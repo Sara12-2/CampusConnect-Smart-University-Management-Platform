@@ -1,72 +1,248 @@
 @import "tailwindcss";
 
-@theme {
-  /* Primary — Orange */
-  --color-brand-50:  #fff7ed;
-  --color-brand-100: #ffedd5;
-  --color-brand-200: #fed7aa;
-  --color-brand-300: #fdba74;
-  --color-brand-400: #fb923c;
-  --color-brand-500: #f97316;
-  --color-brand-600: #ea580c;
-  --color-brand-700: #c2410c;
-  --color-brand-800: #9a3412;
-  --color-brand-900: #7c2d12;
+/* ============================================================
+   CampusConnect — Dark Green + Dark Orange Theme
+   ============================================================ */
 
-  /* Secondary — Green */
-  --color-accent-50:  #f0fdf4;
-  --color-accent-100: #dcfce7;
-  --color-accent-200: #bbf7d0;
-  --color-accent-300: #86efac;
-  --color-accent-400: #4ade80;
-  --color-accent-500: #22c55e;
-  --color-accent-600: #16a34a;
-  --color-accent-700: #15803d;
-  --color-accent-800: #166534;
-  --color-accent-900: #14532d;
+@theme {
+  /* Primary — Dark Orange */
+  --color-brand-50:  #fdf2e3;
+  --color-brand-100: #fbe4c7;
+  --color-brand-200: #f7c990;
+  --color-brand-300: #f0a958;
+  --color-brand-400: #E67E22;   /* Main dark orange */
+  --color-brand-500: #D35400;   /* Darker orange */
+  --color-brand-600: #B45A0B;   /* Deep orange */
+  --color-brand-700: #8a3f08;
+  --color-brand-800: #622a05;
+  --color-brand-900: #3d1a03;
+
+  /* Secondary — Dark Green */
+  --color-accent-50:  #eaf6ee;
+  --color-accent-100: #c8e6d1;
+  --color-accent-200: #a3d5b3;
+  --color-accent-300: #58b277;
+  --color-accent-400: #28a745;   /* Vibrant dark green */
+  --color-accent-500: #227736;   /* Main dark green */
+  --color-accent-600: #1c6430;   /* Darker green */
+  --color-accent-700: #165127;   /* Deepest green */
+  --color-accent-800: #103e1e;
+  --color-accent-900: #0a2b15;
 }
 
+/* ===== Global reset ===== */
 * {
-  transition: color .2s ease, background-color .2s ease, border-color .2s ease;
+  transition: color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
 
 html { scroll-behavior: smooth; }
 
 body {
   background: #ffffff;
-  color: #0f172a;
+  color: #0f1d17;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
+/* ===== Scrollbar — dark green + dark orange ===== */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-track { background: #f8faf9; }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #f97316, #22c55e);
+  background: linear-gradient(180deg, #227736, #E67E22);
   border-radius: 8px;
 }
-::-webkit-scrollbar-thumb:hover { background: #ea580c; }
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #1c6430, #D35400);
+}
 
+/* ===== Text Selection ===== */
+::selection {
+  background: #227736;
+  color: #ffffff;
+}
+::-moz-selection {
+  background: #227736;
+  color: #ffffff;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+/* Fade In Up */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up { animation: fadeInUp .6s ease forwards; }
 
+/* Fade In */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in { animation: fadeIn .5s ease forwards; }
+
+/* Slide In Left */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-left { animation: slideInLeft .6s ease forwards; }
+
+/* Slide In Right */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right { animation: slideInRight .6s ease forwards; }
+
+/* Float */
 @keyframes float {
-  0%,100% { transform: translateY(0); }
-  50%     { transform: translateY(-10px); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
 }
 .animate-float { animation: float 4s ease-in-out infinite; }
 
+/* Float Slow */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-8px) rotate(2deg); }
+}
+.animate-float-slow { animation: floatSlow 6s ease-in-out infinite; }
+
+/* Pulse Ring — Green */
+@keyframes pulseGreen {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 119, 54, 0.4); }
+  50%      { box-shadow: 0 0 0 12px rgba(34, 119, 54, 0); }
+}
+.animate-pulse-green { animation: pulseGreen 2s infinite; }
+
+/* Pulse Ring — Orange */
+@keyframes pulseOrange {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.4); }
+  50%      { box-shadow: 0 0 0 12px rgba(230, 126, 34, 0); }
+}
+.animate-pulse-orange { animation: pulseOrange 2s infinite; }
+
+/* Shimmer — Green + Orange gradient text */
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 .animate-shimmer {
-  background: linear-gradient(90deg, #f97316 0%, #22c55e 50%, #f97316 100%);
+  background: linear-gradient(90deg, #227736 0%, #E67E22 50%, #227736 100%);
   background-size: 200% 100%;
   animation: shimmer 3s linear infinite;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Gradient Move */
+@keyframes gradientMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientMove 8s ease infinite;
+}
+
+/* Bounce Gentle */
+@keyframes bounceGentle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.animate-bounce-gentle { animation: bounceGentle 2s ease-in-out infinite; }
+
+/* Rotate Slow */
+@keyframes rotateSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-rotate-slow { animation: rotateSlow 12s linear infinite; }
+
+/* ============================================================
+   UTILITY CLASSES — Dark Theme
+   ============================================================ */
+
+/* Dark Green Gradient Text */
+.text-green-gradient {
+  background: linear-gradient(135deg, #227736, #28a745);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Dark Orange Gradient Text */
+.text-orange-gradient {
+  background: linear-gradient(135deg, #E67E22, #D35400);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Mixed Green → Orange Gradient Text */
+.text-brand-gradient {
+  background: linear-gradient(135deg, #227736 0%, #E67E22 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Dark Green Background Gradient */
+.bg-green-gradient {
+  background: linear-gradient(135deg, #165127, #1c6430, #227736);
+}
+
+/* Dark Orange Background Gradient */
+.bg-orange-gradient {
+  background: linear-gradient(135deg, #E67E22, #D35400);
+}
+
+/* Glass Effect — Light (for white backgrounds) */
+.glass-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Glass Effect — Dark (for dark backgrounds) */
+.glass-dark {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Dark Border (green-tinted) */
+.border-brand {
+  border-color: #e2ebe6;
+}
+
+/* Soft Shadow — Green */
+.shadow-green-soft {
+  box-shadow: 0 4px 24px -8px rgba(34, 119, 54, 0.15);
+}
+
+/* Soft Shadow — Orange */
+.shadow-orange-soft {
+  box-shadow: 0 4px 24px -8px rgba(230, 126, 34, 0.15);
+}
+
+/* Focus Ring — Green */
+.focus-green:focus {
+  outline: none;
+  border-color: #227736;
+  box-shadow: 0 0 0 4px rgba(34, 119, 54, 0.1);
+}
+
+/* Focus Ring — Orange */
+.focus-orange:focus {
+  outline: none;
+  border-color: #E67E22;
+  box-shadow: 0 0 0 4px rgba(230, 126, 34, 0.1);
 }

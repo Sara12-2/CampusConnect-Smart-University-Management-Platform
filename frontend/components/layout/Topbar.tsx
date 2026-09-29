@@ -12,7 +12,8 @@ import {
   User,
   Settings,
   ChevronDown,
-  Sun,
+  Sparkles,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mockUser, mockAdmin, mockNotifications } from "@/data/mock-data";
@@ -22,28 +23,31 @@ interface Props {
   onMenuClick?: () => void;
 }
 
+/* ============================================================
+   ROLE CONFIG — Dark theme
+   ============================================================ */
 const roleConfig = {
   student: {
     label: "Welcome back,",
     user: mockUser,
-    accent: "orange",
-    searchFocus: "focus:border-orange-500 focus:ring-orange-100",
-    iconHover: "hover:bg-orange-50 hover:text-orange-600",
-    notifDot: "bg-orange-500",
-    avatar: "from-orange-500 to-green-500",
+    searchFocus: "focus:border-[#227736] focus:ring-[#227736]/10",
+    iconHover: "hover:bg-[#eaf6ee] hover:text-[#227736]",
+    notifDot: "bg-[#E67E22]",
+    avatar: "from-[#227736] to-[#28a745]",
     profileLink: "/student/profile",
     notificationsLink: "/student/notifications",
+    roleBadge: "bg-[#eaf6ee] text-[#227736] border border-[#c8e6d1]",
   },
   admin: {
     label: "Admin Panel —",
     user: mockAdmin,
-    accent: "green",
-    searchFocus: "focus:border-green-500 focus:ring-green-100",
-    iconHover: "hover:bg-green-50 hover:text-green-600",
-    notifDot: "bg-green-500",
-    avatar: "from-green-500 to-green-600",
+    searchFocus: "focus:border-[#227736] focus:ring-[#227736]/10",
+    iconHover: "hover:bg-[#eaf6ee] hover:text-[#227736]",
+    notifDot: "bg-[#E67E22]",
+    avatar: "from-[#227736] to-[#28a745]",
     profileLink: "/admin",
     notificationsLink: "/admin",
+    roleBadge: "bg-[#fdf2e3] text-[#B45A0B] border border-[#E67E22]/30",
   },
 };
 
@@ -86,32 +90,43 @@ export default function Topbar({ role = "student", onMenuClick }: Props) {
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#e2ebe6]">
+
+      {/* ==================== TOP ACCENT LINE ==================== */}
+      <div className="h-0.5 bg-gradient-to-r from-[#227736] via-[#28a745] to-[#E67E22]" />
+
       <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
-        {/* Left: Menu + Greeting */}
+
+        {/* ==================== LEFT: Menu + Greeting ==================== */}
         <div className="flex items-center gap-3 min-w-0">
-          <button
+          {/* Mobile menu toggle */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
             onClick={onMenuClick}
-            className="md:hidden p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition-all"
+            className="md:hidden p-2 rounded-xl text-[#227736] hover:bg-[#eaf6ee] transition-colors duration-300"
             aria-label="Menu"
           >
             <Menu size={20} />
-          </button>
+          </motion.button>
 
+          {/* Greeting */}
           <div className="min-w-0">
-            <p className="text-xs text-slate-500 truncate">{cfg.label}</p>
-            <h2 className="font-bold text-slate-800 truncate text-sm md:text-base">
+            <p className="text-[10px] text-[#5a6e63] truncate uppercase tracking-wider font-semibold">
+              {cfg.label}
+            </p>
+            <h2 className="font-bold text-[#0f1d17] truncate text-sm md:text-base tracking-tight">
               {cfg.user.name}
             </h2>
           </div>
         </div>
 
-        {/* Center: Search (desktop) */}
+        {/* ==================== CENTER: Search (desktop) ==================== */}
         <div className="hidden md:block flex-1 max-w-md mx-4">
-          <div className="relative">
+          <div className="relative group">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5a6e63] group-focus-within:text-[#227736] transition-colors duration-300"
+              size={15}
             />
             <input
               value={query}
@@ -122,56 +137,82 @@ export default function Topbar({ role = "student", onMenuClick }: Props) {
                   : "Search notices, complaints, items..."
               }
               className={cn(
-                "w-full pl-9 pr-4 py-2 text-sm rounded-xl border-2 border-slate-200 outline-none transition-all",
-                "focus:ring-4 placeholder:text-slate-400",
+                "w-full pl-10 pr-10 py-2 text-sm rounded-xl bg-[#f8faf9] border-2 border-[#e2ebe6] text-[#0f1d17]",
+                "placeholder:text-[#5a6e63]/60 outline-none transition-all duration-300",
+                "focus:bg-white focus:ring-4",
                 cfg.searchFocus
               )}
             />
-            {query && (
-              <button
+            {query ? (
+              <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
                 onClick={() => setQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5a6e63] hover:text-[#227736] hover:bg-[#eaf6ee] p-1 rounded-md transition-all"
+                aria-label="Clear search"
               >
-                <X size={14} />
-              </button>
+                <X size={13} />
+              </motion.button>
+            ) : (
+              <kbd className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-0.5 text-[10px] font-mono text-[#5a6e63] bg-white border border-[#e2ebe6] rounded-md px-1.5 py-0.5">
+                ⌘K
+              </kbd>
             )}
           </div>
         </div>
 
-        {/* Right: Actions */}
+        {/* ==================== RIGHT: Actions ==================== */}
         <div className="flex items-center gap-1.5 md:gap-2">
+
           {/* Mobile search toggle */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setMobileSearch((v) => !v)}
-            className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-all"
+            className="md:hidden p-2 rounded-xl text-[#5a6e63] hover:bg-[#eaf6ee] hover:text-[#227736] transition-all duration-300"
             aria-label="Search"
           >
             <Search size={18} />
-          </button>
+          </motion.button>
 
-          {/* Notifications */}
+          {/* ==================== NOTIFICATIONS ==================== */}
           <div ref={notifRef} className="relative">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 setNotifOpen((v) => !v);
                 setProfileOpen(false);
               }}
               className={cn(
-                "relative p-2 rounded-xl text-slate-600 transition-all",
+                "relative p-2 rounded-xl text-[#5a6e63] transition-all duration-300",
                 cfg.iconHover
               )}
               aria-label="Notifications"
             >
-              <Bell size={18} />
+              <motion.div
+                animate={unread > 0 ? { rotate: [0, -10, 10, -10, 0] } : {}}
+                transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 3 }}
+              >
+                <Bell size={18} />
+              </motion.div>
+
               {unread > 0 && (
-                <span
-                  className={cn(
-                    "absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-white",
-                    cfg.notifDot
-                  )}
-                />
+                <>
+                  <motion.span
+                    animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className={cn(
+                      "absolute top-1 right-1 w-2.5 h-2.5 rounded-full ring-2 ring-white",
+                      cfg.notifDot
+                    )}
+                  />
+                  <span className="absolute top-0 right-0 min-w-4 h-4 px-1 rounded-full bg-[#dc3545] text-white text-[8px] font-bold flex items-center justify-center ring-2 ring-white">
+                    {unread}
+                  </span>
+                </>
               )}
-            </button>
+            </motion.button>
 
             <AnimatePresence>
               {notifOpen && (
@@ -179,85 +220,140 @@ export default function Topbar({ role = "student", onMenuClick }: Props) {
                   initial={{ opacity: 0, y: -8, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl shadow-black/10 border border-[#e2ebe6] overflow-hidden"
                 >
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <h3 className="font-bold text-sm text-slate-800">
+                  {/* Header */}
+                  <div className="relative px-4 py-3 border-b border-[#e2ebe6] flex items-center justify-between">
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#227736] to-[#E67E22]" />
+
+                    <h3 className="font-bold text-sm text-[#0f1d17] flex items-center gap-1.5">
+                      <Bell size={13} className="text-[#227736]" />
                       Notifications
                     </h3>
-                    <span className="text-xs text-orange-600 font-semibold">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fdf2e3] text-[#B45A0B] border border-[#E67E22]/30 uppercase tracking-wider">
                       {unread} new
                     </span>
                   </div>
+
+                  {/* List */}
                   <div className="max-h-80 overflow-y-auto">
                     {mockNotifications.length === 0 ? (
-                      <p className="p-6 text-center text-sm text-slate-500">
-                        Koi notifications nahi
-                      </p>
+                      <div className="p-8 text-center">
+                        <div className="w-12 h-12 mx-auto rounded-xl bg-[#eaf6ee] border border-[#c8e6d1] flex items-center justify-center mb-3">
+                          <Bell size={20} className="text-[#227736]" />
+                        </div>
+                        <p className="text-sm text-[#5a6e63]">
+                          No notifications
+                        </p>
+                      </div>
                     ) : (
-                      mockNotifications.map((n) => (
-                        <Link
+                      mockNotifications.map((n, i) => (
+                        <motion.div
                           key={n.id}
-                          href={cfg.notificationsLink}
-                          onClick={() => setNotifOpen(false)}
-                          className={cn(
-                            "block px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors",
-                            !n.read && "bg-orange-50/40"
-                          )}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
                         >
-                          <div className="flex items-start gap-2">
-                            {!n.read && (
-                              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+                          <Link
+                            href={cfg.notificationsLink}
+                            onClick={() => setNotifOpen(false)}
+                            className={cn(
+                              "group relative block px-4 py-3 border-b border-[#f8faf9] hover:bg-[#f8faf9] transition-colors duration-300",
+                              !n.read && "bg-[#eaf6ee]/40"
                             )}
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-slate-800 truncate">
-                                {n.title}
-                              </p>
-                              <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
-                                {n.message}
-                              </p>
+                          >
+                            <div className="flex items-start gap-2.5">
+                              <div
+                                className={cn(
+                                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border transition-all duration-300",
+                                  n.read
+                                    ? "bg-[#f8faf9] border-[#e2ebe6] text-[#5a6e63]"
+                                    : "bg-[#fdf2e3] border-[#E67E22]/30 text-[#E67E22]"
+                                )}
+                              >
+                                <Bell size={13} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p
+                                    className={cn(
+                                      "text-sm truncate",
+                                      n.read
+                                        ? "font-medium text-[#5a6e63]"
+                                        : "font-bold text-[#0f1d17]"
+                                    )}
+                                  >
+                                    {n.title}
+                                  </p>
+                                  {!n.read && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#E67E22] shrink-0 mt-1.5" />
+                                  )}
+                                </div>
+                                <p className="text-xs text-[#5a6e63] line-clamp-2 mt-0.5">
+                                  {n.message}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </Link>
+                          </Link>
+                        </motion.div>
                       ))
                     )}
                   </div>
+
+                  {/* Footer */}
                   <Link
                     href={cfg.notificationsLink}
                     onClick={() => setNotifOpen(false)}
-                    className="block px-4 py-3 text-center text-xs font-semibold text-orange-600 hover:bg-orange-50 transition-colors"
+                    className="group flex items-center justify-center gap-1.5 px-4 py-3 text-xs font-bold text-[#227736] hover:bg-[#eaf6ee] transition-colors border-t border-[#e2ebe6]"
                   >
                     View all notifications
+                    <ChevronDown
+                      size={12}
+                      className="-rotate-90 group-hover:translate-x-0.5 transition-transform"
+                    />
                   </Link>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Profile */}
+          {/* ==================== PROFILE ==================== */}
           <div ref={profileRef} className="relative">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => {
                 setProfileOpen((v) => !v);
                 setNotifOpen(false);
               }}
-              className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 transition-all"
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-[#f8faf9] transition-all duration-300"
               aria-label="Profile"
             >
               <div
                 className={cn(
-                  "w-9 h-9 rounded-full bg-gradient-to-br text-white flex items-center justify-center font-bold text-sm shadow-sm",
+                  "relative w-9 h-9 rounded-full bg-gradient-to-br text-white flex items-center justify-center font-bold text-sm shadow-md shadow-[#227736]/20 ring-2 ring-white",
                   cfg.avatar
                 )}
               >
                 {initials}
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#28a745] border-2 border-white" />
               </div>
+
+              <div className="hidden md:block text-left">
+                <p className="text-xs font-bold text-[#0f1d17] truncate max-w-24">
+                  {cfg.user.name.split(" ")[0]}
+                </p>
+              </div>
+
               <ChevronDown
                 size={14}
-                className="hidden md:block text-slate-400"
+                className={cn(
+                  "hidden md:block text-[#5a6e63] transition-transform duration-300",
+                  profileOpen && "rotate-180"
+                )}
               />
-            </button>
+            </motion.button>
 
             <AnimatePresence>
               {profileOpen && (
@@ -265,50 +361,81 @@ export default function Topbar({ role = "student", onMenuClick }: Props) {
                   initial={{ opacity: 0, y: -8, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl shadow-black/10 border border-[#e2ebe6] overflow-hidden"
                 >
-                  <div className="px-4 py-3 border-b border-slate-100">
-                    <p className="font-bold text-sm text-slate-800 truncate">
-                      {cfg.user.name}
-                    </p>
-                    <p className="text-xs text-slate-500 truncate">
-                      {cfg.user.email}
-                    </p>
+                  {/* Header */}
+                  <div className="relative px-4 py-4 border-b border-[#e2ebe6]">
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#227736] to-[#E67E22]" />
+
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "w-10 h-10 rounded-xl bg-gradient-to-br text-white flex items-center justify-center font-bold shadow-md",
+                          cfg.avatar
+                        )}
+                      >
+                        {initials}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-sm text-[#0f1d17] truncate">
+                          {cfg.user.name}
+                        </p>
+                        <p className="text-xs text-[#5a6e63] truncate">
+                          {cfg.user.email}
+                        </p>
+                      </div>
+                    </div>
+
                     <span
                       className={cn(
-                        "inline-block mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full",
-                        role === "admin"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-orange-100 text-orange-700"
+                        "inline-flex items-center gap-1 mt-3 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full",
+                        cfg.roleBadge
                       )}
                     >
+                      <Sparkles size={10} />
                       {cfg.user.role}
                     </span>
                   </div>
 
+                  {/* Menu items */}
                   <div className="py-1">
                     <Link
                       href={cfg.profileLink}
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      className="group flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5a6e63] hover:bg-[#f8faf9] hover:text-[#227736] transition-all duration-300"
                     >
-                      <User size={15} /> My Profile
+                      <div className="w-7 h-7 rounded-md bg-[#f8faf9] group-hover:bg-[#eaf6ee] flex items-center justify-center transition-colors">
+                        <User size={13} />
+                      </div>
+                      My Profile
                     </Link>
-                    <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
-                      <Settings size={15} /> Settings
+
+                    <button className="group w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5a6e63] hover:bg-[#f8faf9] hover:text-[#227736] transition-all duration-300">
+                      <div className="w-7 h-7 rounded-md bg-[#f8faf9] group-hover:bg-[#eaf6ee] flex items-center justify-center transition-colors">
+                        <Settings size={13} />
+                      </div>
+                      Settings
                     </button>
-                    <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
-                      <Sun size={15} /> Light Theme
+
+                    <button className="group w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#5a6e63] hover:bg-[#f8faf9] hover:text-[#227736] transition-all duration-300">
+                      <div className="w-7 h-7 rounded-md bg-[#f8faf9] group-hover:bg-[#eaf6ee] flex items-center justify-center transition-colors">
+                        <Check size={13} />
+                      </div>
+                      Light Theme
                     </button>
                   </div>
 
-                  <div className="border-t border-slate-100 py-1">
+                  {/* Logout */}
+                  <div className="border-t border-[#e2ebe6] py-1">
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-semibold"
+                      className="group w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#dc3545] hover:bg-[#fdeaea] transition-all duration-300 font-bold"
                     >
-                      <LogOut size={15} /> Logout
+                      <div className="w-7 h-7 rounded-md bg-[#fdeaea] group-hover:bg-[#dc3545] group-hover:text-white flex items-center justify-center transition-colors">
+                        <LogOut size={13} />
+                      </div>
+                      Logout
                     </button>
                   </div>
                 </motion.div>
@@ -318,19 +445,20 @@ export default function Topbar({ role = "student", onMenuClick }: Props) {
         </div>
       </div>
 
-      {/* Mobile search drawer */}
+      {/* ==================== MOBILE SEARCH DRAWER ==================== */}
       <AnimatePresence>
         {mobileSearch && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="md:hidden overflow-hidden border-t border-slate-100 bg-white"
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="md:hidden overflow-hidden border-t border-[#e2ebe6] bg-white"
           >
             <div className="p-3">
               <div className="relative">
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5a6e63]"
                   size={16}
                 />
                 <input
@@ -339,8 +467,8 @@ export default function Topbar({ role = "student", onMenuClick }: Props) {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search..."
                   className={cn(
-                    "w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border-2 border-slate-200 outline-none transition-all",
-                    "focus:ring-4 placeholder:text-slate-400",
+                    "w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-[#f8faf9] border-2 border-[#e2ebe6] text-[#0f1d17] outline-none transition-all",
+                    "focus:bg-white focus:ring-4 placeholder:text-[#5a6e63]/60",
                     cfg.searchFocus
                   )}
                 />

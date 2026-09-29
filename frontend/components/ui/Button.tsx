@@ -4,7 +4,14 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "outline" | "ghost" | "danger";
+type Variant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "danger"
+  | "accent"
+  | "white";
 type Size = "sm" | "md" | "lg";
 
 interface Props {
@@ -19,47 +26,102 @@ interface Props {
 }
 
 const variants: Record<Variant, string> = {
+  /* Green solid — main CTA */
   primary:
-    "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/20",
+    "bg-[#227736] text-white hover:bg-[#1c6430] active:bg-[#165127] shadow-md shadow-[#227736]/25 hover:shadow-lg hover:shadow-[#227736]/30",
+
+  /* Soft green — secondary CTA */
   secondary:
-    "bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/20",
+    "bg-[#eaf6ee] text-[#227736] hover:bg-[#d5ecdc] border border-[#c8e6d1] hover:border-[#a3d5b3]",
+
+  /* Green outline */
   outline:
-    "border-2 border-orange-500 text-orange-600 hover:bg-orange-50",
-  ghost: "text-slate-700 hover:bg-slate-100",
-  danger: "bg-red-500 text-white hover:bg-red-600",
+    "border-2 border-[#227736] text-[#227736] hover:bg-[#eaf6ee] hover:border-[#1c6430]",
+
+  /* Ghost — minimal */
+  ghost:
+    "text-[#5a6e63] hover:bg-[#eaf6ee] hover:text-[#227736]",
+
+  /* Danger */
+  danger:
+    "bg-[#dc3545] text-white hover:bg-[#c82333] shadow-md shadow-red-500/25",
+
+  /* Orange accent — special CTAs */
+  accent:
+    "bg-[#f4a228] text-white hover:bg-[#e08a10] shadow-md shadow-[#f4a228]/25",
+
+  /* White — for dark backgrounds */
+  white:
+    "bg-white text-[#227736] hover:bg-[#eaf6ee] shadow-md shadow-black/10 hover:shadow-lg",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-sm rounded-lg",
+  sm: "px-3.5 py-1.5 text-[13px] rounded-lg",
   md: "px-5 py-2.5 text-sm rounded-xl",
   lg: "px-7 py-3.5 text-base rounded-xl",
 };
 
 export default function Button({
-  children, variant = "primary", size = "md",
-  href, onClick, type = "button", className, disabled,
+  children,
+  variant = "primary",
+  size = "md",
+  href,
+  onClick,
+  type = "button",
+  className,
+  disabled,
 }: Props) {
   const classes = cn(
-    "inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300",
-    "hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed",
-    variants[variant], sizes[size], className
+    "relative inline-flex items-center justify-center gap-2 font-semibold overflow-hidden group",
+    "transition-all duration-300 ease-out",
+    "hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
+    "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:active:scale-100",
+    variants[variant],
+    sizes[size],
+    className
+  );
+
+  const inner = (
+    <>
+      {/* Shine sweep on hover */}
+      <span
+        className="absolute inset-0 -translate-x-full group-hover:translate-x-full 
+          transition-transform duration-700 ease-out
+          bg-gradient-to-r from-transparent via-white/25 to-transparent 
+          pointer-events-none"
+      />
+      <span className="relative z-10 inline-flex items-center gap-2">
+        {children}
+      </span>
+    </>
   );
 
   if (href) {
     return (
-      <motion.div whileTap={{ scale: 0.97 }}>
-        <Link href={href} className={classes}>{children}</Link>
-      </motion.div>
+      <motion.span
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        className="inline-block"
+      >
+        <Link href={href} className={classes}>
+          {inner}
+        </Link>
+      </motion.span>
     );
   }
 
   return (
     <motion.button
+      whileHover={{ y: -2 }}
       whileTap={{ scale: 0.97 }}
-      type={type} onClick={onClick} disabled={disabled}
+      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
       className={classes}
     >
-      {children}
+      {inner}
     </motion.button>
   );
 }
