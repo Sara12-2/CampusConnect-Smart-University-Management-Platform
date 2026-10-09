@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+email-validator
+python-jose[cryptography]
+bcrypt
+python-multipart
