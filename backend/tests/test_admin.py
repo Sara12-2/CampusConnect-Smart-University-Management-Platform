@@ -7,9 +7,9 @@ def test_admin_can_view_stats_and_staff(client, admin_headers):
     response = client.get("/api/admin/stats", headers=admin_headers)
     assert response.status_code == 200
     assert response.json()["users"] == 1
-    created = client.post("/api/admin/staff", headers=admin_headers, json={"name": "Campus Staff", "email": "staff@test.local", "department": "IT", "designation": "Support"})
+    created = client.post("/api/admin/staff", headers=admin_headers, json={"name": "Campus Staff", "email": "staff@test.com", "department": "IT", "designation": "Support"})
     assert created.status_code == 200, created.text
-    assert created.json()["email"] == "staff@test.local"
+    assert created.json()["email"] == "staff@test.com"
 
 
 def test_admin_can_list_users_but_password_is_not_returned(client, admin_headers):

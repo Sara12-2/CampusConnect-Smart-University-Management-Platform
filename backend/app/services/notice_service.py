@@ -4,6 +4,16 @@ from app.database import notices, next_notice_id
 from app.services.ai_service import generate_summary
 
 
+def _to_dict(data):
+    if isinstance(data, dict):
+        return data
+    if hasattr(data, "model_dump"):
+        return data.model_dump()
+    if hasattr(data, "dict"):
+        return data.dict()
+    raise TypeError("Notice data must be a dictionary or Pydantic model")
+
+
 def list_notices(
     department: str | None = None,
     semester: int | None = None,
@@ -14,57 +24,44 @@ def list_notices(
 
     if department:
         result = [
-            notice
-            for notice in result
-            if notice["department"].lower() == department.lower()
-            or notice["department"].lower() == "all"
+            n for n in result
+            if n["department"].lower() == department.lower()
+            or n["department"].lower() == "all"
         ]
 
     if semester:
         result = [
-            notice
-            for notice in result
-            if notice["semester"] is None
-            or notice["semester"] == semester
+            n for n in result
+            if n["semester"] is None or n["semester"] == semester
         ]
 
     if category:
-        result = [
-            notice
-            for notice in result
-            if notice["category"] == category
-        ]
+        result = [n for n in result if n["category"] == category]
 
     if search:
         search_text = search.lower()
-
         result = [
-            notice
-            for notice in result
-            if search_text in notice["title"].lower()
-            or search_text in notice["content"].lower()
+            n for n in result
+            if search_text in n["title"].lower()
+            or search_text in n["content"].lower()
         ]
 
     result.sort(
-        key=lambda notice: (
-            notice["pinned"],
-            notice["createdAt"],
-        ),
+        key=lambda n: (n["pinned"], n["createdAt"]),
         reverse=True,
     )
-
     return result
 
 
 def get_notice(notice_id: str):
     for notice in notices:
-        if notice["id"] == notice_id:
+        if str(notice["id"]) == str(notice_id):
             return notice
-
     return None
 
 
-def create_notice(data: dict, author: str):
+def create_notice(data, author: str):
+    data = _to_dict(data)
     summary = data.get("summary")
 
     if not summary:
@@ -85,34 +82,30 @@ def create_notice(data: dict, author: str):
     }
 
     notices.append(notice)
-
     return notice
 
 
-def update_notice(notice_id: str, data: dict):
+def update_notice(notice_id: str, data):
     notice = get_notice(notice_id)
-
     if not notice:
         return None
+
+    data = _to_dict(data)
 
     for key, value in data.items():
         if value is not None:
             notice[key] = value
 
     if data.get("content"):
-        notice["summary"] = generate_summary(
-            notice["content"]
-        )
+        notice["summary"] = generate_summary(notice["content"])
 
     return notice
 
 
 def delete_notice(notice_id: str):
     notice = get_notice(notice_id)
-
     if not notice:
         return False
 
     notices.remove(notice)
-
     return True

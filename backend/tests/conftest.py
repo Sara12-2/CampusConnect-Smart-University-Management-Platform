@@ -23,14 +23,14 @@ def client():
 
 @pytest.fixture
 def admin_user():
-    user = {"id": 9001, "name": "Test Admin", "email": "admin@test.local", "password": hash_password("StrongPass123!"), "role": "admin", "department": None, "semester": None, "avatar": None, "is_active": True}
+    user = {"id": 9001, "name": "Test Admin", "email": "admin@example.com", "password": hash_password("StrongPass123!"), "role": "admin", "department": None, "semester": None, "avatar": None, "is_active": True}
     database.users.append(user)
     return user
 
 
 @pytest.fixture
 def student_user():
-    user = {"id": 9002, "name": "Test Student", "email": "student@test.local", "password": hash_password("StudentPass123!"), "role": "student", "department": "Computer Science", "semester": 2, "avatar": None, "is_active": True}
+    user = {"id": 9002, "name": "Test Student", "email": "student@example.com", "password": hash_password("StudentPass123!"), "role": "student", "department": "Computer Science", "semester": 2, "avatar": None, "is_active": True}
     database.users.append(user)
     return user
 
