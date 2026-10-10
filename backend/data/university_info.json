@@ -1,0 +1,108 @@
+{
+  "university_name": "CampusConnect University",
+  "tagline": "Smart University Management & Academic Excellence",
+  "office_hours": {
+    "days": "Monday to Friday",
+    "hours": "9:00 AM - 4:00 PM",
+    "lunch_break": "1:00 PM - 2:00 PM",
+    "weekends": "Closed on weekends and gazetted holidays",
+    "public_holidays": "Closed",
+    "administration_block_location": "Administration block is located near the main campus entrance."
+  },
+  "contacts": {
+    "general_helpline": {
+      "email": "info@campusconnect.edu",
+      "phone": "+92-51-111-222-333",
+      "location": "Administration Block Information Desk"
+    },
+    "student_affairs": {
+      "email": "studentaffairs@campusconnect.edu",
+      "phone": "+92-51-111-222-333",
+      "location": "Administration Block, Ground Floor, Room 102"
+    },
+    "it_helpdesk": {
+      "email": "it-support@campusconnect.edu",
+      "phone": "+92-51-111-222-334",
+      "location": "IT Center, 2nd Floor, Room 204"
+    },
+    "security_and_lost_found": {
+      "email": "security@campusconnect.edu",
+      "phone": "+92-51-111-222-335",
+      "location": "Main Entrance Gate Security Desk"
+    },
+    "registrar_office": {
+      "email": "registrar@campusconnect.edu",
+      "phone": "+92-51-111-222-336",
+      "location": "Administration Block, 1st Floor, Room 108"
+    },
+    "medical_emergency_clinic": {
+      "email": "clinic@campusconnect.edu",
+      "phone": "+92-51-111-222-337",
+      "emergency_hotline": "1122",
+      "location": "Campus Health Clinic, Ground Floor, Medical Wing"
+    }
+  },
+  "campus_policies": {
+    "attendance_policy": {
+      "title": "Course Attendance Requirement",
+      "rule": "Students must maintain a minimum of 75% attendance in each course to be eligible to sit for midterm and final examinations. Attendance below 75% leads to automatic course debarment or withdrawal."
+    },
+    "code_of_conduct_and_discipline": {
+      "title": "Student Code of Conduct & Anti-Harassment",
+      "rule": "Zero-tolerance policy towards harassment, cheating, plagiarism, ragging, vandalism, or unauthorized political activity. Any violation will be referred to the University Disciplinary Committee with penalties ranging from fines to suspension or expulsion."
+    },
+    "id_card_policy": {
+      "title": "University ID Card Requirement",
+      "rule": "Wearing the official university student ID card is mandatory on campus premises and during examinations. Entry without an ID card is strictly restricted at main gates."
+    },
+    "library_policy": {
+      "title": "Library Book Borrowing & Returns",
+      "rule": "Undergraduate students can borrow up to 3 books for a duration of 14 days. Overdue items incur a fine of Rs. 20 per day per book. Reference books cannot be issued outside the library."
+    },
+    "fee_and_refund_policy": {
+      "title": "Semester Fee Clearance & Refund",
+      "rule": "All tuition dues must be cleared prior to examination slips issuance. Full 100% refund is available within the first week of classes, 50% within the second week, and no refund thereafter."
+    },
+    "grading_policy": {
+      "title": "Academic Grading & Minimum CGPA",
+      "rule": "Minimum passing grade is D (50%). Undergraduate students must maintain a minimum cumulative CGPA of 2.00 to avoid academic warning or probation."
+    }
+  },
+  "academic_calendar": {
+    "fall_semester": {
+      "orientation": "September 1",
+      "classes_begin": "September 5",
+      "midterm_examinations": "October 20",
+      "scholarship_application_deadline": "October 15",
+      "sports_gala": "November 5 - November 10",
+      "final_examinations": "January 10",
+      "semester_break": "January 25 - February 10"
+    }
+  },
+  "scholarships": {
+    "merit_based": {
+      "eligibility": "Minimum CGPA of 3.50",
+      "concession": "Up to 100% tuition fee waiver for top 3 positions",
+      "deadline": "October 15",
+      "documents": "Grade transcript, CNIC copy, Application form"
+    },
+    "need_based": {
+      "eligibility": "Demonstrated financial hardship with minimum CGPA of 2.50",
+      "concession": "25% to 75% fee concession",
+      "deadline": "October 15",
+      "documents": "Parent income certificate, Utility bills, Application form"
+    }
+  },
+  "departments": [
+    "Computer Science & Software Engineering",
+    "Electrical & Computer Engineering",
+    "Business Administration & Management Sciences",
+    "Humanities & Social Sciences"
+  ],
+  "facilities": {
+    "central_library": "Open Monday to Friday 8:30 AM - 8:00 PM, Saturday 10:00 AM - 4:00 PM",
+    "cafeteria": "Open daily 8:00 AM - 6:00 PM",
+    "health_clinic": "On-campus basic medical assistance open 9:00 AM - 5:00 PM",
+    "sports_complex": "Gymnasium, basketball, badminton, and cricket grounds open 3:00 PM - 8:00 PM"
+  }
+}

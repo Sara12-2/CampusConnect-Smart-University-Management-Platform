@@ -155,3 +155,12 @@ def delete_notice(notice_id: str):
     notice = get_notice(notice_id)
 
     notices.remove(notice)
+
+
+# Explicitly expose chatbot services for static analyzers
+from app.services import (  # type: ignore
+    ai_service as ai_service,
+    embedding_service as embedding_service,
+    vector_store as vector_store,
+    rag_service as rag_service,
+)

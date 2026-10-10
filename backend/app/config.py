@@ -12,10 +12,15 @@ class Settings(BaseSettings):
     upload_dir: str = "uploads"
     max_upload_size_mb: int = 10
 
+    gemini_api_key: str = ""
+    chroma_dir: str = "vector_store"
+    ai_model: str = "gemini-2.0-flash"
+    embedding_model: str = "text-embedding-004"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
     )
 
 
-settings = Settings()
+settings = Settings()

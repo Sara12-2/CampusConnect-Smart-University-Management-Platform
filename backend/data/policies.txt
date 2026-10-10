@@ -1,0 +1,23 @@
+## Policy 1: Academic Integrity and Anti-Plagiarism
+All students enrolled at CampusConnect University are held to high standards of academic honesty. Plagiarism, unauthorized collaboration, exam cheating, and falsification of project results are strictly prohibited. The university utilizes automated similarity detection software with an acceptable similarity index threshold of 19%. Violations are reviewed by the Academic Disciplinary Board and can lead to course failure or academic suspension.
+
+## Policy 2: Attendance and Leave Regulations
+Students must maintain a minimum of 75% attendance in each registered theory lecture and practical lab session to qualify for sitting in mid-term and final examinations. Leaves for medical emergencies must be submitted through the Student Affairs portal with a certified medical certificate within 5 working days of absence. Shortage below 75% results in automatic withdrawal (W grade) from the course.
+
+## Policy 3: Student Code of Conduct and Campus Discipline
+All students are expected to uphold respectful behavior towards peers, instructors, and university staff. Smoking, substance abuse, physical altercation, verbal harassment, and destruction of university property carry zero-tolerance penalties. Students must wear their university identity card visibly while on campus premises and during transit in university transport.
+
+## Policy 4: IT, Wi-Fi and Computing Facilities Policy
+University Wi-Fi and laboratory computer terminals are provided for academic learning and administrative purposes. Unauthorized network sniffing, torrenting, crypto mining, accessing restricted illicit web content, or tampering with university servers will result in immediate suspension of student portal access. Wi-Fi credentials are non-transferable.
+
+## Policy 5: Examination and Grading Regulations
+Examinations are conducted per the semester calendar. Mid-term exams account for 30% of course weightage, sessional assignments/quizzes 20%, and final exams 50%. A minimum CGPA of 2.00 is required for undergraduate degree award. Students scoring below 2.00 are placed on academic probation for one semester.
+
+## Policy 6: Fee Payment and Refund Policy
+Tuition and lab fees must be paid in full or via approved equal installments before the commencement of each semester. A late fee penalty of Rs. 100 per day applies after the advertised due date. Refund requests submitted within the first week of semester classes are eligible for a 100% tuition refund (excluding admission fee), and 50% within the second week. No refunds are granted after the second week.
+
+## Policy 7: Lost and Found Property Policy
+Found valuables, electronics, wallets, and keys must be handed over to the Campus Security or designated Lost & Found custodian within 24 hours. Items are logged on the CampusConnect Lost & Found portal. Unclaimed items are securely retained for a minimum period of 90 days. Legitimate claimants must provide credible proof of ownership prior to release.
+
+## Policy 8: Student Grievance and Complaint Redressal
+CampusConnect provides students with a transparent online grievance redressal mechanism. Complaints submitted under categories such as Wi-Fi, Infrastructure, Sanitation, Academic, or Transport are assigned directly to department supervisors. Routine maintenance complaints are addressed within 2 business days; academic or administrative complaints are addressed within 5 business days with written resolution notes.
