@@ -1,11 +1,11 @@
 "use client";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Bell, MessageSquare, Search, ShieldCheck, Users, GraduationCap,
   ArrowRight, CheckCircle2, Sparkles, TrendingUp,
   Play, Lock, Globe, Check, ChevronRight,
-  FileCheck, Clock, AlertCircle, Send,
+  FileCheck, Clock, Send, Home, User,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -42,10 +42,10 @@ const howItWorks = [
 ];
 
 const projectStats = [
-  { icon: FileCheck, value: "3", label: "Core Modules", accent: false },
-  { icon: Sparkles, value: "AI", label: "Powered Summaries", accent: true },
-  { icon: Clock, value: "Live", label: "Real-Time Updates", accent: false },
-  { icon: ShieldCheck, value: "2", label: "Access Roles", accent: true },
+  { icon: FileCheck, value: 3, label: "Core Modules", accent: false, isText: null },
+  { icon: Sparkles, value: 0, label: "AI-Powered Summaries", accent: true, isText: "AI" },
+  { icon: Clock, value: 0, label: "Real-Time Updates", accent: false, isText: "Live" },
+  { icon: ShieldCheck, value: 2, label: "Access Roles", accent: true, isText: null },
 ];
 
 const container = {
@@ -57,6 +57,27 @@ const item = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
 };
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+function CountUp({ to, duration = 1.2 }: { to: number; duration?: number }) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start: number | null = null;
+    let raf: number;
+    const step = (ts: number) => {
+      if (start === null) start = ts;
+      const progress = Math.min((ts - start) / (duration * 1000), 1);
+      setCount(Math.floor(progress * to));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [to, duration]);
+  return <>{count}</>;
+}
 
 /* ============================================================
    UI PREVIEWS
@@ -160,20 +181,20 @@ function LostFoundPreview() {
         {[
           { type: "LOST", title: "Black Wallet", loc: "Cafeteria", accent: true },
           { type: "FOUND", title: "Blue Bottle", loc: "Library", accent: false },
-        ].map((item, i) => (
+        ].map((it, i) => (
           <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-[#f8faf9] border border-[#e2ebe6]">
             <div
               className={`text-[8px] font-black px-1.5 py-0.5 rounded text-white ${
-                item.accent ? "bg-[#E67E22]" : "bg-[#227736]"
+                it.accent ? "bg-[#E67E22]" : "bg-[#227736]"
               }`}
             >
-              {item.type}
+              {it.type}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-[#0f1d17] truncate">
-                {item.title}
+                {it.title}
               </p>
-              <p className="text-[9px] text-[#5a6e63]">{item.loc}</p>
+              <p className="text-[9px] text-[#5a6e63]">{it.loc}</p>
             </div>
           </div>
         ))}
@@ -197,280 +218,361 @@ const previewMap: Record<string, () => JSX.Element> = {
 };
 
 /* ============================================================
-   HERO DASHBOARD CARD
+   PHONE MOCKUP WITH AUTO-SCROLL
    ============================================================ */
 
-function HeroDashboardCard() {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [8, -8]), { stiffness: 200, damping: 20 });
-  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [-8, 8]), { stiffness: 200, damping: 20 });
+function PhoneMockup() {
+  const screenRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scrollDist, setScrollDist] = useState(0);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    mx.set(x);
-    my.set(y);
-  };
-
-  const handleMouseLeave = () => {
-    mx.set(0);
-    my.set(0);
-  };
+  useEffect(() => {
+    const measure = () => {
+      if (contentRef.current && screenRef.current) {
+        const cH = contentRef.current.scrollHeight;
+        const sH = screenRef.current.clientHeight;
+        setScrollDist(Math.max(0, cH - sH));
+      }
+    };
+    measure();
+    const t = setTimeout(measure, 300);
+    window.addEventListener("resize", measure);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative [perspective:1400px]"
-      style={{ transformStyle: "preserve-3d" }}
-    >
-      {/* Glow behind — dark green + dark orange */}
+    <div className="relative w-full flex items-center justify-center min-h-[600px]">
+      {/* Ambient glow */}
       <motion.div
-        animate={{ scale: [1, 1.05, 1], opacity: [0.4, 0.6, 0.4] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -inset-6 rounded-[28px] blur-2xl
-          bg-gradient-to-br from-[#227736]/40 via-[#1c6430]/30 to-[#E67E22]/30"
+        animate={{ scale: [1, 1.08, 1], opacity: [0.35, 0.55, 0.35] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute w-[420px] h-[520px] rounded-full blur-3xl
+          bg-gradient-to-br from-[#28a745]/40 via-[#227736]/20 to-[#E67E22]/30
+          pointer-events-none"
       />
 
-      {/* Sparkle dots — dark green + dark orange */}
-      <motion.span
-        animate={{ y: [0, -10, 0], opacity: [0.4, 1, 0.4] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-3 -right-3 w-2 h-2 rounded-full bg-[#E67E22] shadow-lg shadow-[#E67E22]/50"
-      />
-      <motion.span
-        animate={{ y: [0, 8, 0], opacity: [0.4, 1, 0.4] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        className="absolute -bottom-4 -left-4 w-2.5 h-2.5 rounded-full bg-[#28a745] shadow-lg shadow-[#28a745]/50"
-      />
-      <motion.span
-        animate={{ x: [0, -8, 0], opacity: [0.3, 0.9, 0.3] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute top-1/2 -left-5 w-1.5 h-1.5 rounded-full bg-white"
-      />
-
+      {/* ====== THE PHONE ====== */}
       <motion.div
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className="relative rounded-2xl overflow-hidden 
-          bg-white shadow-2xl shadow-black/30 
-          border border-white/20
-          ring-1 ring-[#227736]/10"
+        initial={{ opacity: 0, y: 30, rotate: -2 }}
+        animate={{ opacity: 1, y: 0, rotate: 0 }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        whileHover={{ y: -8, rotate: 0 }}
+        className="relative z-10"
+        style={{ transformStyle: "preserve-3d" }}
       >
-        <motion.div
-          animate={{ x: ["-100%", "200%"] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-          className="pointer-events-none absolute inset-y-0 w-1/3 z-20
-            bg-gradient-to-r from-transparent via-white/40 to-transparent 
-            skew-x-12"
-        />
+        {/* Phone body / outer bezel */}
+        <div className="relative w-[300px] h-[610px] rounded-[42px]
+          bg-gradient-to-b from-[#1a1a1a] via-[#0a0a0a] to-[#1a1a1a]
+          p-[10px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)]
+          ring-1 ring-black/40">
 
-        <div className="flex items-center gap-2 px-4 py-2.5 
-          bg-[#f8faf9] border-b border-[#e2ebe6]">
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#227736]" />
-            <div className="w-2.5 h-2.5 rounded-full bg-[#28a745]" />
-            <div className="w-2.5 h-2.5 rounded-full bg-[#E67E22]" />
-          </div>
-          <div className="flex-1 mx-3">
-            <div className="bg-white rounded-md px-3 py-1 text-[10px] 
-              text-[#5a6e63] max-w-xs mx-auto text-center 
-              border border-[#e2ebe6] flex items-center justify-center gap-1.5">
-              <Lock size={9} className="text-[#227736]" />
-              app.campusconnect.edu/student
+          {/* Side button (right) */}
+          <div className="absolute -right-[3px] top-[140px] w-[3px] h-[70px]
+            bg-[#2a2a2a] rounded-r" />
+          <div className="absolute -right-[3px] top-[220px] w-[3px] h-[40px]
+            bg-[#2a2a2a] rounded-r" />
+
+          {/* Volume buttons (left) */}
+          <div className="absolute -left-[3px] top-[130px] w-[3px] h-[35px]
+            bg-[#2a2a2a] rounded-l" />
+          <div className="absolute -left-[3px] top-[180px] w-[3px] h-[60px]
+            bg-[#2a2a2a] rounded-l" />
+          <div className="absolute -left-[3px] top-[255px] w-[3px] h-[60px]
+            bg-[#2a2a2a] rounded-l" />
+
+          {/* Inner screen frame */}
+          <div className="relative w-full h-full rounded-[34px] overflow-hidden bg-white">
+            {/* Dynamic Island / Notch */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30
+              w-[100px] h-[26px] rounded-full bg-black
+              flex items-center justify-end pr-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#1a1a1a] ring-1 ring-[#333]" />
             </div>
-          </div>
-        </div>
 
-        <div className="bg-[#f8faf9] p-4 md:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-[10px] text-[#5a6e63]">Welcome back,</p>
-              <p className="text-sm font-bold text-[#0f1d17]">Sara Manzoor</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 bg-[#eaf6ee] 
-                border border-[#c8e6d1] rounded-full px-2 py-0.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#28a745] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#227736]" />
-                </span>
-                <span className="text-[9px] font-bold text-[#227736]">LIVE</span>
-              </span>
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                className="w-7 h-7 rounded-full 
-                  bg-gradient-to-br from-[#227736] to-[#28a745] 
-                  text-white flex items-center justify-center 
-                  text-[10px] font-bold ring-2 ring-[#c8e6d1]"
-              >
-                SM
-              </motion.div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {[
-              { label: "Notices", value: "24", color: "#227736" },
-              { label: "Complaints", value: "08", color: "#E67E22" },
-              { label: "Claims", value: "03", color: "#28a745" },
-            ].map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 12, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 0.9 + i * 0.12, type: "spring", stiffness: 200 }}
-                whileHover={{ y: -3, scale: 1.03 }}
-                className="bg-white rounded-lg border border-[#e2ebe6] p-2.5 
-                  cursor-default transition-colors hover:border-[#227736]/30"
-              >
-                <p className="text-[9px] text-[#5a6e63] font-semibold 
-                  uppercase tracking-wider">
-                  {s.label}
-                </p>
-                <div className="flex items-end justify-between mt-0.5">
-                  <p className="text-base font-bold text-[#0f1d17]">{s.value}</p>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.2 }}
-            whileHover={{ scale: 1.01 }}
-            className="relative bg-white rounded-lg border border-[#e2ebe6] p-3 mb-2.5 overflow-hidden"
-          >
-            <motion.div
-              animate={{ scaleY: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute left-0 top-0 bottom-0 w-1 
-                bg-gradient-to-b from-[#227736] to-[#E67E22]"
-            />
-            <div className="pl-2">
-              <div className="flex items-center gap-2 mb-2">
-                <Bell size={11} className="text-[#227736]" />
-                <span className="text-[9px] font-bold text-[#5a6e63] 
-                  uppercase tracking-wider">
-                  Latest Notice
-                </span>
-              </div>
-              <p className="text-xs font-bold text-[#0f1d17]">Mid-Term Exam Schedule</p>
-              <div className="mt-2 pt-2 border-t border-[#e2ebe6] flex items-center gap-1.5">
-                <motion.div
-                  animate={{ rotate: [0, 15, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <Sparkles size={10} className="text-[#E67E22]" />
-                </motion.div>
-                <span className="text-[9px] font-bold text-[#227736]">
-                  AI Summary available
-                </span>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.35 }}
-            className="bg-white rounded-lg border border-[#e2ebe6] p-3"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider">
-                Recent Activity
-              </p>
-              <span className="flex items-center gap-0.5 text-[9px] font-bold text-[#28a745]">
-                <TrendingUp size={9} /> +24%
+            {/* Status bar */}
+            <div className="absolute top-0 left-0 right-0 z-20 pt-3 px-6
+              flex items-center justify-between text-[9px] font-bold text-[#0f1d17]">
+              <span>9:41</span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-3 h-2 border border-[#0f1d17] rounded-sm" />
+                <span className="inline-block w-3 h-2 border border-[#0f1d17] rounded-sm" />
+                <span className="inline-block w-4 h-2 bg-[#0f1d17] rounded-sm" />
               </span>
             </div>
-            <div className="space-y-1.5">
-              {[70, 45, 90, 60].map((w, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <motion.div
-                    animate={{ scale: [1, 1.3, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
-                    className="w-1.5 h-1.5 rounded-full bg-[#227736]"
-                  />
-                  <div className="flex-1 h-1.5 rounded-full bg-[#e2ebe6] overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${w}%` }}
-                      transition={{ delay: 1.5 + i * 0.15, duration: 0.8, ease: "easeOut" }}
-                      className="h-full rounded-full bg-gradient-to-r from-[#227736] to-[#28a745]"
-                    />
+
+            {/* ============ THE APP SCREEN (scrollable) ============ */}
+            <div
+              ref={screenRef}
+              className="absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
+            >
+              <motion.div
+                ref={contentRef}
+                animate={{
+                  y: scrollDist > 0 ? [0, -scrollDist, 0] : 0,
+                }}
+                transition={{
+                  duration: 14,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  times: [0, 0.5, 1],
+                }}
+                className="pt-10 pb-16"
+              >
+                {/* ============ APP HEADER ============ */}
+                <div className="px-5 pt-2 pb-4 bg-gradient-to-br from-[#165127] to-[#227736] text-white
+                  rounded-b-3xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-[9px] text-white/70">Good morning,</p>
+                      <p className="text-sm font-bold">Sara Manzoor</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center relative">
+                        <Bell size={12} />
+                        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full
+                          bg-[#E67E22] border border-[#165127]" />
+                      </div>
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#E67E22] to-[#d4701a]
+                        flex items-center justify-center text-[10px] font-bold">
+                        SM
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Search */}
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 border border-white/15">
+                    <Search size={12} className="text-white/60" />
+                    <span className="text-[10px] text-white/60">Search notices, items...</span>
+                  </div>
+
+                  {/* Stat pills */}
+                  <div className="grid grid-cols-3 gap-2 mt-3">
+                    {[
+                      { label: "Notices", value: "24" },
+                      { label: "Complaints", value: "08" },
+                      { label: "Claims", value: "03" },
+                    ].map((s) => (
+                      <div key={s.label} className="bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-white/10">
+                        <p className="text-[8px] text-white/60 uppercase tracking-wider">{s.label}</p>
+                        <p className="text-sm font-bold">{s.value}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+
+                {/* ============ QUICK ACTIONS ============ */}
+                <div className="px-5 mt-4">
+                  <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider mb-2">
+                    Quick Actions
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { icon: Bell, label: "Notices", color: "#227736", bg: "#eaf6ee" },
+                      { icon: MessageSquare, label: "Complain", color: "#E67E22", bg: "#fdf2e3" },
+                      { icon: Search, label: "Lost", color: "#227736", bg: "#eaf6ee" },
+                      { icon: User, label: "Profile", color: "#E67E22", bg: "#fdf2e3" },
+                    ].map((a, i) => {
+                      const Icon = a.icon;
+                      return (
+                        <div key={i} className="flex flex-col items-center gap-1">
+                          <div
+                            className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                            style={{ backgroundColor: a.bg }}
+                          >
+                            <Icon size={16} style={{ color: a.color }} />
+                          </div>
+                          <span className="text-[8px] font-semibold text-[#0f1d17]">{a.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ============ LATEST NOTICE ============ */}
+                <div className="px-5 mt-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider">
+                      Latest Notice
+                    </p>
+                    <span className="text-[9px] font-bold text-[#227736]">See all</span>
+                  </div>
+                  <div className="rounded-2xl border border-[#e2ebe6] bg-white overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-2 bg-[#eaf6ee] border-b border-[#c8e6d1]">
+                      <div className="flex items-center gap-1.5">
+                        <Bell size={11} className="text-[#227736]" />
+                        <span className="text-[9px] font-bold text-[#227736] uppercase tracking-wider">Exam</span>
+                      </div>
+                      <span className="text-[8px] font-bold text-white bg-[#E67E22] px-1.5 py-0.5 rounded-full">
+                        NEW
+                      </span>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-xs font-bold text-[#0f1d17]">Mid-Term Exam Schedule</p>
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <Sparkles size={9} className="text-[#E67E22]" />
+                        <span className="text-[8px] font-bold text-[#E67E22] uppercase tracking-wider">
+                          AI Summary
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-[#5a6e63] mt-1 leading-relaxed">
+                        Exams begin 20 Oct 2025. Bring original ID card and fee clearance slip.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ============ RECENT COMPLAINTS ============ */}
+                <div className="px-5 mt-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider">
+                      My Complaints
+                    </p>
+                    <span className="text-[9px] font-bold text-[#227736]">See all</span>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { title: "Wi-Fi not working in Lab 3", status: "In Progress", color: "#E67E22", bg: "#fdf2e3" },
+                      { title: "Broken chairs in Class 12", status: "Resolved", color: "#227736", bg: "#eaf6ee" },
+                    ].map((c, i) => (
+                      <div key={i} className="rounded-xl border border-[#e2ebe6] bg-white px-3 py-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[11px] font-semibold text-[#0f1d17] flex-1">
+                            {c.title}
+                          </p>
+                          <span
+                            className="text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ color: c.color, backgroundColor: c.bg }}
+                          >
+                            {c.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ============ LOST & FOUND ============ */}
+                <div className="px-5 mt-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider">
+                      Lost & Found
+                    </p>
+                    <span className="text-[9px] font-bold text-[#227736]">See all</span>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { type: "LOST", title: "Black Wallet", loc: "Cafeteria · 2h ago", accent: true },
+                      { type: "FOUND", title: "Blue Water Bottle", loc: "Library · 5h ago", accent: false },
+                    ].map((it, i) => (
+                      <div key={i} className="rounded-xl border border-[#e2ebe6] bg-white p-3 flex items-center gap-2">
+                        <div className={`text-[8px] font-black px-1.5 py-1 rounded text-white ${it.accent ? "bg-[#E67E22]" : "bg-[#227736]"}`}>
+                          {it.type}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold text-[#0f1d17] truncate">{it.title}</p>
+                          <p className="text-[9px] text-[#5a6e63]">{it.loc}</p>
+                        </div>
+                        <ChevronRight size={14} className="text-[#b0bfb7]" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ============ CTA BUTTON ============ */}
+                <div className="px-5 mt-5">
+                  <div className="rounded-2xl bg-gradient-to-br from-[#227736] to-[#28a745] p-4 text-white">
+                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+                      Quick Report
+                    </p>
+                    <p className="text-sm font-bold mt-1">Having an issue?</p>
+                    <p className="text-[10px] opacity-80 mt-0.5">Submit a complaint in 30 seconds</p>
+                    <button className="mt-3 w-full bg-white text-[#227736] rounded-xl py-2 text-[10px] font-bold">
+                      Submit Complaint
+                    </button>
+                  </div>
+                </div>
+
+                {/* padding bottom for nav */}
+                <div className="h-4" />
+              </motion.div>
+
+              {/* ============ BOTTOM NAV (fixed) ============ */}
+              <div className="absolute bottom-0 left-0 right-0 h-[60px]
+                bg-white/95 backdrop-blur-md border-t border-[#e2ebe6]
+                flex items-center justify-around px-4">
+                {[
+                  { icon: Home, label: "Home", active: true },
+                  { icon: Bell, label: "Notices", active: false },
+                  { icon: MessageSquare, label: "Issues", active: false },
+                  { icon: User, label: "Profile", active: false },
+                ].map((n, i) => {
+                  const Icon = n.icon;
+                  return (
+                    <div key={i} className="flex flex-col items-center gap-0.5">
+                      <Icon
+                        size={16}
+                        className={n.active ? "text-[#227736]" : "text-[#b0bfb7]"}
+                      />
+                      <span
+                        className={`text-[8px] font-bold ${
+                          n.active ? "text-[#227736]" : "text-[#b0bfb7]"
+                        }`}
+                      >
+                        {n.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Floating notification */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.85, x: -30 }}
-        animate={{ opacity: 1, scale: 1, x: 0 }}
-        transition={{ delay: 1.6, type: "spring", stiffness: 200 }}
-        whileHover={{ y: -4, scale: 1.03 }}
-        className="absolute -left-6 md:-left-10 top-28 hidden md:block 
-          bg-white rounded-xl border border-[#e2ebe6] 
-          shadow-xl shadow-black/20 p-3 w-52 z-30"
-      >
-        <div className="flex items-start gap-2">
-          <motion.div
-            animate={{ scale: [1, 1.15, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="w-7 h-7 rounded-lg bg-[#eaf6ee] 
-              flex items-center justify-center shrink-0"
-          >
-            <CheckCircle2 size={13} className="text-[#227736]" />
-          </motion.div>
-          <div>
-            <p className="text-[10px] font-bold text-[#0f1d17]">
-              Complaint resolved
-            </p>
-            <p className="text-[9px] text-[#5a6e63] mt-0.5">
-              Wi-Fi · Lab 3 · just now
-            </p>
           </div>
         </div>
-      </motion.div>
 
-      {/* Floating notice */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.85, x: 30 }}
-        animate={{ opacity: 1, scale: 1, x: 0 }}
-        transition={{ delay: 1.8, type: "spring", stiffness: 200 }}
-        whileHover={{ y: 4, scale: 1.03 }}
-        className="absolute -right-6 md:-right-10 bottom-20 hidden md:block 
-          bg-white rounded-xl border border-[#e2ebe6] 
-          shadow-xl shadow-black/20 p-3 w-52 z-30"
-      >
-        <div className="flex items-start gap-2">
-          <motion.div
-            animate={{ rotate: [0, -10, 10, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-7 h-7 rounded-lg bg-[#fdf2e3] 
-              flex items-center justify-center shrink-0"
-          >
-            <Bell size={13} className="text-[#E67E22]" />
-          </motion.div>
-          <div>
-            <p className="text-[10px] font-bold text-[#0f1d17]">
-              New notice posted
-            </p>
-            <p className="text-[9px] text-[#5a6e63] mt-0.5">
-              Scholarship · 2 min ago
-            </p>
+        {/* ====== FLOATING BADGES (outside phone) ====== */}
+        <motion.div
+          initial={{ opacity: 0, x: -30, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ delay: 1, type: "spring", stiffness: 200 }}
+          whileHover={{ y: -4, scale: 1.05 }}
+          className="absolute -left-12 md:-left-20 top-32 hidden md:block
+            bg-white rounded-2xl border border-[#e2ebe6]
+            shadow-xl shadow-black/20 p-3 w-44 z-20
+            ring-1 ring-[#227736]/10"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#eaf6ee] flex items-center justify-center">
+              <CheckCircle2 size={14} className="text-[#227736]" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-[#0f1d17]">Complaint resolved</p>
+              <p className="text-[9px] text-[#5a6e63]">just now</p>
+            </div>
           </div>
-        </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 30, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ delay: 1.2, type: "spring", stiffness: 200 }}
+          whileHover={{ y: 4, scale: 1.05 }}
+          className="absolute -right-12 md:-right-20 bottom-32 hidden md:block
+            bg-white rounded-2xl border border-[#e2ebe6]
+            shadow-xl shadow-black/20 p-3 w-44 z-20
+            ring-1 ring-[#E67E22]/10"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#fdf2e3] flex items-center justify-center">
+              <Sparkles size={14} className="text-[#E67E22]" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-[#0f1d17]">AI Summary ready</p>
+              <p className="text-[9px] text-[#5a6e63]">2 min ago</p>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   );
@@ -500,16 +602,15 @@ export default function HomePage() {
             }}
           />
 
-          {/* Orange glow corner */}
           <motion.div
             animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.28, 0.15] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full 
+            className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full
               bg-[#E67E22]/50 blur-3xl pointer-events-none"
           />
 
-          <div className="relative max-w-7xl mx-auto px-6 pt-14 md:pt-20 pb-20">
-            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div className="relative max-w-7xl mx-auto px-6 pt-20 md:pt-24 pb-16">
+            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
 
               {/* LEFT */}
               <motion.div variants={container} initial="hidden" animate="show">
@@ -530,7 +631,7 @@ export default function HomePage() {
 
                 <motion.h1
                   variants={item}
-                  className="text-[40px] md:text-[52px] lg:text-[60px] font-extrabold 
+                  className="text-[40px] md:text-[52px] lg:text-[60px] font-extrabold
                     leading-[1.05] tracking-[-0.035em] text-white"
                 >
                   Everything your
@@ -541,7 +642,7 @@ export default function HomePage() {
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ duration: 1, delay: 1, ease: [0.22, 1, 0.36, 1] }}
-                      className="absolute -bottom-1 left-0 right-0 h-[3px] origin-left 
+                      className="absolute -bottom-1 left-0 right-0 h-[3px] origin-left
                         bg-[#E67E22] rounded-full"
                     />
                   </span>
@@ -549,7 +650,7 @@ export default function HomePage() {
 
                 <motion.p
                   variants={item}
-                  className="mt-6 text-sm md:text-base text-white/75 max-w-md 
+                  className="mt-6 text-sm md:text-base text-white/75 max-w-md
                     leading-relaxed"
                 >
                   Notices, complaints, Lost & Found, and AI-powered
@@ -560,7 +661,7 @@ export default function HomePage() {
                   <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     transition={{ type: "spring", stiffness: 400, damping: 20 }}>
                     <Button href="/register" size="lg"
-                      className="!bg-white !text-[#227736] hover:!bg-[#eaf6ee] 
+                      className="!bg-white !text-[#227736] hover:!bg-[#eaf6ee]
                         !shadow-xl !shadow-black/20 !font-bold">
                       Get Started <ArrowRight size={16} />
                     </Button>
@@ -569,30 +670,44 @@ export default function HomePage() {
                   <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     transition={{ type: "spring", stiffness: 400, damping: 20 }}>
                     <Button href="/services" variant="ghost" size="lg"
-                      className="!text-white !border !border-white/30 
+                      className="!text-white !border !border-white/30
                         hover:!bg-white/10 hover:!border-[#E67E22]/60">
                       <Play size={14} /> Explore Platform
                     </Button>
                   </motion.div>
                 </motion.div>
 
+                {/* Trust badges */}
                 <motion.div
                   variants={item}
-                  className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 
-                    text-xs md:text-sm text-white/80"
+                  className="mt-10 pt-8 border-t border-white/15 flex flex-wrap items-center gap-5"
                 >
-                  {["Smart Notices", "Issue Tracking", "AI-Powered"].map((label, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Check size={13} className="text-[#E67E22]" />
-                      <span className="font-medium">{label}</span>
-                    </div>
-                  ))}
+                  <div className="flex -space-x-2">
+                    {["SM", "AK", "RH", "FA"].map((initials, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 1.2 + i * 0.1, type: "spring", stiffness: 200 }}
+                        whileHover={{ y: -2, scale: 1.1, zIndex: 10 }}
+                        className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E67E22] to-[#d4701a]
+                          border-2 border-[#165127] flex items-center justify-center
+                          text-[10px] font-bold text-white cursor-default"
+                      >
+                        {initials}
+                      </motion.div>
+                    ))}
+                  </div>
+                  <div className="text-xs">
+                    <p className="font-bold text-white">Trusted by 2,400+ students</p>
+                    <p className="text-white/60 mt-0.5">across 12 departments</p>
+                  </div>
                 </motion.div>
               </motion.div>
 
-              {/* RIGHT */}
-              <div className="lg:pl-4">
-                <HeroDashboardCard />
+              {/* RIGHT — Phone mockup */}
+              <div className="relative lg:pl-4">
+                <PhoneMockup />
               </div>
             </div>
           </div>
@@ -601,7 +716,7 @@ export default function HomePage() {
         {/* ================= BUILT FOR ================= */}
         <section className="py-12 bg-white border-b border-[#e2ebe6]">
           <div className="max-w-6xl mx-auto px-6">
-            <p className="text-center text-[10px] font-bold text-[#5a6e63] 
+            <p className="text-center text-[10px] font-bold text-[#5a6e63]
               uppercase tracking-[0.25em] mb-8">
               Built for universities
             </p>
@@ -613,7 +728,7 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
-                  className="flex items-center gap-2 text-[#5a6e63] 
+                  className="flex items-center gap-2 text-[#5a6e63]
                     hover:text-[#227736] transition-colors duration-300 cursor-default"
                 >
                   <div className="w-1.5 h-1.5 rounded-full bg-[#E67E22]" />
@@ -635,11 +750,11 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="max-w-2xl mb-14"
             >
-              <p className="text-[11px] font-bold text-[#227736] 
+              <p className="text-[11px] font-bold text-[#227736]
                 uppercase tracking-[0.22em] mb-4">
                 Core Modules
               </p>
-              <h2 className="text-[32px] md:text-[42px] font-extrabold 
+              <h2 className="text-[32px] md:text-[42px] font-extrabold
                 text-[#0f1d17] tracking-[-0.03em] leading-[1.1]">
                 Three tools, one
                 <br />
@@ -660,19 +775,27 @@ export default function HomePage() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1 }}
                     whileHover={{ y: -6 }}
-                    className={`group p-5 rounded-2xl bg-white border transition-all duration-300 ${
+                    className={`group relative p-5 rounded-2xl bg-white border overflow-hidden
+                      transition-all duration-300 ${
                       isOrange
                         ? "border-[#E67E22]/30 hover:border-[#E67E22]/60 hover:shadow-xl hover:shadow-[#E67E22]/10"
                         : "border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-xl hover:shadow-[#227736]/10"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 mb-3">
+                    <motion.div
+                      initial={{ x: "-150%" }}
+                      whileHover={{ x: "150%" }}
+                      transition={{ duration: 0.9, ease: "easeInOut" }}
+                      className="absolute inset-y-0 w-1/2 bg-gradient-to-r
+                        from-transparent via-white/60 to-transparent
+                        skew-x-12 pointer-events-none"
+                    />
+
+                    <div className="relative flex items-center gap-2.5 mb-3">
                       <motion.div
                         whileHover={{ rotate: 8, scale: 1.1 }}
                         className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                          isOrange
-                            ? "bg-[#fdf2e3]"
-                            : "bg-[#eaf6ee]"
+                          isOrange ? "bg-[#fdf2e3]" : "bg-[#eaf6ee]"
                         }`}
                       >
                         <Icon
@@ -682,8 +805,10 @@ export default function HomePage() {
                       </motion.div>
                       <h3 className="font-bold text-[#0f1d17] text-sm">{f.title}</h3>
                     </div>
-                    <p className="text-xs text-[#5a6e63] leading-relaxed mb-4">{f.desc}</p>
-                    <Preview />
+                    <p className="relative text-xs text-[#5a6e63] leading-relaxed mb-4">{f.desc}</p>
+                    <div className="relative">
+                      <Preview />
+                    </div>
                   </motion.div>
                 );
               })}
@@ -708,19 +833,31 @@ export default function HomePage() {
                     whileHover={{ y: -3 }}
                     className="flex items-start gap-3 group"
                   >
-                    <motion.div
-                      whileHover={{ rotate: 10 }}
-                      className={`w-8 h-8 rounded-lg bg-white border flex items-center justify-center shrink-0 transition-colors ${
-                        isOrange
-                          ? "border-[#E67E22]/30 group-hover:border-[#E67E22]/60"
-                          : "border-[#e2ebe6] group-hover:border-[#227736]/40"
-                      }`}
-                    >
-                      <Icon
-                        size={14}
-                        className={isOrange ? "text-[#E67E22]" : "text-[#227736]"}
-                      />
-                    </motion.div>
+                    <div className="relative shrink-0">
+                      <motion.div
+                        whileHover={{ rotate: 10 }}
+                        className={`w-9 h-9 rounded-lg bg-white border flex items-center justify-center
+                          transition-colors ${
+                          isOrange
+                            ? "border-[#E67E22]/30 group-hover:border-[#E67E22]/60"
+                            : "border-[#e2ebe6] group-hover:border-[#227736]/40"
+                        }`}
+                      >
+                        <Icon
+                          size={14}
+                          className={isOrange ? "text-[#E67E22]" : "text-[#227736]"}
+                        />
+                      </motion.div>
+                      <span
+                        className={`absolute -top-1 -right-1 w-4 h-4 rounded-full
+                          text-[8px] font-bold flex items-center justify-center
+                          border-2 border-[#f8faf9] text-white ${
+                            isOrange ? "bg-[#E67E22]" : "bg-[#227736]"
+                          }`}
+                      >
+                        {i + 1}
+                      </span>
+                    </div>
                     <div>
                       <p className="text-sm font-bold text-[#0f1d17]">{f.title}</p>
                       <p className="text-xs text-[#5a6e63] mt-0.5 leading-relaxed">
@@ -743,11 +880,11 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="max-w-2xl mb-12"
             >
-              <p className="text-[11px] font-bold text-[#227736] 
+              <p className="text-[11px] font-bold text-[#227736]
                 uppercase tracking-[0.22em] mb-4">
                 Product Preview
               </p>
-              <h2 className="text-[32px] md:text-[42px] font-extrabold 
+              <h2 className="text-[32px] md:text-[42px] font-extrabold
                 text-[#0f1d17] tracking-[-0.03em] leading-[1.1]">
                 See CampusConnect
                 <br />
@@ -765,15 +902,24 @@ export default function HomePage() {
                     onClick={() => setActiveTab(tab.id)}
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.97 }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg 
-                      text-sm font-semibold transition-all duration-300 ${
-                        active
-                          ? "bg-[#227736] text-white shadow-lg shadow-[#227736]/20"
-                          : "bg-[#f8faf9] text-[#5a6e63] hover:bg-[#eaf6ee] hover:text-[#227736]"
-                      }`}
+                    className={`relative flex items-center gap-2 px-4 py-2 rounded-lg
+                      text-sm font-semibold transition-colors duration-300 ${
+                      active
+                        ? "text-white"
+                        : "bg-[#f8faf9] text-[#5a6e63] hover:bg-[#eaf6ee] hover:text-[#227736]"
+                    }`}
                   >
-                    <Icon size={14} />
-                    {tab.label}
+                    {active && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute inset-0 rounded-lg bg-[#227736] shadow-lg shadow-[#227736]/20"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative flex items-center gap-2">
+                      <Icon size={14} />
+                      {tab.label}
+                    </span>
                   </motion.button>
                 );
               })}
@@ -786,7 +932,7 @@ export default function HomePage() {
               transition={{ duration: 0.4 }}
               className="rounded-2xl border border-[#e2ebe6] overflow-hidden bg-[#f8faf9]"
             >
-              <div className="flex items-center gap-2 px-4 py-2.5 
+              <div className="flex items-center gap-2 px-4 py-2.5
                 bg-white border-b border-[#e2ebe6]">
                 <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#227736]" />
@@ -794,8 +940,8 @@ export default function HomePage() {
                   <div className="w-2.5 h-2.5 rounded-full bg-[#E67E22]" />
                 </div>
                 <div className="flex-1 mx-3">
-                  <div className="bg-[#f8faf9] rounded-md px-3 py-1 text-[10px] 
-                    text-[#5a6e63] max-w-sm mx-auto text-center 
+                  <div className="bg-[#f8faf9] rounded-md px-3 py-1 text-[10px]
+                    text-[#5a6e63] max-w-sm mx-auto text-center
                     border border-[#e2ebe6]">
                     app.campusconnect.edu/{activeTab}
                   </div>
@@ -810,10 +956,10 @@ export default function HomePage() {
                       { title: "Scholarship Applications Open", tag: "FEE", pinned: false, ai: "Merit-based. CGPA 3.5+. Deadline 15 Oct.", accent: false },
                       { title: "Annual Sports Gala 2025", tag: "EVENT", pinned: false, ai: "5-10 Nov. Register with Sports Dept.", accent: true },
                     ].map((n, i) => (
-                      <div key={i} className="bg-white rounded-xl border 
+                      <div key={i} className="bg-white rounded-xl border
                         border-[#e2ebe6] p-4 hover:shadow-md transition-shadow duration-300">
                         <div className="flex items-center justify-between mb-2">
-                          <span className={`text-[9px] font-bold px-2 py-0.5 
+                          <span className={`text-[9px] font-bold px-2 py-0.5
                             rounded-full text-white ${
                               n.accent ? "bg-[#E67E22]" : "bg-[#227736]"
                             }`}>
@@ -844,8 +990,8 @@ export default function HomePage() {
 
                 {activeTab === "complaints" && (
                   <div className="bg-white rounded-xl border border-[#e2ebe6] overflow-hidden">
-                    <div className="grid grid-cols-12 px-4 py-2.5 bg-[#f8faf9] 
-                      border-b border-[#e2ebe6] text-[10px] font-bold 
+                    <div className="grid grid-cols-12 px-4 py-2.5 bg-[#f8faf9]
+                      border-b border-[#e2ebe6] text-[10px] font-bold
                       text-[#5a6e63] uppercase tracking-wider">
                       <div className="col-span-5">Complaint</div>
                       <div className="col-span-3">Category</div>
@@ -856,15 +1002,15 @@ export default function HomePage() {
                       { title: "Broken chairs in Classroom 12", cat: "Furniture", status: "Submitted", color: "bg-[#5a6e63]" },
                       { title: "Fan not working in Room 8", cat: "Electricity", status: "Resolved", color: "bg-[#227736]" },
                     ].map((c, i) => (
-                      <div key={i} className="grid grid-cols-12 px-4 py-3 
-                        border-b border-[#e2ebe6] last:border-0 
+                      <div key={i} className="grid grid-cols-12 px-4 py-3
+                        border-b border-[#e2ebe6] last:border-0
                         hover:bg-[#f8faf9] transition-colors">
                         <div className="col-span-5 text-xs font-semibold text-[#0f1d17]">
                           {c.title}
                         </div>
                         <div className="col-span-3 text-xs text-[#5a6e63]">{c.cat}</div>
                         <div className="col-span-4">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 
+                          <span className={`text-[10px] font-bold px-2 py-0.5
                             rounded-full text-white ${c.color}`}>
                             {c.status}
                           </span>
@@ -880,10 +1026,10 @@ export default function HomePage() {
                       { type: "LOST", title: "Black Wallet", loc: "Cafeteria, Block B", date: "23 Sep", accent: true },
                       { type: "FOUND", title: "Blue Water Bottle", loc: "Library Hall", date: "24 Sep", accent: false },
                     ].map((it, i) => (
-                      <div key={i} className="bg-white rounded-xl border 
+                      <div key={i} className="bg-white rounded-xl border
                         border-[#e2ebe6] p-5 hover:shadow-md transition-shadow duration-300">
                         <div className="flex items-center justify-between mb-3">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 
+                          <span className={`text-[10px] font-bold px-2 py-0.5
                             rounded-full text-white ${
                               it.accent ? "bg-[#E67E22]" : "bg-[#227736]"
                             }`}>
@@ -897,8 +1043,8 @@ export default function HomePage() {
                           <motion.button
                             whileHover={{ y: -2 }}
                             whileTap={{ scale: 0.98 }}
-                            className="mt-4 w-full text-xs font-bold 
-                              text-white bg-[#227736] hover:bg-[#1c6430] 
+                            className="mt-4 w-full text-xs font-bold
+                              text-white bg-[#227736] hover:bg-[#1c6430]
                               py-2 rounded-lg transition-all duration-300"
                           >
                             Claim this item
@@ -922,11 +1068,11 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="max-w-2xl mb-14"
             >
-              <p className="text-[11px] font-bold text-[#227736] 
+              <p className="text-[11px] font-bold text-[#227736]
                 uppercase tracking-[0.22em] mb-4">
                 How it works
               </p>
-              <h2 className="text-[32px] md:text-[42px] font-extrabold 
+              <h2 className="text-[32px] md:text-[42px] font-extrabold
                 text-[#0f1d17] tracking-[-0.03em] leading-[1.1]">
                 A simple, four-step
                 <br />
@@ -935,8 +1081,14 @@ export default function HomePage() {
             </motion.div>
 
             <div className="relative">
-              <div className="hidden md:block absolute top-6 left-12 right-12 
-                h-px bg-gradient-to-r from-transparent via-[#c8e6d1] to-transparent" />
+              <motion.div
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+                className="hidden md:block absolute top-6 left-12 right-12 h-px origin-left
+                  bg-gradient-to-r from-[#227736] via-[#E67E22] to-[#227736]"
+              />
 
               <div className="grid md:grid-cols-4 gap-8 md:gap-4">
                 {howItWorks.map((s, i) => {
@@ -955,13 +1107,13 @@ export default function HomePage() {
                       <div className="relative z-10 flex items-center gap-3 mb-4">
                         <motion.div
                           whileHover={{ rotate: 10, scale: 1.05 }}
-                          className={`w-12 h-12 rounded-full bg-white 
-                            border-2 flex items-center justify-center 
+                          className={`w-12 h-12 rounded-full bg-white
+                            border-2 flex items-center justify-center
                             shadow-sm transition-colors ${
-                              isOrange
-                                ? "border-[#E67E22] group-hover:border-[#227736]"
-                                : "border-[#227736] group-hover:border-[#E67E22]"
-                            }`}
+                            isOrange
+                              ? "border-[#E67E22] group-hover:border-[#227736]"
+                              : "border-[#227736] group-hover:border-[#E67E22]"
+                          }`}
                         >
                           <Icon
                             size={18}
@@ -998,11 +1150,11 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <p className="text-[11px] font-bold text-[#227736] 
+              <p className="text-[11px] font-bold text-[#227736]
                 uppercase tracking-[0.22em] mb-4">
                 Platform Overview
               </p>
-              <h2 className="text-[32px] md:text-[40px] font-extrabold 
+              <h2 className="text-[32px] md:text-[40px] font-extrabold
                 text-[#0f1d17] tracking-[-0.03em]">
                 What <span className="text-[#227736]">CampusConnect</span> includes.
               </h2>
@@ -1019,21 +1171,21 @@ export default function HomePage() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.08 }}
                     whileHover={{ y: -6 }}
-                    className={`group p-6 rounded-2xl border transition-all duration-300 
+                    className={`group p-6 rounded-2xl border transition-all duration-300
                       text-center bg-white ${
-                        s.accent
-                          ? "border-[#E67E22]/30 hover:border-[#E67E22]/60 hover:shadow-xl hover:shadow-[#E67E22]/10"
-                          : "border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-xl hover:shadow-[#227736]/10"
-                      }`}
+                      s.accent
+                        ? "border-[#E67E22]/30 hover:border-[#E67E22]/60 hover:shadow-xl hover:shadow-[#E67E22]/10"
+                        : "border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-xl hover:shadow-[#227736]/10"
+                    }`}
                   >
                     <motion.div
                       whileHover={{ rotate: -8, scale: 1.1 }}
-                      className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center mb-4 
+                      className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center mb-4
                         transition-colors duration-300 ${
-                          s.accent
-                            ? "bg-[#fdf2e3] group-hover:bg-[#E67E22]"
-                            : "bg-[#eaf6ee] group-hover:bg-[#227736]"
-                        }`}
+                        s.accent
+                          ? "bg-[#fdf2e3] group-hover:bg-[#E67E22]"
+                          : "bg-[#eaf6ee] group-hover:bg-[#227736]"
+                      }`}
                     >
                       <Icon
                         size={18}
@@ -1045,7 +1197,7 @@ export default function HomePage() {
                       />
                     </motion.div>
                     <p className="text-3xl font-extrabold text-[#0f1d17] tracking-tight">
-                      {s.value}
+                      {s.isText ? s.isText : <CountUp to={s.value} />}
                     </p>
                     <p className="text-xs text-[#5a6e63] mt-1.5 font-medium">
                       {s.label}
@@ -1058,7 +1210,7 @@ export default function HomePage() {
         </section>
 
         {/* ================= PURPOSE ================= */}
-        <section className="py-20 md:py-28 bg-[#227736] text-white 
+        <section className="py-20 md:py-28 bg-[#227736] text-white
           relative overflow-hidden">
           <div
             className="absolute inset-0 opacity-[0.06]"
@@ -1069,11 +1221,10 @@ export default function HomePage() {
             }}
           />
 
-          {/* Orange glow */}
           <motion.div
             animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full 
+            className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full
               bg-[#E67E22]/40 blur-3xl pointer-events-none"
           />
 
@@ -1083,11 +1234,11 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-[11px] font-bold text-white/70 
+              <p className="text-[11px] font-bold text-white/70
                 uppercase tracking-[0.22em] mb-5">
                 Why we built it
               </p>
-              <h2 className="text-[32px] md:text-[42px] font-extrabold 
+              <h2 className="text-[32px] md:text-[42px] font-extrabold
                 text-white tracking-[-0.03em] leading-[1.15]">
                 Designed around real
                 <br />
@@ -1098,19 +1249,19 @@ export default function HomePage() {
                     whileInView={{ scaleX: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 1, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute -bottom-1 left-0 right-0 h-[3px] origin-left 
+                    className="absolute -bottom-1 left-0 right-0 h-[3px] origin-left
                       bg-[#E67E22] rounded-full"
                   />
                 </span>
               </h2>
-              <p className="mt-8 text-white/75 text-base md:text-lg max-w-2xl mx-auto 
+              <p className="mt-8 text-white/75 text-base md:text-lg max-w-2xl mx-auto
                 leading-relaxed">
                 Students were missing important notices, issues were going
                 unreported, and lost items were never reunited with their
                 owners. CampusConnect brings all of it under one roof.
               </p>
 
-              <div className="mt-10 flex flex-wrap justify-center items-center 
+              <div className="mt-10 flex flex-wrap justify-center items-center
                 gap-x-8 gap-y-4 text-sm text-white/85">
                 {[
                   "Centralized communication",
@@ -1134,52 +1285,53 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="rounded-2xl border border-[#e2ebe6] 
-                bg-[#f8faf9] px-8 py-14 md:px-14 md:py-16 text-center relative overflow-hidden"
+              className="rounded-2xl p-[1.5px] bg-gradient-to-br from-[#227736] via-[#e2ebe6] to-[#E67E22]
+                shadow-xl shadow-[#227736]/5"
             >
-              {/* Orange accent corner */}
-              <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full 
-                bg-[#E67E22]/10 blur-2xl" />
+              <div className="rounded-2xl bg-[#f8faf9] px-8 py-14 md:px-14 md:py-16 text-center relative overflow-hidden">
+                <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full
+                  bg-[#E67E22]/10 blur-2xl" />
 
-              <div className="relative">
-                <h2 className="text-[32px] md:text-[42px] font-extrabold 
-                  text-[#0f1d17] tracking-[-0.03em] leading-[1.15]">
-                  Your campus.
-                  <br />
-                  <span className="text-[#227736]">One connected platform.</span>
-                </h2>
-                <p className="mt-5 text-[#5a6e63] text-base md:text-lg max-w-xl mx-auto">
-                  Start exploring CampusConnect and see how it fits your
-                  university's needs.
-                </p>
+                <div className="relative">
+                  <h2 className="text-[32px] md:text-[42px] font-extrabold
+                    text-[#0f1d17] tracking-[-0.03em] leading-[1.15]">
+                    Your campus.
+                    <br />
+                    <span className="text-[#227736]">One connected platform.</span>
+                  </h2>
+                  <p className="mt-5 text-[#5a6e63] text-base md:text-lg max-w-xl mx-auto">
+                    Start exploring CampusConnect and see how it fits your
+                    university's needs.
+                  </p>
 
-                <div className="mt-9 flex flex-wrap gap-3 justify-center">
-                  <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                    <Button href="/register" variant="primary" size="lg">
-                      Get Started <ArrowRight size={16} />
-                    </Button>
-                  </motion.div>
+                  <div className="mt-9 flex flex-wrap gap-3 justify-center">
+                    <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+                      <Button href="/register" variant="primary" size="lg">
+                        Get Started <ArrowRight size={16} />
+                      </Button>
+                    </motion.div>
 
-                  <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                    <Button href="/services" variant="outline" size="lg">
-                      Explore Platform <ChevronRight size={16} />
-                    </Button>
-                  </motion.div>
-                </div>
+                    <motion.div whileHover={{ y: -3, scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+                      <Button href="/services" variant="outline" size="lg">
+                        Explore Platform <ChevronRight size={16} />
+                      </Button>
+                    </motion.div>
+                  </div>
 
-                <div className="mt-8 flex flex-wrap justify-center items-center 
-                  gap-6 text-xs text-[#5a6e63]">
-                  <span className="flex items-center gap-1.5">
-                    <Check size={12} className="text-[#227736]" /> No setup cost
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Lock size={12} className="text-[#227736]" /> Secure by default
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Globe size={12} className="text-[#227736]" /> Web-based
-                  </span>
+                  <div className="mt-8 flex flex-wrap justify-center items-center
+                    gap-6 text-xs text-[#5a6e63]">
+                    <span className="flex items-center gap-1.5">
+                      <Check size={12} className="text-[#227736]" /> No setup cost
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Lock size={12} className="text-[#227736]" /> Secure by default
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Globe size={12} className="text-[#227736]" /> Web-based
+                    </span>
+                  </div>
                 </div>
               </div>
             </motion.div>
