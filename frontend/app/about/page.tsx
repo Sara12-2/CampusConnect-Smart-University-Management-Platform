@@ -1,10 +1,10 @@
 "use client";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
   GraduationCap, Target, Users, Sparkles, ShieldCheck, BookOpen,
   Zap, Heart, Compass, Rocket, Code2, Database, Layers,
-  ArrowRight, GitBranch, Globe, Link2,
+  ArrowRight, GitBranch, Globe, Link2, Cpu, Server,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -42,68 +42,24 @@ const values = [
 ];
 
 const team = [
-  {
-    name: "Sara Manzoor",
-    role: "Project Lead",
-    id: "UL-BSCSM-A-24-01",
-    icon: Compass,
-    accent: false,
-  },
-  {
-    name: "Muhammad Abubakar Nadeem",
-    role: "Backend Developer",
-    id: "UL-BSCSM-A-24-46",
-    icon: Database,
-    accent: true,
-  },
-  {
-    name: "Muhammad Abdullah",
-    role: "Frontend Developer",
-    id: "UL-BSCSM-A-24-43",
-    icon: Code2,
-    accent: false,
-  },
-  {
-    name: "Muhammad Umair Akram",
-    role: "Database & Testing",
-    id: "UL-BSCSM-A-24-26",
-    icon: Layers,
-    accent: true,
-  },
+  { name: "Sara Manzoor", role: "Project Lead", id: "UL-BSCSM-A-24-01", icon: Compass, accent: false },
+  { name: "Muhammad Abubakar Nadeem", role: "Backend Developer", id: "UL-BSCSM-A-24-46", icon: Database, accent: true },
+  { name: "Muhammad Abdullah", role: "Frontend Developer", id: "UL-BSCSM-A-24-43", icon: Code2, accent: false },
+  { name: "Muhammad Umair Akram", role: "Database & Testing", id: "UL-BSCSM-A-24-26", icon: Layers, accent: true },
 ];
 
 const stats = [
-  { value: "3", label: "Core Modules", icon: Layers, accent: false },
-  { value: "AI", label: "Powered", icon: Sparkles, accent: true },
-  { value: "2", label: "User Roles", icon: Users, accent: false },
-  { value: "24/7", label: "Availability", icon: Zap, accent: true },
+  { value: 3, suffix: "", label: "Core Modules", icon: Layers, accent: false },
+  { value: 0, suffix: "", text: "AI", label: "Powered", icon: Sparkles, accent: true },
+  { value: 2, suffix: "", label: "User Roles", icon: Users, accent: false },
+  { value: 0, suffix: "", text: "24/7", label: "Availability", icon: Zap, accent: true },
 ];
 
 const milestones = [
-  {
-    year: "Phase 1",
-    title: "Idea & Research",
-    desc: "Identified real campus problems — missed notices, untracked complaints, lost items.",
-    icon: BookOpen,
-  },
-  {
-    year: "Phase 2",
-    title: "Design & Build",
-    desc: "Designed the platform with a student-first approach, built on modern tech.",
-    icon: Code2,
-  },
-  {
-    year: "Phase 3",
-    title: "AI Integration",
-    desc: "Integrated AI-powered notice summarization for quick comprehension.",
-    icon: Sparkles,
-  },
-  {
-    year: "Phase 4",
-    title: "Launch & Iterate",
-    desc: "Ready for universities — continuously improving with feedback.",
-    icon: Rocket,
-  },
+  { year: "Phase 1", title: "Idea & Research", desc: "Identified real campus problems — missed notices, untracked complaints, lost items.", icon: BookOpen },
+  { year: "Phase 2", title: "Design & Build", desc: "Designed the platform with a student-first approach, built on modern tech.", icon: Code2 },
+  { year: "Phase 3", title: "AI Integration", desc: "Integrated AI-powered notice summarization for quick comprehension.", icon: Cpu },
+  { year: "Phase 4", title: "Launch & Iterate", desc: "Ready for universities — continuously improving with feedback.", icon: Rocket },
 ];
 
 /* ============================================================
@@ -112,24 +68,34 @@ const milestones = [
 
 const container = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
-  },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
 
 const item = {
   hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
-  },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
 };
 
 /* ============================================================
-   FLOATING BLOBS
+   HELPERS
    ============================================================ */
+
+function CountUp({ to, duration = 1.5, suffix = "" }: { to: number; duration?: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start: number | null = null;
+    let raf: number;
+    const step = (ts: number) => {
+      if (start === null) start = ts;
+      const progress = Math.min((ts - start) / (duration * 1000), 1);
+      setCount(Math.floor(progress * to));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [to, duration]);
+  return <>{count}{suffix}</>;
+}
 
 function FloatingBlobs({ variant = "green" }: { variant?: "green" | "orange" }) {
   const color = variant === "green" ? "#227736" : "#E67E22";
@@ -141,10 +107,7 @@ function FloatingBlobs({ variant = "green" }: { variant?: "green" | "orange" }) 
         className="absolute rounded-full blur-[120px] pointer-events-none"
         style={{
           background: `radial-gradient(circle, ${color}20, transparent 70%)`,
-          width: 400,
-          height: 400,
-          top: "10%",
-          left: "-10%",
+          width: 400, height: 400, top: "10%", left: "-10%",
         }}
       />
       <motion.div
@@ -153,13 +116,44 @@ function FloatingBlobs({ variant = "green" }: { variant?: "green" | "orange" }) 
         className="absolute rounded-full blur-[120px] pointer-events-none"
         style={{
           background: `radial-gradient(circle, ${color}15, transparent 70%)`,
-          width: 500,
-          height: 500,
-          bottom: "10%",
-          right: "-15%",
+          width: 500, height: 500, bottom: "10%", right: "-15%",
         }}
       />
     </>
+  );
+}
+
+/* ============================================================
+   HERO ORBITAL DECORATION (3D)
+   ============================================================ */
+
+function OrbitalDecoration() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ perspective: "1200px" }}>
+      {/* Concentric rings */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 30 + i * 10, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/2 left-1/2 rounded-full border border-white/[0.06]"
+          style={{
+            width: 300 + i * 180,
+            height: 300 + i * 180,
+            marginLeft: -(300 + i * 180) / 2,
+            marginTop: -(300 + i * 180) / 2,
+          }}
+        >
+          <motion.div
+            animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 4 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
+            className={`absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full ${
+              i % 2 === 0 ? "bg-[#E67E22] shadow-lg shadow-[#E67E22]/50" : "bg-[#28a745] shadow-lg shadow-[#28a745]/50"
+            }`}
+          />
+        </motion.div>
+      ))}
+    </div>
   );
 }
 
@@ -192,11 +186,13 @@ export default function AboutPage() {
           <div
             className="absolute inset-0 opacity-[0.08]"
             style={{
-              backgroundImage:
-                "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+              backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
               backgroundSize: "32px 32px",
             }}
           />
+
+          {/* Orbital decoration (3D rings) */}
+          <OrbitalDecoration />
 
           {/* Animated orange glow */}
           <motion.div
@@ -211,47 +207,48 @@ export default function AboutPage() {
           />
 
           {/* Floating sparkle dots */}
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <motion.span
               key={i}
-              animate={{ y: [0, -20, 0], opacity: [0.3, 1, 0.3], scale: [1, 1.3, 1] }}
-              transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 }}
-              className={`absolute rounded-full shadow-lg ${
-                i % 2 === 0 ? "bg-[#E67E22] shadow-[#E67E22]/50" : "bg-white shadow-white/50"
+              animate={{ y: [0, -20, 0], opacity: [0.3, 1, 0.3], scale: [1, 1.4, 1] }}
+              transition={{ duration: 3 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
+              className={`absolute rounded-full ${
+                i % 2 === 0 ? "bg-[#E67E22] shadow-lg shadow-[#E67E22]/50" : "bg-white shadow-lg shadow-white/50"
               }`}
               style={{
                 width: i % 3 === 0 ? 8 : 5,
                 height: i % 3 === 0 ? 8 : 5,
-                top: `${15 + i * 12}%`,
-                left: `${10 + i * 15}%`,
+                top: `${12 + i * 10}%`,
+                left: `${8 + i * 11}%`,
               }}
             />
           ))}
 
           {/* Decorative icon */}
           <GraduationCap
-            size={220}
-            strokeWidth={0.6}
-            className="absolute -bottom-12 -right-6 text-white/[0.05] pointer-events-none select-none"
+            size={240}
+            strokeWidth={0.5}
+            className="absolute -bottom-14 -right-8 text-white/[0.05] pointer-events-none select-none"
           />
 
           <motion.div
             style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
-            className="relative max-w-7xl mx-auto px-6 pt-20 pb-20 md:pt-28 md:pb-28 text-center"
+            className="relative max-w-7xl mx-auto px-6 pt-24 pb-24 md:pt-32 md:pb-32 text-center"
           >
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="max-w-3xl mx-auto"
-            >
+            <motion.div variants={container} initial="hidden" animate="show" className="max-w-3xl mx-auto">
               {/* Badge */}
               <motion.div
                 variants={item}
                 whileHover={{ scale: 1.05, y: -2 }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 mb-6 cursor-default transition-colors hover:bg-white/15"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full
+                  bg-white/10 backdrop-blur-md border border-white/20 mb-8
+                  shadow-lg shadow-black/10 cursor-default
+                  hover:bg-white/15 transition-all duration-300"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E67E22] animate-pulse" />
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E67E22] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E67E22]" />
+                </span>
                 <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-white/90">
                   About Us
                 </span>
@@ -280,7 +277,9 @@ export default function AboutPage() {
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 1, delay: 1, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute -bottom-2 left-0 right-0 h-[3px] origin-left bg-gradient-to-r from-[#E67E22] to-transparent rounded-full"
+                    className="absolute -bottom-2 left-0 right-0 h-[3px] origin-left
+                      bg-gradient-to-r from-[#E67E22] via-[#E67E22] to-transparent rounded-full
+                      shadow-[0_0_20px_rgba(230,126,34,0.6)]"
                   />
                 </span>
               </motion.h1>
@@ -288,7 +287,7 @@ export default function AboutPage() {
               {/* Subtext */}
               <motion.p
                 variants={item}
-                className="mt-6 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl mx-auto"
+                className="mt-8 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl mx-auto"
               >
                 A smart university management and student services platform
                 that brings notices, complaints, and Lost & Found together in
@@ -298,7 +297,7 @@ export default function AboutPage() {
               {/* Trust row */}
               <motion.div
                 variants={item}
-                className="mt-10 flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-sm"
+                className="mt-12 flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-sm"
               >
                 {["Built for universities", "AI-powered", "Student-first"].map((label, i) => (
                   <motion.div
@@ -374,7 +373,8 @@ export default function AboutPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: 0.1 }}
                 whileHover={{ y: -4 }}
-                className="relative p-6 md:p-8 rounded-2xl border border-[#e2ebe6] bg-[#f8faf9] transition-shadow duration-300 hover:shadow-xl hover:shadow-[#227736]/5 overflow-hidden"
+                className="relative p-6 md:p-8 rounded-2xl border border-[#e2ebe6] bg-[#f8faf9]
+                  transition-shadow duration-300 hover:shadow-xl hover:shadow-[#227736]/5 overflow-hidden"
               >
                 <motion.div
                   animate={{ opacity: [0.6, 1, 0.6] }}
@@ -411,7 +411,9 @@ export default function AboutPage() {
                         viewport={{ once: true }}
                         transition={{ delay: 0.3 + i * 0.1, type: "spring" }}
                         whileHover={{ y: -3, scale: 1.08 }}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white border border-[#e2ebe6] text-[#227736] hover:border-[#227736]/40 hover:shadow-md transition-all duration-300 cursor-default"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full
+                          bg-white border border-[#e2ebe6] text-[#227736]
+                          hover:border-[#227736]/40 hover:shadow-md transition-all duration-300 cursor-default"
                       >
                         <span className="w-1 h-1 rounded-full bg-[#E67E22]" />
                         {tag}
@@ -431,7 +433,7 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-center max-w-2xl mx-auto mb-14"
+              className="text-center max-w-2xl mx-auto mb-16"
             >
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -451,7 +453,16 @@ export default function AboutPage() {
             </motion.div>
 
             <div className="relative">
-              <div className="hidden md:block absolute top-12 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-[#c8e6d1] to-transparent" />
+              {/* Animated connecting line */}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+                className="hidden md:block absolute top-7 left-[12.5%] right-[12.5%] h-0.5 origin-left
+                  bg-gradient-to-r from-[#227736] via-[#E67E22] to-[#227736]
+                  rounded-full shadow-[0_0_12px_rgba(230,126,34,0.3)]"
+              />
 
               <div className="grid md:grid-cols-4 gap-6 md:gap-4">
                 {milestones.map((m, i) => {
@@ -463,16 +474,27 @@ export default function AboutPage() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.15, duration: 0.6 }}
-                      whileHover={{ y: -6 }}
+                      whileHover={{ y: -8 }}
                       className="relative group"
                     >
-                      <div className="relative z-10 flex justify-center mb-4">
+                      {/* Icon circle with 3D glow */}
+                      <div className="relative z-10 flex justify-center mb-5">
                         <motion.div
                           whileHover={{ rotate: 360, scale: 1.15 }}
-                          transition={{ duration: 0.6, type: "spring" }}
-                          className="w-14 h-14 rounded-2xl bg-white border-2 border-[#227736] flex items-center justify-center shadow-lg shadow-[#227736]/10 group-hover:border-[#E67E22] group-hover:shadow-[#E67E22]/20 transition-all duration-300"
+                          transition={{ duration: 0.7, type: "spring" }}
+                          className="relative w-14 h-14 rounded-2xl bg-white
+                            border-2 border-[#227736] flex items-center justify-center
+                            shadow-lg shadow-[#227736]/15
+                            group-hover:border-[#E67E22] group-hover:shadow-[#E67E22]/30
+                            transition-all duration-500"
                         >
-                          <Icon size={20} className="text-[#227736] group-hover:text-[#E67E22] transition-colors duration-300" />
+                          {/* Pulse ring */}
+                          <motion.span
+                            animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
+                            transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.4 }}
+                            className="absolute inset-0 rounded-2xl bg-[#E67E22]"
+                          />
+                          <Icon size={22} className="relative text-[#227736] group-hover:text-[#E67E22] transition-colors duration-500" />
                         </motion.div>
                       </div>
 
@@ -480,12 +502,8 @@ export default function AboutPage() {
                         <span className="inline-block text-[10px] font-bold tracking-[0.15em] uppercase text-[#E67E22] mb-2">
                           {m.year}
                         </span>
-                        <h3 className="font-bold text-[#0f1d17] text-sm">
-                          {m.title}
-                        </h3>
-                        <p className="text-xs text-[#5a6e63] mt-2 leading-relaxed">
-                          {m.desc}
-                        </p>
+                        <h3 className="font-bold text-[#0f1d17] text-sm">{m.title}</h3>
+                        <p className="text-xs text-[#5a6e63] mt-2 leading-relaxed">{m.desc}</p>
                       </div>
                     </motion.div>
                   );
@@ -531,7 +549,10 @@ export default function AboutPage() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1, duration: 0.6 }}
                     whileHover={{ y: -8, scale: 1.02 }}
-                    className="group relative p-6 rounded-2xl bg-white border border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-2xl hover:shadow-[#227736]/10 transition-all duration-300 overflow-hidden"
+                    className="group relative p-6 rounded-2xl bg-white
+                      border border-[#e2ebe6] hover:border-[#227736]/40
+                      hover:shadow-2xl hover:shadow-[#227736]/10
+                      transition-all duration-300 overflow-hidden"
                   >
                     <motion.div
                       initial={{ scale: 0 }}
@@ -568,12 +589,11 @@ export default function AboutPage() {
                     <h3 className="relative font-bold text-[#0f1d17] text-base group-hover:text-[#227736] transition-colors duration-300">
                       {v.title}
                     </h3>
-                    <p className="relative text-sm text-[#5a6e63] mt-2 leading-relaxed">
-                      {v.desc}
-                    </p>
+                    <p className="relative text-sm text-[#5a6e63] mt-2 leading-relaxed">{v.desc}</p>
 
                     <span
-                      className={`absolute bottom-0 left-6 right-6 h-0.5 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 rounded-full ${
+                      className={`absolute bottom-0 left-6 right-6 h-0.5 origin-left scale-x-0 group-hover:scale-x-100
+                        transition-transform duration-500 rounded-full ${
                         v.accent ? "bg-[#E67E22]" : "bg-[#227736]"
                       }`}
                     />
@@ -598,14 +618,14 @@ export default function AboutPage() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1 }}
                     whileHover={{ y: -6, scale: 1.03 }}
-                    className="relative p-5 rounded-2xl bg-white border border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-xl hover:shadow-[#227736]/10 transition-all duration-300 text-center overflow-hidden group cursor-default"
+                    className="relative p-5 rounded-2xl bg-white border border-[#e2ebe6]
+                      hover:border-[#227736]/40 hover:shadow-xl hover:shadow-[#227736]/10
+                      transition-all duration-300 text-center overflow-hidden group cursor-default"
                   >
                     <motion.div
                       animate={{ opacity: [0, 0.08, 0], scale: [1, 1.3, 1] }}
                       transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
-                      className={`absolute inset-0 rounded-2xl ${
-                        s.accent ? "bg-[#E67E22]" : "bg-[#227736]"
-                      }`}
+                      className={`absolute inset-0 rounded-2xl ${s.accent ? "bg-[#E67E22]" : "bg-[#227736]"}`}
                     />
 
                     <motion.div
@@ -620,11 +640,9 @@ export default function AboutPage() {
                       <Icon size={18} />
                     </motion.div>
                     <p className="relative text-2xl md:text-3xl font-extrabold text-[#0f1d17] tracking-tight">
-                      {s.value}
+                      {s.text ? s.text : <CountUp to={s.value} suffix={s.suffix} />}
                     </p>
-                    <p className="relative text-xs text-[#5a6e63] mt-1 font-medium">
-                      {s.label}
-                    </p>
+                    <p className="relative text-xs text-[#5a6e63] mt-1 font-medium">{s.label}</p>
                   </motion.div>
                 );
               })}
@@ -641,7 +659,7 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-center max-w-2xl mx-auto mb-14"
+              className="text-center max-w-2xl mx-auto mb-16"
             >
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -672,8 +690,11 @@ export default function AboutPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1, duration: 0.6 }}
-                    whileHover={{ y: -8 }}
-                    className="group relative p-6 rounded-2xl bg-white border border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-2xl hover:shadow-[#227736]/10 transition-all duration-300 text-center overflow-hidden"
+                    whileHover={{ y: -10 }}
+                    className="group relative p-6 rounded-2xl bg-white
+                      border border-[#e2ebe6] hover:border-[#227736]/40
+                      hover:shadow-2xl hover:shadow-[#227736]/10
+                      transition-all duration-300 text-center overflow-hidden"
                   >
                     <motion.div
                       initial={{ scale: 0 }}
@@ -689,9 +710,7 @@ export default function AboutPage() {
                       <motion.span
                         animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
                         transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
-                        className={`absolute inset-0 rounded-2xl ${
-                          m.accent ? "bg-[#E67E22]" : "bg-[#227736]"
-                        }`}
+                        className={`absolute inset-0 rounded-2xl ${m.accent ? "bg-[#E67E22]" : "bg-[#227736]"}`}
                       />
 
                       <motion.div
@@ -707,9 +726,7 @@ export default function AboutPage() {
                       </motion.div>
                     </div>
 
-                    <h3 className="relative font-bold text-[#0f1d17] text-sm tracking-tight">
-                      {m.name}
-                    </h3>
+                    <h3 className="relative font-bold text-[#0f1d17] text-sm tracking-tight">{m.name}</h3>
 
                     <div className="relative mt-2">
                       <motion.span
@@ -720,21 +737,15 @@ export default function AboutPage() {
                             : "bg-[#eaf6ee] text-[#227736] border border-[#c8e6d1]"
                         }`}
                       >
-                        <span
-                          className={`w-1 h-1 rounded-full ${
-                            m.accent ? "bg-[#E67E22]" : "bg-[#227736]"
-                          }`}
-                        />
+                        <span className={`w-1 h-1 rounded-full ${m.accent ? "bg-[#E67E22]" : "bg-[#227736]"}`} />
                         {m.role}
                       </motion.span>
                     </div>
 
-                    <p className="relative text-[10px] text-[#5a6e63] mt-3 font-mono tracking-wider">
-                      {m.id}
-                    </p>
+                    <p className="relative text-[10px] text-[#5a6e63] mt-3 font-mono tracking-wider">{m.id}</p>
 
-                    {/* Social icons */}
-                    <div className="relative mt-4 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="relative mt-4 flex items-center justify-center gap-2
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       {[GitBranch, Link2, Globe].map((SocIcon, si) => (
                         <motion.button
                           key={si}
@@ -753,7 +764,8 @@ export default function AboutPage() {
                     </div>
 
                     <span
-                      className={`absolute bottom-0 left-6 right-6 h-0.5 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 rounded-full ${
+                      className={`absolute bottom-0 left-6 right-6 h-0.5 origin-left scale-x-0 group-hover:scale-x-100
+                        transition-transform duration-500 rounded-full ${
                         m.accent ? "bg-[#E67E22]" : "bg-[#227736]"
                       }`}
                     />
@@ -772,13 +784,14 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative rounded-3xl bg-gradient-to-br from-[#165127] via-[#227736] to-[#1c6430] p-10 md:p-14 text-center text-white overflow-hidden"
+              className="relative rounded-3xl bg-gradient-to-br from-[#165127] via-[#227736] to-[#1c6430]
+                p-10 md:p-14 text-center text-white overflow-hidden
+                shadow-2xl shadow-[#227736]/30"
             >
               <div
                 className="absolute inset-0 opacity-[0.08]"
                 style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+                  backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
                   backgroundSize: "32px 32px",
                 }}
               />
