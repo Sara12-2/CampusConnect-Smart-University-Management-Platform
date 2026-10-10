@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import {
   Mail, Phone, MapPin, Heart, ArrowUpRight, Sparkles,
   Bell, MessageSquare, Search, ShieldCheck, Globe,
-  Facebook, Twitter, Instagram, Linkedin,
 } from "lucide-react";
 
 /* ============================================================
@@ -32,10 +31,10 @@ const contactInfo = [
 ];
 
 const socials = [
-  { label: "Facebook", icon: Facebook, href: "#" },
-  { label: "Twitter", icon: Twitter, href: "#" },
-  { label: "Instagram", icon: Instagram, href: "#" },
-  { label: "LinkedIn", icon: Linkedin, href: "#" },
+  { label: "Facebook", emoji: "f" },
+  { label: "Twitter", emoji: "𝕏" },
+  { label: "Instagram", emoji: "📷" },
+  { label: "LinkedIn", emoji: "in" },
 ];
 
 export default function Footer() {
@@ -130,31 +129,28 @@ export default function Footer() {
 
           {/* Social buttons */}
           <div className="mt-6 flex gap-2">
-            {socials.map((s, i) => {
-              const Icon = s.icon;
-              return (
-                <motion.a
-                  key={s.label}
-                  href={s.href}
-                  initial={{ opacity: 0, y: 8 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  whileHover={{ y: -4, scale: 1.08 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label={s.label}
-                  className="w-9 h-9 rounded-lg bg-white/10 backdrop-blur 
-                    border border-white/15 
-                    hover:bg-[#E67E22] hover:border-[#E67E22] 
-                    hover:text-white hover:shadow-lg hover:shadow-[#E67E22]/40
-                    transition-all duration-300 
-                    flex items-center justify-center 
-                    text-white/80"
-                >
-                  <Icon size={15} />
-                </motion.a>
-              );
-            })}
+            {socials.map((s, i) => (
+              <motion.a
+                key={s.label}
+                href="#"
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                whileHover={{ y: -4, scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label={s.label}
+                className="w-9 h-9 rounded-lg bg-white/10 backdrop-blur 
+                  border border-white/15 
+                  hover:bg-[#E67E22] hover:border-[#E67E22] 
+                  hover:text-white hover:shadow-lg hover:shadow-[#E67E22]/40
+                  transition-all duration-300 
+                  flex items-center justify-center 
+                  text-xs font-bold"
+              >
+                {s.emoji}
+              </motion.a>
+            ))}
           </div>
         </motion.div>
 
