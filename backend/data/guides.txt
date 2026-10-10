@@ -1,0 +1,64 @@
+## Guide 1: How to Submit and Track Complaints on CampusConnect
+Step 1: Log in to your student account and click 'Complaints' on the left navigation sidebar.
+Step 2: Click the 'New Complaint' button in the top right corner.
+Step 3: Enter a concise title, choose the appropriate category (e.g., Wi-Fi, Electricity, Cleaning, Facilities), and describe the problem in detail including room or block numbers.
+Step 4: Attach a photo if relevant to help maintenance staff inspect the issue quickly.
+Step 5: Click 'Submit'.
+Step 6: Track live progress under your complaints table. Statuses move from 'Pending' to 'In Progress' to 'Resolved'.
+
+## Guide 2: How to Report Lost or Found Items
+Step 1: In the sidebar, select 'Lost & Found'.
+Step 2: Click the 'Report Item' button.
+Step 3: Choose whether you 'Lost' an item or 'Found' an unattended item.
+Step 4: Provide item details: title (e.g., Black Leather Wallet), category (Electronics, Documents, Personal Items), location where it was lost or discovered, and approximate time.
+Step 5: Upload an image if available to assist identification.
+Step 6: Submit the report. Found items can be cross-referenced by owners immediately.
+
+## Guide 3: How to Claim a Found Item
+Step 1: Browse through the 'Lost & Found' catalog to locate your missing item.
+Step 2: Click on the item card to open the detail modal.
+Step 3: Click 'Claim This Item'.
+Step 4: Provide verifiable proof of ownership in the claim form — such as wallpaper description for mobile phones, distinctive stickers, contents inside a bag, or purchase receipt.
+Step 5: Submit your claim.
+Step 6: Navigate to 'My Claims' in the sidebar to review status updates. Once approved by the administrator, visit the Campus Security Desk with your ID card to collect your item.
+
+## Guide 4: How to View Department Notices and Announcements
+Step 1: Open the 'Notices' tab from the sidebar.
+Step 2: Use the top filters to narrow down announcements by Department (Computer Science, Business, Engineering, All), Category (Exams, Events, General), or Semester.
+Step 3: Pinned high-priority announcements will always appear at the top with a distinctive badge.
+Step 4: Click any notice to read the full body text and AI-generated quick summary.
+
+## Guide 5: How to Update Your Profile and Account Settings
+Students can update their profile by logging into their dashboard, navigating to the Profile or Settings section, updating their personal/academic details (such as full name, department, current semester, phone number, or password), and clicking "Save Changes". Contact the registrar helpdesk if you require corrections to your registered student ID or official email.
+
+## Guide 6: How to Apply for Merit and Need-Based Scholarships
+Step 1: Confirm eligibility: A minimum cumulative GPA (CGPA) of 3.50 is required for Merit-based tuition fee concessions.
+Step 2: Collect mandatory documents: recent official grade transcript, student CNIC/B-Form copy, and parent/guardian income certificate.
+Step 3: Visit the Financial Aid & Scholarship portal or Student Affairs desk before the deadline of October 15.
+Step 4: Submit your completed application bundle. Shortlisted candidates will be invited for interview by the Scholarship Committee.
+
+## Guide 7: How to Connect to Campus Wi-Fi and Report Network Issues
+Step 1: Connect your device to the SSID 'CampusConnect-Student-WiFi'.
+Step 2: When the captive portal opens, enter your university student email and portal password.
+Step 3: Accept the security certificate and click 'Connect'.
+Step 4: If you experience dead zones, frequent disconnections, or slow speeds, open the Complaints page on CampusConnect, select category 'Wi-Fi', specify the building, floor, and room number, and submit a ticket. IT technicians typically resolve network issues within 24 to 48 hours.
+
+## Guide 8: University Office Timings and Administration Contact Info
+University offices are open Monday to Friday, from 9:00 AM to 4:00 PM. Closed on weekends and gazetted holidays. The Administration block is located near the main campus entrance. Visit during working hours for registrar queries, student affairs, or official documentation.
+
+## Guide 9: University Campus Policies and Student Regulations
+1. Attendance Policy: Students must maintain at least 75% attendance in each registered course to be allowed into examination halls for midterms and finals. Failure to achieve 75% attendance results in course debarment.
+2. Code of Conduct: CampusConnect University enforces strict anti-harassment, anti-ragging, and academic integrity policies. Cheating, vandalism, or disruptive conduct leads to Disciplinary Committee hearings and potential expulsion.
+3. Student ID Policy: Carrying and displaying the university student ID card is mandatory at all times inside campus buildings, laboratories, and examination centers.
+4. Library Policy: Up to 3 books can be checked out for 14 calendar days. A late fee of Rs. 20 per day per book applies to overdue returns.
+5. Grading & Degree Criteria: Passing grade is 50% (Grade D). Undergraduate degree completion requires a cumulative CGPA of 2.00 or higher.
+
+## Guide 10: Departmental Contact Numbers, Helplines, and Emergency Numbers
+For official queries, students and faculty can contact the relevant offices directly:
+- General University Helpline: +92-51-111-222-333 (Email: info@campusconnect.edu)
+- Student Affairs & Financial Aid: +92-51-111-222-333 (Email: studentaffairs@campusconnect.edu, Admin Block Room 102)
+- IT Helpdesk & Portal Support: +92-51-111-222-334 (Email: it-support@campusconnect.edu, IT Center Room 204)
+- Campus Security & Lost/Found Desk: +92-51-111-222-335 (Email: security@campusconnect.edu, Main Gate Security Desk)
+- Registrar Office: +92-51-111-222-336 (Email: registrar@campusconnect.edu, Admin Block Room 108)
+- Medical Emergency Clinic: +92-51-111-222-337 or call Emergency Hotline 1122 (Campus Health Clinic, Ground Floor)
+

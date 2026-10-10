@@ -1,0 +1,86 @@
+[
+  {
+    "id": "faq_01",
+    "question": "What is CampusConnect?",
+    "answer": "CampusConnect is a comprehensive Smart University Management Platform designed to streamline campus life. It features a digital notice board, an online complaint management system, a lost and found portal, claim verifications, AI-powered notice summarization, and role-based student and admin dashboards.",
+    "category": "general",
+    "tags": ["campusconnect", "platform", "overview", "system", "about", "kya hai"]
+  },
+  {
+    "id": "faq_02",
+    "question": "How do I submit a complaint?",
+    "answer": "To submit a complaint, go to the Complaints page in your student dashboard. Click 'New Complaint', fill in the details (title, category like Wi-Fi or Electricity, and description), attach any optional images, and submit. You'll receive real-time updates as your issue is resolved.",
+    "category": "complaints",
+    "tags": ["complaint", "submit", "shikayat", "report issue", "grievance", "kaise darj karein"]
+  },
+  {
+    "id": "faq_03",
+    "question": "How do I report a lost item?",
+    "answer": "To report a lost or found item, navigate to 'Lost & Found' in the sidebar navigation. Click 'Report Item', select whether it is Lost or Found, enter the item title, description, category, last known location, and date, then submit the form.",
+    "category": "lost_found",
+    "tags": ["lost item", "gum ho gaya", "report lost", "wallet", "keys", "phone", "bag"]
+  },
+  {
+    "id": "faq_04",
+    "question": "How do I claim a lost item?",
+    "answer": "To claim an item, open the specific item in the Lost & Found section and click 'Claim This Item'. Provide valid proof of ownership (such as unique identifiers, marks, serial numbers, or purchase details) and your contact info. The campus administrator will verify and approve your claim.",
+    "category": "claims",
+    "tags": ["claim", "ownership", "mera samaan", "claim item", "verify proof"]
+  },
+  {
+    "id": "faq_05",
+    "question": "What is the exam schedule?",
+    "answer": "Midterm examinations begin on October 20. Official exam schedules, date sheets, room allotments, and guidelines are posted by the administration in the Notices section. Students must bring their original university ID card and clear all fee dues prior to examinations.",
+    "category": "academics",
+    "tags": ["exam", "schedule", "datesheet", "midterm", "final", "paper kab hai", "imtihaan"]
+  },
+  {
+    "id": "faq_06",
+    "question": "How do I apply for a scholarship?",
+    "answer": "To apply for a scholarship, students must have a minimum CGPA of 3.5 for Merit Scholarships. Applications must be submitted by October 15 with your official academic transcript, CNIC copy, and income certificate. Need-based scholarships are also evaluated via the Financial Aid office.",
+    "category": "scholarships",
+    "tags": ["scholarship", "financial aid", "merit", "wazifa", "cgpa", "deadline", "fees"]
+  },
+  {
+    "id": "faq_07",
+    "question": "How do I report Wi-Fi issue?",
+    "answer": "To report a Wi-Fi or network issue, navigate to the Complaints section, click 'New Complaint', select 'Wi-Fi' as the category, specify the exact building, floor, and room location, and describe the connectivity problem. The IT Helpdesk resolves network complaints within 24 to 48 hours.",
+    "category": "complaints",
+    "tags": ["wifi", "wi-fi", "internet", "network", "slow internet", "chal nahi raha"]
+  },
+  {
+    "id": "faq_08",
+    "question": "What are the office timings and administration contact info?",
+    "answer": "University offices are open Monday to Friday, from 9:00 AM to 4:00 PM. Closed on weekends and gazetted holidays. The Administration block is located near the main campus entrance.",
+    "category": "timings",
+    "tags": ["office hours", "office timings", "timings", "auqat", "administration", "admin block", "admin contact", "location", "open hours"]
+  },
+  {
+    "id": "faq_09",
+    "question": "How do I update my profile?",
+    "answer": "Students can update their profile by logging into their dashboard, navigating to the Profile or Settings section, updating their personal/academic details, and clicking 'Save Changes'.",
+    "category": "profile",
+    "tags": ["profile", "account", "update profile", "settings", "password", "personal details", "save changes"]
+  },
+  {
+    "id": "faq_10",
+    "question": "How can I check the status of my claims and complaints?",
+    "answer": "You can check real-time updates for complaints directly on the Complaints page under your submissions. For Lost & Found claims, visit the 'My Claims' section in the sidebar to view status badges: Pending, Approved, or Rejected.",
+    "category": "tracking",
+    "tags": ["track status", "claim status", "complaint status", "pending", "approved", "check"]
+  },
+  {
+    "id": "faq_11",
+    "question": "What are the university policies and campus rules?",
+    "answer": "CampusConnect University enforces several key policies: 1) Attendance Policy: Minimum 75% attendance in each course is required to sit for exams. 2) Code of Conduct: Strict zero tolerance for harassment, cheating, plagiarism, or ragging. 3) ID Card Policy: Wearing official university student ID cards is mandatory on campus. 4) Library Policy: Up to 3 books for 14 days, with Rs. 20/day overdue fine. 5) Grading Policy: Minimum 50% (Grade D) to pass, and a minimum CGPA of 2.00 to avoid academic probation.",
+    "category": "policies",
+    "tags": ["policies", "policy", "rules", "regulations", "attendance policy", "qanoon", "qawaneen", "discipline", "id card", "library policy"]
+  },
+  {
+    "id": "faq_12",
+    "question": "What are the university contact numbers and helplines?",
+    "answer": "University Contact Numbers & Helplines: General Helpline & Student Affairs: +92-51-111-222-333 (studentaffairs@campusconnect.edu). IT Helpdesk: +92-51-111-222-334 (it-support@campusconnect.edu). Campus Security & Lost/Found: +92-51-111-222-335 (security@campusconnect.edu). Registrar Office: +92-51-111-222-336 (registrar@campusconnect.edu). Medical Emergency Clinic Hotline: +92-51-111-222-337 or call 1122.",
+    "category": "contacts",
+    "tags": ["contact", "contact number", "phone number", "helpline", "rabta", "email", "security desk", "it helpdesk", "call", "emergency number"]
+  }
+]

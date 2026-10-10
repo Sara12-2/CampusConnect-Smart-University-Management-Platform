@@ -1,9 +1,4 @@
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    UploadFile,
-)
+from fastapi import APIRouter, Depends, File, UploadFile  # type: ignore[import-not-found]
 
 from app.routers.auth import get_current_user
 

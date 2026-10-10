@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare,
@@ -9,6 +9,12 @@ import {
   User as UserIcon,
   Minimize2,
   RotateCcw,
+  Sparkles,
+  Bell,
+  FileText,
+  Search,
+  GraduationCap,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMockReply } from "./mockReplies";
@@ -18,34 +24,72 @@ interface Message {
   role: "user" | "bot";
   content: string;
   time: string;
+  sources?: string[];
+  mode?: string;
 }
 
-const quickQuestions = [
-  "When is the exam schedule?",
-  "How do I apply for a scholarship?",
-  "How to file a Wi-Fi complaint?",
-  "How do I report a lost item?",
+const WELCOME_QUOTES = [
+  "How can I help you navigate CampusConnect today?",
+  "Ask about exams, scholarships, or lodge complaints in English or Roman Urdu.",
+  "Need help finding a lost item or checking the latest department notices?",
+  "Aap mujh se Urdu ya English dono mein university ke baray mein pooch saktay hain.",
+];
+
+const SUGGESTION_CARDS = [
+  {
+    icon: Bell,
+    title: "Exam Schedule",
+    subtitle: "When is the midterm examination?",
+    prompt: "What is the exam schedule?",
+    color: "from-emerald-500 to-green-600",
+  },
+  {
+    icon: FileText,
+    title: "Lodge Complaint",
+    subtitle: "How to report Wi-Fi or electricity issues",
+    prompt: "How do I submit a complaint?",
+    color: "from-blue-500 to-indigo-600",
+  },
+  {
+    icon: Search,
+    title: "Lost & Found",
+    subtitle: "How to claim or report lost property",
+    prompt: "How do I claim a lost item?",
+    color: "from-amber-500 to-orange-600",
+  },
+  {
+    icon: GraduationCap,
+    title: "Scholarships",
+    subtitle: "Eligibility criteria & CGPA rules",
+    prompt: "Tell me about scholarship",
+    color: "from-purple-500 to-pink-600",
+  },
 ];
 
 export default function ChatBot() {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "bot",
-      content:
-        "Hello! 👋 I'm the CampusConnect Assistant.\n\nAsk me about notices, complaints, Lost & Found, or anything else on your campus.",
-      time: new Date().toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [welcomeQuoteIdx, setWelcomeQuoteIdx] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Time-based greeting (e.g. Good morning / afternoon / evening)
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  }, []);
+
+  // Rotate greeting quote when chatbot is opened
+  useEffect(() => {
+    if (open) {
+      setWelcomeQuoteIdx(Math.floor(Math.random() * WELCOME_QUOTES.length));
+    }
+  }, [open]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -57,7 +101,7 @@ export default function ChatBot() {
       minute: "2-digit",
     });
 
-  const handleSend = (text?: string) => {
+  const handleSend = async (text?: string) => {
     const content = (text ?? input).trim();
     if (!content) return;
 
@@ -72,17 +116,45 @@ export default function ChatBot() {
     setInput("");
     setTyping(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:8000/api/chat/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: content,
+          use_rag: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      const botMsg: Message = {
+        id: `b-${Date.now()}`,
+        role: "bot",
+        content: data.reply || "Sorry, I could not generate a reply.",
+        time: now(),
+        sources: Array.isArray(data.sources) ? data.sources : [],
+        mode: data.mode || "rag",
+      };
+      setMessages((m) => [...m, botMsg]);
+    } catch {
+      // Offline fallback to intelligent local reply
       const reply = getMockReply(content);
       const botMsg: Message = {
         id: `b-${Date.now()}`,
         role: "bot",
         content: reply,
         time: now(),
+        sources: [],
+        mode: "local",
       };
       setMessages((m) => [...m, botMsg]);
+    } finally {
       setTyping(false);
-    }, 900);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -93,14 +165,8 @@ export default function ChatBot() {
   };
 
   const clearChat = () => {
-    setMessages([
-      {
-        id: "welcome",
-        role: "bot",
-        content: "Chat cleared. Ask me something new! 😊",
-        time: now(),
-      },
-    ]);
+    setMessages([]);
+    setWelcomeQuoteIdx((prev) => (prev + 1) % WELCOME_QUOTES.length);
   };
 
   return (
@@ -128,7 +194,7 @@ export default function ChatBot() {
 
             <span className="absolute top-0 right-0 flex h-3.5 w-3.5 z-20">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f4a228] opacity-75" />
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#f4a228] ring-2 ring-white" />
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#f4a228]" />
             </span>
           </motion.button>
         )}
@@ -138,71 +204,62 @@ export default function ChatBot() {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.92, y: 30 }}
             animate={{
               opacity: 1,
-              y: 0,
               scale: 1,
+              y: 0,
               height: minimized ? 64 : 580,
             }}
-            exit={{ opacity: 0, y: 40, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 26 }}
-            className={cn(
-              "fixed bottom-6 right-6 z-50 w-[92vw] max-w-sm bg-white rounded-2xl",
-              "shadow-2xl shadow-black/25",
-              "border border-[#e2ebe6] overflow-hidden flex flex-col",
-              "max-h-[85vh]"
-            )}
+            exit={{ opacity: 0, scale: 0.92, y: 30 }}
+            transition={{ type: "spring", stiffness: 320, damping: 26 }}
+            className="fixed bottom-6 right-6 z-50 w-[94vw] sm:w-[410px] rounded-3xl bg-white shadow-2xl border border-[#c8e6d1]/60 flex flex-col overflow-hidden"
           >
             {/* ============ HEADER ============ */}
-            <div className="relative bg-gradient-to-r from-[#227736] via-[#1c6430] to-[#227736] text-white px-4 py-3.5 flex items-center justify-between shrink-0 overflow-hidden">
-              <motion.div
-                animate={{ backgroundPositionX: ["0px", "20px"] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 opacity-[0.09]"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-                  backgroundSize: "20px 20px",
-                }}
-              />
+            <div className="bg-gradient-to-r from-[#227736] via-[#1c6430] to-[#144722] text-white p-3.5 flex items-center justify-between shrink-0 shadow-sm relative overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none" />
 
-              <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-[#f4a228]/25 blur-2xl pointer-events-none" />
-
-              <div className="relative flex items-center gap-3">
+              <div className="flex items-center gap-2.5 relative z-10">
                 <div className="relative">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                    className="absolute -inset-1 rounded-full bg-[conic-gradient(from_0deg,transparent,#f4a228,transparent)] opacity-70"
-                  />
-                  <div className="relative w-10 h-10 rounded-full bg-white/15 backdrop-blur flex items-center justify-center border border-white/25">
-                    <Bot size={18} />
+                  <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shadow-inner">
+                    <Sparkles size={18} className="text-[#f4a228]" />
                   </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#58b277] ring-2 ring-[#227736]" />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#58b277] ring-2 ring-[#227736]" />
                 </div>
 
                 <div>
-                  <p className="font-bold text-sm tracking-tight">
-                    CampusConnect Assistant
-                  </p>
-                  <p className="text-[11px] text-white/75 flex items-center gap-1 mt-0.5">
-                    <motion.span
-                      animate={{ opacity: [1, 0.4, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="w-1.5 h-1.5 rounded-full bg-[#58b277]"
-                    />
-                    Online
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-bold text-sm tracking-tight text-white">
+                      CampusConnect AI
+                    </p>
+                    <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full bg-white/15 text-white/90 tracking-wider">
+                      RAG
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-white/80 flex items-center gap-1">
+                    English & Roman Urdu Support
                   </p>
                 </div>
               </div>
 
-              <div className="relative flex items-center gap-1">
+              <div className="relative flex items-center gap-1 z-10">
+                {messages.length > 0 && (
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: -90 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={clearChat}
+                    title="New Chat"
+                    className="p-1.5 rounded-lg hover:bg-white/15 text-white/80 hover:text-white transition-colors"
+                    aria-label="New Chat"
+                  >
+                    <RotateCcw size={15} />
+                  </motion.button>
+                )}
                 <motion.button
-                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setMinimized((v) => !v)}
-                  className="p-1.5 rounded-lg hover:bg-white/15 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-white/15 text-white/80 hover:text-white transition-colors"
                   aria-label="Minimize"
                 >
                   <Minimize2 size={15} />
@@ -211,7 +268,7 @@ export default function ChatBot() {
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/15 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-white/15 text-white/80 hover:text-white transition-colors"
                   aria-label="Close"
                 >
                   <X size={15} />
@@ -222,66 +279,163 @@ export default function ChatBot() {
             {/* ============ BODY ============ */}
             {!minimized && (
               <>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f8faf9]">
-                  {messages.map((msg, idx) => (
-                    <motion.div
-                      key={msg.id}
-                      initial={{ opacity: 0, y: 12, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{
-                        duration: 0.35,
-                        delay: idx === messages.length - 1 ? 0.05 : 0,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      className={cn(
-                        "flex items-end gap-2",
-                        msg.role === "user" ? "justify-end" : "justify-start"
-                      )}
-                    >
-                      {msg.role === "bot" && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
-                          className="w-7 h-7 rounded-full bg-gradient-to-br from-[#227736] to-[#28a745] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#227736]/25"
-                        >
-                          <Bot size={13} />
-                        </motion.div>
-                      )}
-
+                <div className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-[#f8faf9]">
+                  {/* ====== GEMINI / CHATGPT STYLE WELCOME SCREEN ====== */}
+                  {messages.length === 0 ? (
+                    <div className="py-2 px-1 flex flex-col justify-between h-full">
+                      {/* Greeting Headline */}
                       <motion.div
-                        whileHover={{ y: -1 }}
-                        className={cn(
-                          "max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-line leading-relaxed",
-                          msg.role === "user"
-                            ? "bg-[#227736] text-white rounded-br-md shadow-md shadow-[#227736]/25"
-                            : "bg-white text-[#0f1d17] border border-[#e2ebe6] rounded-bl-md shadow-sm"
-                        )}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="text-center pt-2 pb-4"
                       >
-                        {msg.content}
-                        <div
-                          className={cn(
-                            "text-[10px] mt-1.5 opacity-60",
-                            msg.role === "user" ? "text-right" : "text-left"
-                          )}
-                        >
-                          {msg.time}
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[#227736] text-xs font-semibold mb-3 shadow-xs">
+                          <Sparkles size={13} className="text-[#f4a228]" />
+                          <span>Gemini 2.0 & ChromaDB RAG</span>
                         </div>
+
+                        <h3 className="text-xl font-extrabold text-[#0f1d17] tracking-tight">
+                          {greeting}, <span className="bg-gradient-to-r from-[#227736] via-[#28a745] to-[#f4a228] bg-clip-text text-transparent">Scholar</span> 👋
+                        </h3>
+                        <p className="text-xs text-[#5a6e63] mt-1.5 px-4 leading-relaxed font-medium">
+                          {WELCOME_QUOTES[welcomeQuoteIdx]}
+                        </p>
                       </motion.div>
 
-                      {msg.role === "user" && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
-                          className="w-7 h-7 rounded-full bg-[#eaf6ee] text-[#227736] flex items-center justify-center shrink-0 border border-[#c8e6d1]"
-                        >
-                          <UserIcon size={13} />
-                        </motion.div>
-                      )}
-                    </motion.div>
-                  ))}
+                      {/* Interactive Prompt Cards Grid (like ChatGPT/Gemini) */}
+                      <div className="grid grid-cols-2 gap-2 my-2">
+                        {SUGGESTION_CARDS.map((card, idx) => {
+                          const Icon = card.icon;
+                          return (
+                            <motion.button
+                              key={card.title}
+                              initial={{ opacity: 0, y: 12 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.1 + idx * 0.06 }}
+                              whileHover={{ y: -3, scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => handleSend(card.prompt)}
+                              className="text-left p-3 rounded-2xl bg-white border border-[#e2ebe6] hover:border-[#227736] hover:shadow-md hover:shadow-[#227736]/10 transition-all duration-200 group flex flex-col justify-between"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className={cn("w-7 h-7 rounded-xl bg-gradient-to-br text-white flex items-center justify-center shadow-xs", card.color)}>
+                                  <Icon size={14} />
+                                </div>
+                                <span className="text-[10px] text-[#227736] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Ask →
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-[#0f1d17] group-hover:text-[#227736] transition-colors">
+                                  {card.title}
+                                </p>
+                                <p className="text-[10px] text-[#5a6e63] mt-0.5 line-clamp-1">
+                                  {card.subtitle}
+                                </p>
+                              </div>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
 
+                      {/* Roman Urdu Quick Pill */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="mt-2 text-center"
+                      >
+                        <button
+                          onClick={() => handleSend("Mai complaint kaise darj karun?")}
+                          className="text-[11px] px-3 py-1.5 rounded-full bg-emerald-50 text-[#1c6430] border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-all font-medium inline-flex items-center gap-1.5"
+                        >
+                          <span>🇵🇰 Roman Urdu:</span>
+                          <span className="font-semibold underline">Mai complaint kaise darj karun?</span>
+                        </button>
+                      </motion.div>
+                    </div>
+                  ) : (
+                    /* ====== ACTIVE MESSAGE LIST ====== */
+                    messages.map((msg, idx) => (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{
+                          duration: 0.35,
+                          delay: idx === messages.length - 1 ? 0.05 : 0,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className={cn(
+                          "flex items-end gap-2",
+                          msg.role === "user" ? "justify-end" : "justify-start"
+                        )}
+                      >
+                        {msg.role === "bot" && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
+                            className="w-7 h-7 rounded-full bg-gradient-to-br from-[#227736] to-[#28a745] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#227736]/25"
+                          >
+                            <Bot size={13} />
+                          </motion.div>
+                        )}
+
+                        <motion.div
+                          whileHover={{ y: -1 }}
+                          className={cn(
+                            "max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm whitespace-pre-line leading-relaxed",
+                            msg.role === "user"
+                              ? "bg-[#227736] text-white rounded-br-md shadow-md shadow-[#227736]/25"
+                              : "bg-white text-[#0f1d17] border border-[#e2ebe6] rounded-bl-md shadow-xs"
+                          )}
+                        >
+                          {msg.content}
+
+                          {/* Grounded RAG Citations */}
+                          {msg.sources && msg.sources.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-emerald-100 flex flex-wrap gap-1">
+                              <span className="text-[10px] font-semibold text-[#227736] flex items-center">
+                                📚 Sources:
+                              </span>
+                              {msg.sources.map((src, i) => (
+                                <span
+                                  key={i}
+                                  className="text-[10px] bg-[#eaf6ee] text-[#1c6430] px-1.5 py-0.5 rounded-md border border-[#c8e6d1]"
+                                >
+                                  {src}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <div
+                            className={cn(
+                              "text-[10px] mt-1.5 opacity-60",
+                              msg.role === "user" ? "text-right" : "text-left"
+                            )}
+                          >
+                            {msg.time}
+                          </div>
+                        </motion.div>
+
+                        {msg.role === "user" && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
+                            className="w-7 h-7 rounded-full bg-[#eaf6ee] text-[#227736] flex items-center justify-center shrink-0 border border-[#c8e6d1]"
+                          >
+                            <UserIcon size={13} />
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    ))
+                  )}
+
+                  {/* Typing Indicator */}
                   {typing && (
                     <motion.div
                       initial={{ opacity: 0, y: 12, scale: 0.96 }}
@@ -296,7 +450,7 @@ export default function ChatBot() {
                           <Bot size={13} />
                         </motion.div>
                       </div>
-                      <div className="bg-white border border-[#e2ebe6] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                      <div className="bg-white border border-[#e2ebe6] rounded-2xl rounded-bl-md px-4 py-3 shadow-xs">
                         <div className="flex gap-1 items-center">
                           {[0, 1, 2].map((i) => (
                             <motion.span
@@ -322,37 +476,7 @@ export default function ChatBot() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                <AnimatePresence>
-                  {messages.length <= 1 && !typing && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="px-4 py-3 border-t border-[#e2ebe6] bg-white overflow-hidden"
-                    >
-                      <p className="text-[10px] font-bold text-[#5a6e63] uppercase tracking-wider mb-2">
-                        Quick questions
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {quickQuestions.map((q, i) => (
-                          <motion.button
-                            key={q}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.15 + i * 0.08 }}
-                            whileHover={{ y: -2, scale: 1.02 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => handleSend(q)}
-                            className="text-[11px] px-2.5 py-1.5 rounded-full bg-[#eaf6ee] text-[#227736] border border-[#c8e6d1] hover:bg-[#227736] hover:text-white hover:border-[#227736] hover:shadow-md hover:shadow-[#227736]/25 transition-all duration-300 font-medium"
-                          >
-                            {q}
-                          </motion.button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
+                {/* ============ FOOTER / INPUT ============ */}
                 <div className="border-t border-[#e2ebe6] p-3 bg-white shrink-0">
                   <div className="flex items-end gap-2">
                     <div className="relative flex-1">
@@ -360,10 +484,10 @@ export default function ChatBot() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Type your question..."
+                        placeholder="Ask in English or Roman Urdu..."
                         rows={1}
-                        className="w-full resize-none rounded-xl border-2 border-[#e2ebe6] bg-[#f8faf9] px-3.5 py-2.5 text-sm outline-none text-[#0f1d17] focus:border-[#227736] focus:bg-white focus:ring-4 focus:ring-[#227736]/10 transition-all duration-300 placeholder:text-[#5a6e63] max-h-24"
-                        style={{ minHeight: 42 }}
+                        className="w-full resize-none rounded-xl border border-[#e2ebe6] bg-[#f8faf9] px-3.5 py-2.5 text-xs sm:text-sm outline-none text-[#0f1d17] focus:border-[#227736] focus:bg-white focus:ring-3 focus:ring-[#227736]/10 transition-all duration-200 placeholder:text-[#5a6e63] max-h-24"
+                        style={{ minHeight: 40 }}
                       />
                     </div>
 
@@ -372,7 +496,7 @@ export default function ChatBot() {
                       whileTap={{ scale: 0.94 }}
                       onClick={() => handleSend()}
                       disabled={!input.trim() || typing}
-                      className="relative w-10 h-10 rounded-xl bg-[#227736] hover:bg-[#1c6430] text-white flex items-center justify-center shadow-md shadow-[#227736]/25 transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none shrink-0 overflow-hidden group"
+                      className="relative w-10 h-10 rounded-xl bg-[#227736] hover:bg-[#1c6430] text-white flex items-center justify-center shadow-md shadow-[#227736]/25 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none shrink-0 overflow-hidden group"
                       aria-label="Send"
                     >
                       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
@@ -381,22 +505,16 @@ export default function ChatBot() {
                   </div>
 
                   <div className="flex items-center justify-between mt-2 px-1">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <button
                       onClick={clearChat}
                       className="flex items-center gap-1 text-[10px] text-[#5a6e63] hover:text-[#227736] font-medium transition-colors"
                     >
-                      <motion.div
-                        whileHover={{ rotate: -180 }}
-                        transition={{ duration: 0.4 }}
-                      >
-                        <RotateCcw size={10} />
-                      </motion.div>
-                      Clear chat
-                    </motion.button>
-                    <span className="text-[10px] text-[#5a6e63] font-medium">
-                      CampusConnect
+                      <RotateCcw size={10} />
+                      New chat
+                    </button>
+                    <span className="text-[10px] text-[#5a6e63] font-medium flex items-center gap-1">
+                      <Sparkles size={10} className="text-[#f4a228]" />
+                      CampusConnect Assistant
                     </span>
                   </div>
                 </div>
