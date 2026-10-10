@@ -1,4 +1,8 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+ENV_PATH = BACKEND_DIR / ".env"
 
 
 class Settings(BaseSettings):
@@ -9,16 +13,16 @@ class Settings(BaseSettings):
     secret_key: str = "campusconnect-development-secret-key"
     access_token_expire_minutes: int = 60
 
-    upload_dir: str = "uploads"
+    upload_dir: str = str(BACKEND_DIR / "uploads")
     max_upload_size_mb: int = 10
 
     gemini_api_key: str = ""
-    chroma_dir: str = "vector_store"
-    ai_model: str = "gemini-2.0-flash"
+    chroma_dir: str = str(BACKEND_DIR / "vector_store")
+    ai_model: str = "gemini-flash-latest"
     embedding_model: str = "text-embedding-004"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_PATH) if ENV_PATH.exists() else ".env",
         extra="ignore",
     )
 

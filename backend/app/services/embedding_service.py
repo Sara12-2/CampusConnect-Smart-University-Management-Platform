@@ -61,7 +61,7 @@ def get_embedding(text: str) -> List[float]:
         except Exception as exc:
             logger.debug(f"google.genai embedding error: {exc}. Trying fallback...")
 
-        # Try google.generativeai SDK
+        # Try google.generativeai SDK if installed
         try:
             import google.generativeai as legacy_genai  # type: ignore
 
@@ -72,8 +72,10 @@ def get_embedding(text: str) -> List[float]:
             )
             if isinstance(result, dict) and "embedding" in result:
                 return result["embedding"]
+        except ImportError:
+            pass
         except Exception as exc:
-            logger.warning(f"legacy google.generativeai embedding error: {exc}")
+            logger.debug(f"legacy google.generativeai embedding error: {exc}")
 
 
     return _pseudo_embedding(clean_text)

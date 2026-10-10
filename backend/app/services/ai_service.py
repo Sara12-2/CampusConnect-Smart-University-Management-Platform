@@ -347,10 +347,17 @@ Your mission is to assist university students, teachers, and staff with kindness
 Capabilities & Personality:
 1. Tone: Warm, welcoming, respectful, and helpful.
 2. Core University Topics (ALL ARE VALID IN-DOMAIN UNIVERSITY TOPICS):
-   - Smart Notice Board: Announcements, exam schedules, dates, and AI notice summaries.
+   - Smart Notice Board & Academic Calendar:
+     * Midterm Examinations start on October 20 (Fall semester).
+     * Final Examinations begin on January 10.
+     * Official date sheets, room allotments, and notices are published on the Notice Board.
+     * Requirements: Students must bring their original university ID card and clear fee dues before examinations.
    - Complaints & Grievance Redressal: Submitting issues (Wi-Fi, electricity, lab, maintenance), tracking status, and follow-ups.
    - Lost & Found: Reporting lost belongings, finding misplaced items, and claim verification.
-   - Scholarships & Financial Aid: Merit-based & need-based scholarships, CGPA requirements, and deadlines.
+   - Scholarships & Financial Aid:
+     * Merit-based scholarships: Minimum CGPA of 3.50 required. Application deadline is October 15. Up to 100% tuition concession.
+     * Need-based scholarships: Minimum CGPA of 2.50 required. Application deadline is October 15. Apply via Student Affairs office.
+     * Required documents: Academic transcript, CNIC copy, and income certificate.
    - Office Timings & Administration Contact Info:
      * Office Hours: Monday to Friday, 9:00 AM to 4:00 PM (Lunch break: 1:00 PM - 2:00 PM). Closed weekends & holidays.
      * Location: Administration Block is near the main campus entrance.
@@ -369,6 +376,8 @@ Capabilities & Personality:
    - Profile & Account Management: Students can update their profile by logging into their dashboard, navigating to the Profile or Settings section, updating personal/academic details, and clicking "Save Changes".
 
 Knowledge & Scope Rules:
+- When asked about exams or exam schedule, always explicitly state that Midterm examinations start on October 20, and Final examinations begin on January 10.
+- When asked about scholarships, state the minimum 3.50 CGPA requirement for Merit Scholarships and the deadline of October 15.
 - Queries regarding campus policies, rules, regulations, contact numbers, phone numbers, helplines, profile settings, account updates, and office hours are VALID university/platform topics and MUST NEVER be classified as out-of-context. Answer them helpfully with clear instructions.
 - When context from the university knowledge base is provided, base your answer strictly on that context.
 - If the user asks anything strictly OUT OF CONTEXT (such as general news, weather, movies, celebrities, cricket match scores, politics, or general topics unrelated to university operations), you MUST respond with the exact message below:
@@ -376,7 +385,7 @@ Knowledge & Scope Rules:
   "{OUT_OF_SCOPE_REPLY_EN}"
   For Roman Urdu questions:
   "{OUT_OF_SCOPE_REPLY_UR}"
-- Keep your answers structured, easy to read, with numbered steps or bullet points when explaining procedures.
+- Keep your answers structured, clean, and easy to read. Use numbered lists (1, 2, 3) or clean bullet points (•). Avoid excessive asterisks (* or **) so text looks clean.
 """
 
 
@@ -466,48 +475,58 @@ def generate_chat_response(
     full_prompt += f"User: {user_query}\nAssistant:"
 
     # 1. Try google-genai SDK
+    candidate_models = [
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-2.5-flash-lite",
+    ]
     try:
         from google import genai  # type: ignore
         from google.genai import types  # type: ignore
 
         client = genai.Client(api_key=api_key)
-        model_name = getattr(settings, "ai_model", "gemini-2.0-flash")
-
         config = types.GenerateContentConfig(
             system_instruction=effective_system_instruction,
             temperature=0.3,
             max_output_tokens=1000,
         )
 
-        response = client.models.generate_content(
-            model=model_name,
-            contents=full_prompt,
-            config=config,
-        )
-        if response and response.text:
-            reply = response.text.strip()
-            # Double check if model returned out-of-scope phrasing
-            if "don't have information" in reply.lower() or "maloomat nahi" in reply.lower():
-                return OUT_OF_SCOPE_REPLY_UR if user_lang == "roman_urdu" else OUT_OF_SCOPE_REPLY_EN
-            return reply
+        for model_name in candidate_models:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=full_prompt,
+                    config=config,
+                )
+                if response and response.text:
+                    reply = response.text.strip()
+                    if "don't have information" in reply.lower() or "maloomat nahi" in reply.lower():
+                        return OUT_OF_SCOPE_REPLY_UR if user_lang == "roman_urdu" else OUT_OF_SCOPE_REPLY_EN
+                    return reply
+            except Exception as model_err:
+                logger.debug(f"google.genai call attempt with {model_name} failed ({model_err}).")
     except Exception as exc:
-        logger.warning(f"google.genai call attempt failed ({exc}). Trying alternative...")
+        logger.warning(f"google.genai SDK error ({exc}). Trying alternative...")
 
     # 2. Try google.generativeai SDK
     try:
         import google.generativeai as legacy_genai  # type: ignore
 
         legacy_genai.configure(api_key=api_key)
-        model = legacy_genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=effective_system_instruction,
-        )
-        response = model.generate_content(full_prompt)
-        if response and response.text:
-            reply = response.text.strip()
-            if "don't have information" in reply.lower() or "maloomat nahi" in reply.lower():
-                return OUT_OF_SCOPE_REPLY_UR if user_lang == "roman_urdu" else OUT_OF_SCOPE_REPLY_EN
-            return reply
+        for legacy_model in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]:
+            try:
+                model = legacy_genai.GenerativeModel(
+                    model_name=legacy_model,
+                    system_instruction=effective_system_instruction,
+                )
+                response = model.generate_content(full_prompt)
+                if response and response.text:
+                    reply = response.text.strip()
+                    if "don't have information" in reply.lower() or "maloomat nahi" in reply.lower():
+                        return OUT_OF_SCOPE_REPLY_UR if user_lang == "roman_urdu" else OUT_OF_SCOPE_REPLY_EN
+                    return reply
+            except Exception:
+                pass
     except Exception as exc:
         logger.error(f"Generative AI call failed: {exc}")
 
@@ -528,12 +547,16 @@ def generate_summary(content: str) -> str:
 
             client = genai.Client(api_key=api_key)
             prompt = f"Summarize this university notice into 1 or 2 concise, clear sentences:\n\n{text}"
-            response = client.models.generate_content(
-                model=getattr(settings, "ai_model", "gemini-2.0-flash"),
-                contents=prompt,
-            )
-            if response and response.text:
-                return response.text.strip()
+            for m in ["gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-3-flash-preview"]:
+                try:
+                    response = client.models.generate_content(
+                        model=m,
+                        contents=prompt,
+                    )
+                    if response and response.text:
+                        return response.text.strip()
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -563,12 +586,20 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
     if is_out_of_domain(user_query) or (not context and not is_university_query(user_query)):
         return OUT_OF_SCOPE_REPLY_UR if lang == "roman_urdu" else OUT_OF_SCOPE_REPLY_EN
 
-    # 4. If context has direct answers and query is in-domain
+    # 4. If context contains a section specifically matching user keywords
     if context and len(context) > 20 and is_university_query(user_query):
-        first_section = context.split("\n\n")[0]
-        if lang == "roman_urdu":
-            return f"{first_section}\n\n(Maloomat CampusConnect ke verified knowledge base se li gayi hai)."
-        return f"{first_section}\n\n(Note: Generated from verified CampusConnect knowledge base)."
+        sections = context.split("\n\n")
+        query_words = set(re.findall(r"\w+", m)) - {"what", "is", "the", "how", "do", "i", "kya", "hai", "kab"}
+        best_section = None
+        for sec in sections:
+            sec_lower = sec.lower()
+            if any(w in sec_lower for w in query_words):
+                best_section = sec
+                break
+        if best_section:
+            if lang == "roman_urdu":
+                return f"{best_section}\n\n(Maloomat CampusConnect verified knowledge base se li gayi hai)."
+            return f"{best_section}\n\n(Note: Generated from verified CampusConnect knowledge base)."
 
     # 5. Domain specific fallback responses in matched language
     if "shukriya" in m or "shukria" in m or "meherbani" in m:
@@ -606,15 +637,36 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
             "2. Select a found item and click 'Claim This Item' with proof of ownership to claim it."
         )
 
-    if any(k in m for k in ["exam", "notice", "schedule", "paper", "dates", "announcement"]):
+    if any(k in m for k in ["exam", "notice", "schedule", "paper", "dates", "announcement", "midterm", "final", "date sheet", "datesheet"]):
         if lang == "roman_urdu":
             return (
-                "Aap university ke tamam taza tareen notices, imtehanat ka schedule aur AI summaries Notice Board section mein dekh saktay hain.\n\n"
-                "Imtehan ke liye student ID card aur fee clearance lazmi hai."
+                "📝 Fall semester ke Midterm imtehanat 20 October se shuru ho rahe hain.\n"
+                "Final imtehanat 10 January se shuru honge.\n\n"
+                "Mukammal date sheet aur hall allotments Notice Board section mein mojood hain. "
+                "Imtehan mein shirkat ke liye apna original student ID card lana aur fee dues clear karna lazmi hai."
             )
         return (
-            "You can view all current official notices, examination schedules, and AI summaries in the Notice Board section.\n\n"
-            "Remember to bring your original student ID card and fee clearance slip for exams."
+            "📝 Midterm examinations commence on October 20 for the Fall semester.\n"
+            "Final examinations begin on January 10.\n\n"
+            "Detailed date sheets and hall allotments are published in the Notice Board section. "
+            "Students must bring their original university ID card and clear all fee dues prior to examinations."
+        )
+
+    if any(k in m for k in ["scholarship", "financial aid", "merit", "wazifa", "fee concession"]):
+        if lang == "roman_urdu":
+            return (
+                "🎓 Scholarships ki tafseelat:\n\n"
+                "• Merit Scholarship: Minimum 3.50 CGPA darkar hai (up to 100% tuition concession).\n"
+                "• Need-based Scholarship: Minimum 2.50 CGPA darkar hai.\n"
+                "• Aakhri Tareekh (Deadline): 15 October.\n\n"
+                "Darkhwast ke sath academic transcript, CNIC copy aur income certificate Student Affairs office mein jama karwayen."
+            )
+        return (
+            "🎓 Scholarship Details:\n\n"
+            "• Merit Scholarships: Minimum 3.50 CGPA required (up to 100% tuition concession).\n"
+            "• Need-Based Scholarships: Minimum 2.50 CGPA required.\n"
+            "• Application Deadline: October 15.\n\n"
+            "Submit your academic transcript, CNIC copy, and income certificate to the Student Affairs office."
         )
 
     if any(k in m for k in ["profile", "account", "password", "settings"]):
