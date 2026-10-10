@@ -245,7 +245,6 @@ function PhoneMockup() {
 
   return (
     <div className="relative w-full flex items-center justify-center min-h-[600px]">
-      {/* Ambient glow */}
       <motion.div
         animate={{ scale: [1, 1.08, 1], opacity: [0.35, 0.55, 0.35] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -254,7 +253,6 @@ function PhoneMockup() {
           pointer-events-none"
       />
 
-      {/* ====== THE PHONE ====== */}
       <motion.div
         initial={{ opacity: 0, y: 30, rotate: -2 }}
         animate={{ opacity: 1, y: 0, rotate: 0 }}
@@ -263,19 +261,16 @@ function PhoneMockup() {
         className="relative z-10"
         style={{ transformStyle: "preserve-3d" }}
       >
-        {/* Phone body / outer bezel */}
         <div className="relative w-[300px] h-[610px] rounded-[42px]
           bg-gradient-to-b from-[#1a1a1a] via-[#0a0a0a] to-[#1a1a1a]
           p-[10px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)]
           ring-1 ring-black/40">
 
-          {/* Side button (right) */}
           <div className="absolute -right-[3px] top-[140px] w-[3px] h-[70px]
             bg-[#2a2a2a] rounded-r" />
           <div className="absolute -right-[3px] top-[220px] w-[3px] h-[40px]
             bg-[#2a2a2a] rounded-r" />
 
-          {/* Volume buttons (left) */}
           <div className="absolute -left-[3px] top-[130px] w-[3px] h-[35px]
             bg-[#2a2a2a] rounded-l" />
           <div className="absolute -left-[3px] top-[180px] w-[3px] h-[60px]
@@ -283,16 +278,13 @@ function PhoneMockup() {
           <div className="absolute -left-[3px] top-[255px] w-[3px] h-[60px]
             bg-[#2a2a2a] rounded-l" />
 
-          {/* Inner screen frame */}
           <div className="relative w-full h-full rounded-[34px] overflow-hidden bg-white">
-            {/* Dynamic Island / Notch */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30
               w-[100px] h-[26px] rounded-full bg-black
               flex items-center justify-end pr-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1a1a1a] ring-1 ring-[#333]" />
             </div>
 
-            {/* Status bar */}
             <div className="absolute top-0 left-0 right-0 z-20 pt-3 px-6
               flex items-center justify-between text-[9px] font-bold text-[#0f1d17]">
               <span>9:41</span>
@@ -303,7 +295,6 @@ function PhoneMockup() {
               </span>
             </div>
 
-            {/* ============ THE APP SCREEN (scrollable) ============ */}
             <div
               ref={screenRef}
               className="absolute top-0 left-0 right-0 bottom-0 overflow-hidden"
@@ -321,7 +312,6 @@ function PhoneMockup() {
                 }}
                 className="pt-10 pb-16"
               >
-                {/* ============ APP HEADER ============ */}
                 <div className="px-5 pt-2 pb-4 bg-gradient-to-br from-[#165127] to-[#227736] text-white
                   rounded-b-3xl">
                   <div className="flex items-center justify-between mb-4">
@@ -342,13 +332,11 @@ function PhoneMockup() {
                     </div>
                   </div>
 
-                  {/* Search */}
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 border border-white/15">
                     <Search size={12} className="text-white/60" />
                     <span className="text-[10px] text-white/60">Search notices, items...</span>
                   </div>
 
-                  {/* Stat pills */}
                   <div className="grid grid-cols-3 gap-2 mt-3">
                     {[
                       { label: "Notices", value: "24" },
@@ -363,7 +351,6 @@ function PhoneMockup() {
                   </div>
                 </div>
 
-                {/* ============ QUICK ACTIONS ============ */}
                 <div className="px-5 mt-4">
                   <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider mb-2">
                     Quick Actions
@@ -391,7 +378,6 @@ function PhoneMockup() {
                   </div>
                 </div>
 
-                {/* ============ LATEST NOTICE ============ */}
                 <div className="px-5 mt-5">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider">
@@ -424,7 +410,6 @@ function PhoneMockup() {
                   </div>
                 </div>
 
-                {/* ============ RECENT COMPLAINTS ============ */}
                 <div className="px-5 mt-5">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider">
@@ -454,7 +439,6 @@ function PhoneMockup() {
                   </div>
                 </div>
 
-                {/* ============ LOST & FOUND ============ */}
                 <div className="px-5 mt-5">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[9px] font-bold text-[#5a6e63] uppercase tracking-wider">
@@ -481,7 +465,6 @@ function PhoneMockup() {
                   </div>
                 </div>
 
-                {/* ============ CTA BUTTON ============ */}
                 <div className="px-5 mt-5">
                   <div className="rounded-2xl bg-gradient-to-br from-[#227736] to-[#28a745] p-4 text-white">
                     <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">
@@ -495,11 +478,9 @@ function PhoneMockup() {
                   </div>
                 </div>
 
-                {/* padding bottom for nav */}
                 <div className="h-4" />
               </motion.div>
 
-              {/* ============ BOTTOM NAV (fixed) ============ */}
               <div className="absolute bottom-0 left-0 right-0 h-[60px]
                 bg-white/95 backdrop-blur-md border-t border-[#e2ebe6]
                 flex items-center justify-around px-4">
@@ -531,7 +512,6 @@ function PhoneMockup() {
           </div>
         </div>
 
-        {/* ====== FLOATING BADGES (outside phone) ====== */}
         <motion.div
           initial={{ opacity: 0, x: -30, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -592,6 +572,7 @@ export default function HomePage() {
       <main className="min-h-screen bg-white text-[#0f1d17] overflow-x-hidden">
 
         {/* ================= HERO ================= */}
+        {/* ✅ pt-4 md:pt-6 = navbar (73px) + small gap, items-start = top aligned */}
         <section className="relative bg-gradient-to-b from-[#165127] to-[#1c6430] text-white overflow-hidden">
           <div
             className="absolute inset-0 opacity-[0.08]"
@@ -609,7 +590,7 @@ export default function HomePage() {
               bg-[#E67E22]/50 blur-3xl pointer-events-none"
           />
 
-          <div className="relative max-w-7xl mx-auto px-6 pt-20 md:pt-24 pb-16">
+          <div className="relative max-w-7xl mx-auto px-6 pt-16 md:pt-24 pb-16">
             <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
 
               {/* LEFT */}
@@ -677,7 +658,6 @@ export default function HomePage() {
                   </motion.div>
                 </motion.div>
 
-                {/* Trust badges */}
                 <motion.div
                   variants={item}
                   className="mt-10 pt-8 border-t border-white/15 flex flex-wrap items-center gap-5"

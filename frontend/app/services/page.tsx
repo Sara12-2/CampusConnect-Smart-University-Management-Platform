@@ -188,7 +188,8 @@ export default function ServicesPage() {
             className="absolute -bottom-12 -right-6 text-white/[0.05] pointer-events-none select-none"
           />
 
-          <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-20 md:pt-28 md:pb-28 text-center">
+          {/* ✅ pt-10 md:pt-14 = navbar ke neeche thora gap */}
+          <div className="relative max-w-7xl mx-auto px-6 pt-10 md:pt-14 pb-20 md:pb-28 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
