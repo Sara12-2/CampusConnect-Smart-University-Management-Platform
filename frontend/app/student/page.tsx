@@ -3,9 +3,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Bell, MessageSquare, Search, FileCheck, ArrowRight, Pin,
-  Calendar, Sparkles, TrendingUp, Clock, CheckCircle2, AlertCircle,
-  Plus, Upload, MapPin, Gift, Zap, Lightbulb, GraduationCap,
-  CircleDot, XCircle, Hourglass,
+  Calendar, Sparkles, CheckCircle2,
+  Plus, Upload, MapPin, Gift, Zap, GraduationCap,
+  CircleDot, XCircle, Hourglass, TrendingUp, Activity,
+  Home, Settings, BookOpen,
 } from "lucide-react";
 import {
   mockNotices,
@@ -29,7 +30,8 @@ export default function StudentDashboard() {
       value: mockNotices.length,
       color: "from-[#227736] to-[#28a745]",
       accent: false,
-      shadow: "shadow-[#227736]/30",
+      trend: "+3",
+      sparkline: [4, 6, 5, 8, 7, 10, 12],
     },
     {
       icon: MessageSquare,
@@ -37,7 +39,8 @@ export default function StudentDashboard() {
       value: mockComplaints.length,
       color: "from-[#f4a228] to-[#e08a10]",
       accent: true,
-      shadow: "shadow-[#f4a228]/30",
+      trend: "-1",
+      sparkline: [8, 7, 9, 6, 8, 5, 4],
     },
     {
       icon: Search,
@@ -45,7 +48,8 @@ export default function StudentDashboard() {
       value: mockLostFound.length,
       color: "from-[#227736] to-[#58b277]",
       accent: false,
-      shadow: "shadow-[#227736]/30",
+      trend: "+2",
+      sparkline: [3, 5, 4, 6, 8, 7, 9],
     },
     {
       icon: FileCheck,
@@ -53,57 +57,94 @@ export default function StudentDashboard() {
       value: mockClaims.length,
       color: "from-[#f4a228] to-[#b86b0a]",
       accent: true,
-      shadow: "shadow-[#f4a228]/30",
+      trend: "+1",
+      sparkline: [1, 2, 2, 3, 4, 3, 5],
     },
   ];
 
   const quickActions = [
-    {
-      icon: Plus,
-      label: "Submit Complaint",
-      desc: "Report a campus issue with details and photos",
-      href: "/student/complaints",
-      accent: false,
-    },
-    {
-      icon: Upload,
-      label: "Report Lost Item",
-      desc: "Report a lost or found item on campus",
-      href: "/student/lost-found",
-      accent: true,
-      badge: "NEW",
-    },
-    {
-      icon: Bell,
-      label: "View Notices",
-      desc: "Check the latest university notices",
-      href: "/student/notices",
-      accent: false,
-    },
+    { icon: Plus, label: "New Complaint", href: "/student/complaints", accent: false },
+    { icon: Upload, label: "Report Item", href: "/student/lost-found", accent: true, badge: "NEW" },
+    { icon: Bell, label: "Notices", href: "/student/notices", accent: false },
+    { icon: Search, label: "Lost & Found", href: "/student/lost-found", accent: true },
   ];
 
   /* ---------- status icon helper ---------- */
   const statusIcon = (status: string) => {
     if (status === "resolved" || status === "approved")
-      return <CheckCircle2 size={13} className="text-[#227736]" />;
+      return <CheckCircle2 size={12} className="text-[#227736]" />;
     if (status === "in-progress" || status === "pending")
-      return <Hourglass size={13} className="text-[#f4a228]" />;
+      return <Hourglass size={12} className="text-[#f4a228]" />;
     if (status === "submitted")
-      return <CircleDot size={13} className="text-[#5a6e63]" />;
+      return <CircleDot size={12} className="text-[#5a6e63]" />;
     if (status === "rejected")
-      return <XCircle size={13} className="text-[#dc3545]" />;
+      return <XCircle size={12} className="text-[#dc3545]" />;
     return null;
   };
 
-  return (
-    <div className="space-y-8">
+  /* ---------- Mini sparkline component ---------- */
+  const Sparkline = ({ data, accent }: { data: number[]; accent: boolean }) => {
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min || 1;
+    const W = 100;
+    const H = 30;
 
-      {/* ==================== WELCOME BANNER ==================== */}
+    const points = data.map((v, i) => ({
+      x: (i / (data.length - 1)) * W,
+      y: H - ((v - min) / range) * H,
+    }));
+
+    const path = points
+      .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
+      .join(" ");
+
+    const areaPath = `${path} L ${W} ${H} L 0 ${H} Z`;
+    const color = accent ? "#f4a228" : "#227736";
+    const gradId = `grad-${accent ? "o" : "g"}-${Math.random().toString(36).slice(2, 6)}`;
+
+    return (
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-8" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={areaPath} fill={`url(#${gradId})`} />
+        <motion.path
+          d={path}
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+        />
+        {points.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="1.5" fill={color} opacity="0.6" />
+        ))}
+      </svg>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+
+      {/* ==================== WELCOME BANNER (3D) ==================== */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="relative rounded-3xl bg-gradient-to-br from-[#227736] via-[#1c6430] to-[#165127] p-6 md:p-8 text-white shadow-2xl shadow-[#227736]/25 overflow-hidden"
+        whileHover={{ scale: 1.005, rotateX: 1, rotateY: -1 }}
+        style={{ transformStyle: "preserve-3d", perspective: 1200 }}
+        className="relative rounded-3xl bg-gradient-to-br from-[#227736] via-[#1c6430] to-[#165127]
+          p-6 md:p-8 text-white
+          shadow-2xl shadow-[#227736]/30
+          hover:shadow-[0_30px_60px_-20px_rgba(34,119,54,0.5)]
+          overflow-hidden transition-shadow duration-500"
       >
         {/* Mesh pattern */}
         <div
@@ -115,114 +156,195 @@ export default function StudentDashboard() {
           }}
         />
 
-        {/* Orange glow corner */}
+        {/* Orange glow */}
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.35, 0.2] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-20 -right-20 w-64 h-64 rounded-full 
+          className="absolute -top-20 -right-20 w-64 h-64 rounded-full
             bg-[#f4a228]/40 blur-3xl pointer-events-none"
         />
 
-        {/* Decorative big icon (GraduationCap) */}
+        {/* Green glow */}
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full
+            bg-[#28a745]/40 blur-3xl pointer-events-none"
+        />
+
+        {/* Decorative icon */}
         <GraduationCap
           size={180}
           strokeWidth={0.8}
-          className="absolute -bottom-10 -right-6 text-white/[0.06] 
+          className="absolute -bottom-10 -right-6 text-white/[0.06]
             pointer-events-none select-none"
         />
 
-        <div className="relative">
+        {/* Shine sweep */}
+        <motion.div
+          animate={{ x: ["-150%", "250%"] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-y-0 w-1/3 bg-gradient-to-r
+            from-transparent via-white/10 to-transparent
+            skew-x-12 pointer-events-none"
+        />
+
+        <div className="relative grid md:grid-cols-[1fr_auto] gap-6 items-center">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full
+                bg-white/10 backdrop-blur-md border border-white/20 mb-3"
+            >
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#58b277] opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#58b277]" />
+              </span>
+              <span className="text-[10px] font-bold tracking-wider uppercase">
+                Live Dashboard
+              </span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-2xl md:text-3xl font-extrabold tracking-tight"
+            >
+              Welcome back, {mockUser.name.split(" ")[0]}
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mt-2 text-sm text-white/75 flex items-center gap-2 flex-wrap"
+            >
+              <span className="inline-flex items-center gap-1">
+                <GraduationCap size={13} className="text-[#f4a228]" />
+                {mockUser.department}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-white/40" />
+              <span>Semester {mockUser.semester}</span>
+            </motion.p>
+          </div>
+
+          {/* Mini stats visual — desktop */}
           <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full 
-              bg-white/10 backdrop-blur-sm border border-white/20 mb-4"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.35 }}
+            className="hidden md:flex items-center gap-3"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#58b277] animate-pulse" />
-            <span className="text-[10px] font-bold tracking-wider uppercase">
-              Student Dashboard
-            </span>
+            {[
+              { icon: Activity, label: "Active", value: "3", color: "from-[#58b277] to-[#28a745]" },
+              { icon: Hourglass, label: "Pending", value: "2", color: "from-[#f4a228] to-[#e08a10]" },
+              { icon: CheckCircle2, label: "Done", value: "8", color: "from-[#227736] to-[#1c6430]" },
+            ].map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <motion.div
+                  key={s.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + i * 0.08 }}
+                  whileHover={{ y: -4, scale: 1.05 }}
+                  className="relative rounded-2xl bg-white/10 backdrop-blur-md
+                    border border-white/20 px-4 py-3 min-w-[88px] text-center
+                    shadow-lg shadow-black/10 hover:shadow-xl
+                    hover:border-white/30 transition-all duration-300 cursor-default"
+                >
+                  <Icon size={14} className="text-white/60 mx-auto mb-1" />
+                  <p className={`text-2xl font-extrabold bg-gradient-to-br ${s.color}
+                    bg-clip-text text-transparent tracking-tight`}>
+                    {s.value}
+                  </p>
+                  <p className="text-[9px] text-white/70 uppercase tracking-wider font-bold mt-0.5">
+                    {s.label}
+                  </p>
+                </motion.div>
+              );
+            })}
           </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-2xl md:text-3xl font-extrabold tracking-tight"
-          >
-            Welcome back, {mockUser.name.split(" ")[0]}
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-2 text-sm text-white/80"
-          >
-            {mockUser.department} · Semester {mockUser.semester}
-          </motion.p>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mt-4 text-xs md:text-sm text-white/70 max-w-xl leading-relaxed"
-          >
-            Here's what's happening across your campus today — new notices,
-            complaint updates, and Lost & Found items.
-          </motion.p>
         </div>
       </motion.div>
 
-      {/* ==================== STATS ==================== */}
+      {/* ==================== STATS (3D cards with sparklines) ==================== */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((s, i) => {
           const Icon = s.icon;
+          const trendUp = s.trend.startsWith("+");
           return (
             <motion.div
               key={s.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: i * 0.08,
-                duration: 0.5,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              whileHover={{ y: -6 }}
-              className="group relative bg-white rounded-2xl border border-[#e2ebe6] 
-                p-5 transition-all duration-300 
-                hover:shadow-xl hover:shadow-[#227736]/10 
-                hover:border-[#227736]/40 cursor-default overflow-hidden"
+              transition={{ delay: i * 0.08, duration: 0.5 }}
+              whileHover={{ y: -8, scale: 1.02, rotateX: 2, rotateY: -2 }}
+              style={{ transformStyle: "preserve-3d", perspective: 1000 }}
+              className={`group relative bg-white rounded-2xl border border-[#e2ebe6]
+                p-5 transition-all duration-500 cursor-default overflow-hidden
+                ${
+                  s.accent
+                    ? "hover:border-[#f4a228]/50 hover:shadow-[0_25px_50px_-20px_rgba(244,162,40,0.4)]"
+                    : "hover:border-[#227736]/40 hover:shadow-[0_25px_50px_-20px_rgba(34,119,54,0.4)]"
+                }`}
             >
-              {/* Corner accent */}
+              {/* Corner glow */}
               <div
-                className={`absolute top-0 right-0 w-16 h-16 rounded-bl-full 
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                className={`absolute top-0 right-0 w-20 h-20 rounded-bl-full
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-500
                   ${s.accent ? "bg-[#f4a228]/10" : "bg-[#227736]/10"}`}
               />
 
-              <motion.div
-                whileHover={{ rotate: [0, -8, 8, 0], scale: 1.1 }}
-                transition={{ duration: 0.5 }}
-                className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${s.color} 
-                  text-white flex items-center justify-center mb-3 
-                  shadow-md ${s.shadow}`}
-              >
-                <Icon size={22} strokeWidth={2.2} />
-              </motion.div>
+              <div className="relative flex items-center justify-between mb-3">
+                <motion.div
+                  whileHover={{ rotate: [0, -8, 8, 0], scale: 1.15 }}
+                  transition={{ duration: 0.5 }}
+                  className={`relative w-11 h-11 rounded-xl bg-gradient-to-br ${s.color}
+                    text-white flex items-center justify-center
+                    shadow-md ${s.shadow} group-hover:shadow-xl transition-shadow duration-500`}
+                >
+                  <Icon size={20} strokeWidth={2.2} />
+                  <motion.span
+                    animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0, 0.4] }}
+                    transition={{ duration: 3, repeat: Infinity, delay: i * 0.4 }}
+                    className={`absolute inset-0 rounded-xl ${s.accent ? "bg-[#f4a228]" : "bg-[#227736]"}`}
+                  />
+                </motion.div>
 
-              <p className="relative text-2xl font-extrabold text-[#0f1d17] tracking-tight">
+                {/* Trend badge */}
+                <span
+                  className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full
+                    ${
+                      trendUp
+                        ? "bg-[#eaf6ee] text-[#227736] border border-[#c8e6d1]"
+                        : "bg-[#fdf7ef] text-[#b86b0a] border border-[#f4a228]/40"
+                    }`}
+                >
+                  <TrendingUp size={9} className={trendUp ? "" : "rotate-180"} />
+                  {s.trend}
+                </span>
+              </div>
+
+              <p className="relative text-3xl font-extrabold text-[#0f1d17] tracking-tight">
                 {s.value}
               </p>
-              <p className="relative text-xs text-[#5a6e63] mt-0.5 font-medium">
+              <p className="relative text-[10px] text-[#5a6e63] font-semibold uppercase tracking-wider mt-0.5">
                 {s.label}
               </p>
 
+              {/* Sparkline */}
+              <div className="relative mt-3 -mx-1">
+                <Sparkline data={s.sparkline} accent={s.accent} />
+              </div>
+
               {/* Bottom accent line */}
               <span
-                className={`absolute bottom-0 left-5 right-5 h-0.5 origin-left 
-                  scale-x-0 group-hover:scale-x-100 transition-transform duration-500 
+                className={`absolute bottom-0 left-5 right-5 h-0.5 origin-left
+                  scale-x-0 group-hover:scale-x-100 transition-transform duration-500
                   rounded-full ${s.accent ? "bg-[#f4a228]" : "bg-[#227736]"}`}
               />
             </motion.div>
@@ -230,26 +352,26 @@ export default function StudentDashboard() {
         })}
       </div>
 
-      {/* ==================== QUICK ACTIONS ==================== */}
+      {/* ==================== QUICK ACTIONS (visual grid) ==================== */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
       >
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <h2 className="text-lg md:text-xl font-extrabold text-[#0f1d17] 
-              tracking-tight flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg md:text-xl font-extrabold text-[#0f1d17]
+            tracking-tight flex items-center gap-2">
+            <motion.div
+              animate={{ rotate: [0, -10, 10, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            >
               <Zap size={20} className="text-[#f4a228]" />
-              Quick Actions
-            </h2>
-            <p className="text-xs text-[#5a6e63] mt-1">
-              Jump straight to what you need
-            </p>
-          </div>
+            </motion.div>
+            Quick Actions
+          </h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {quickActions.map((q, i) => {
             const Icon = q.icon;
             return (
@@ -258,85 +380,100 @@ export default function StudentDashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + i * 0.08 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`group relative overflow-hidden rounded-2xl 
-                    bg-white border p-5 transition-all duration-300 
+                  whileHover={{ y: -8, scale: 1.04, rotateX: 3 }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{ transformStyle: "preserve-3d" }}
+                  className={`group relative overflow-hidden rounded-2xl
+                    bg-white border p-5 aspect-square flex flex-col items-center justify-center
+                    transition-all duration-500
                     ${
                       q.accent
-                        ? "border-[#f4a228]/30 hover:border-[#f4a228]/60 hover:shadow-xl hover:shadow-[#f4a228]/15"
-                        : "border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-xl hover:shadow-[#227736]/15"
+                        ? "border-[#f4a228]/30 hover:border-[#f4a228]/60 hover:shadow-[0_25px_50px_-15px_rgba(244,162,40,0.45)]"
+                        : "border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-[0_25px_50px_-15px_rgba(34,119,54,0.45)]"
                     }`}
                 >
-                  {/* Glow */}
+                  {/* Background glow */}
                   <div
-                    className={`absolute -right-6 -top-6 w-28 h-28 rounded-full 
-                      bg-gradient-to-br blur-2xl opacity-10 
-                      group-hover:opacity-25 transition-opacity duration-500 
-                      ${q.accent ? "from-[#f4a228] to-[#e08a10]" : "from-[#227736] to-[#28a745]"}`}
+                    className={`absolute inset-0 rounded-2xl
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-500
+                      bg-gradient-to-br ${
+                        q.accent
+                          ? "from-[#fdf7ef] via-white to-[#fdf7ef]"
+                          : "from-[#eaf6ee] via-white to-[#eaf6ee]"
+                      }`}
+                  />
+
+                  {/* Shine sweep */}
+                  <motion.div
+                    initial={{ x: "-150%" }}
+                    whileHover={{ x: "250%" }}
+                    transition={{ duration: 0.8, ease: "easeInOut" }}
+                    className="absolute inset-y-0 w-1/3 bg-gradient-to-r
+                      from-transparent via-white/60 to-transparent
+                      skew-x-12 pointer-events-none"
                   />
 
                   {/* Badge */}
                   {q.badge && (
-                    <span className="absolute top-3 right-3 text-[9px] font-bold 
-                      px-2 py-0.5 rounded-full bg-[#f4a228] text-white">
+                    <motion.span
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute top-2 right-2 text-[8px] font-bold
+                        px-1.5 py-0.5 rounded-full
+                        bg-gradient-to-br from-[#f4a228] to-[#e08a10]
+                        text-white shadow-md shadow-[#f4a228]/40 z-10"
+                    >
                       {q.badge}
-                    </span>
+                    </motion.span>
                   )}
 
-                  <div className="relative flex items-start gap-3.5">
-                    {/* Icon */}
-                    <motion.div
-                      whileHover={{ rotate: [0, -10, 10, 0], scale: 1.12 }}
-                      transition={{ duration: 0.5 }}
-                      className={`w-12 h-12 rounded-xl 
-                        flex items-center justify-center shrink-0 
-                        transition-all duration-300 
+                  {/* Icon */}
+                  <motion.div
+                    whileHover={{ rotate: [0, -10, 10, 0], scale: 1.15 }}
+                    transition={{ duration: 0.5 }}
+                    className={`relative w-14 h-14 rounded-2xl mb-3
+                      flex items-center justify-center
+                      transition-all duration-500
+                      ${
+                        q.accent
+                          ? "bg-[#fdf7ef] border border-[#f4a228]/30 group-hover:bg-[#f4a228] group-hover:border-[#f4a228] group-hover:shadow-xl group-hover:shadow-[#f4a228]/50"
+                          : "bg-[#eaf6ee] border border-[#c8e6d1] group-hover:bg-[#227736] group-hover:border-[#227736] group-hover:shadow-xl group-hover:shadow-[#227736]/50"
+                      }`}
+                  >
+                    <Icon
+                      size={24}
+                      strokeWidth={2.2}
+                      className={`transition-colors duration-300
                         ${
                           q.accent
-                            ? "bg-[#fdf7ef] border border-[#f4a228]/30 group-hover:bg-[#f4a228] group-hover:border-[#f4a228]"
-                            : "bg-[#eaf6ee] border border-[#c8e6d1] group-hover:bg-[#227736] group-hover:border-[#227736]"
-                        }`}
-                    >
-                      <Icon
-                        size={20}
-                        strokeWidth={2.2}
-                        className={`transition-colors duration-300 
-                          ${
-                            q.accent
-                              ? "text-[#f4a228] group-hover:text-white"
-                              : "text-[#227736] group-hover:text-white"
-                          }`}
-                      />
-                    </motion.div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-[#0f1d17] text-sm 
-                        group-hover:text-[#227736] transition-colors duration-300">
-                        {q.label}
-                      </h3>
-                      <p className="text-xs text-[#5a6e63] mt-1 line-clamp-2 leading-relaxed">
-                        {q.desc}
-                      </p>
-                    </div>
-
-                    <ArrowRight
-                      size={16}
-                      className={`shrink-0 mt-1 transition-all duration-300 
-                        group-hover:translate-x-1 
-                        ${q.accent
-                          ? "text-[#5a6e63]/50 group-hover:text-[#f4a228]"
-                          : "text-[#5a6e63]/50 group-hover:text-[#227736]"
+                            ? "text-[#f4a228] group-hover:text-white"
+                            : "text-[#227736] group-hover:text-white"
                         }`}
                     />
-                  </div>
+                    <motion.span
+                      animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0, 0.3] }}
+                      transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
+                      className={`absolute inset-0 rounded-2xl ${
+                        q.accent ? "bg-[#f4a228]" : "bg-[#227736]"
+                      }`}
+                    />
+                  </motion.div>
 
-                  {/* Bottom accent line */}
-                  <span
-                    className={`absolute bottom-0 left-5 right-5 h-0.5 
-                      origin-left scale-x-0 group-hover:scale-x-100 
-                      transition-transform duration-500 rounded-full 
-                      ${q.accent ? "bg-[#f4a228]" : "bg-[#227736]"}`}
+                  {/* Label */}
+                  <span className="relative text-xs font-bold text-[#0f1d17]
+                    group-hover:text-[#227736] transition-colors text-center">
+                    {q.label}
+                  </span>
+
+                  <ArrowRight
+                    size={14}
+                    className={`relative mt-2 transition-all duration-300
+                      group-hover:translate-x-1
+                      ${
+                        q.accent
+                          ? "text-[#5a6e63]/40 group-hover:text-[#f4a228]"
+                          : "text-[#5a6e63]/40 group-hover:text-[#227736]"
+                      }`}
                   />
                 </motion.div>
               </Link>
@@ -345,112 +482,247 @@ export default function StudentDashboard() {
         </div>
       </motion.div>
 
-      {/* ==================== NOTICES + COMPLAINTS ==================== */}
+      {/* ==================== ACTIVITY OVERVIEW ==================== */}
       <div className="grid lg:grid-cols-3 gap-6">
 
-        {/* ---- Recent Notices ---- */}
+        {/* ---- Recent Notices (visual cards) ---- */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          whileHover={{ y: -4 }}
           className="lg:col-span-2 rounded-2xl bg-white border border-[#e2ebe6] p-6
-            hover:shadow-lg hover:shadow-[#227736]/5 transition-shadow duration-300"
+            hover:shadow-2xl hover:shadow-[#227736]/10 hover:border-[#227736]/30
+            transition-all duration-500"
         >
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-lg flex items-center gap-2.5 text-[#0f1d17]">
-              <div className="w-8 h-8 rounded-lg bg-[#eaf6ee] border border-[#c8e6d1]
-                flex items-center justify-center">
+              <motion.div
+                whileHover={{ rotate: 8, scale: 1.1 }}
+                className="w-8 h-8 rounded-lg bg-[#eaf6ee] border border-[#c8e6d1]
+                  flex items-center justify-center shadow-sm shadow-[#227736]/10"
+              >
                 <Bell size={15} className="text-[#227736]" />
-              </div>
-              Recent Notices
+              </motion.div>
+              Latest Notices
             </h2>
             <Link
               href="/student/notices"
-              className="group text-xs md:text-sm text-[#227736] hover:text-[#1c6430] 
+              className="group text-xs md:text-sm text-[#227736] hover:text-[#1c6430]
                 font-semibold flex items-center gap-1 transition-all"
             >
-              View all
+              See all
               <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
-          <div className="space-y-3">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-1 gap-3">
             {recentNotices.map((n, i) => (
               <Link key={n.id} href={`/student/notices/${n.id}`}>
                 <motion.div
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + i * 0.08 }}
-                  whileHover={{ x: 6 }}
-                  className="group relative p-4 rounded-xl border border-[#e2ebe6] 
-                    hover:border-[#227736]/40 hover:bg-[#f8faf9] 
-                    transition-all duration-300 overflow-hidden"
+                  whileHover={{ x: 6, scale: 1.01 }}
+                  className="group relative p-4 rounded-xl border border-[#e2ebe6]
+                    hover:border-[#227736]/40 hover:bg-gradient-to-r hover:from-[#f8faf9] hover:to-white
+                    transition-all duration-500 overflow-hidden flex items-start gap-4"
                 >
-                  {/* Orange accent bar on hover */}
-                  <div className="absolute left-0 top-0 bottom-0 w-1 
-                    bg-gradient-to-b from-[#f4a228] to-[#e08a10] 
-                    scale-y-0 group-hover:scale-y-100 
-                    origin-top transition-transform duration-300" />
+                  {/* Icon visual */}
+                  <motion.div
+                    whileHover={{ rotate: 8, scale: 1.1 }}
+                    className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#227736] to-[#28a745]
+                      flex items-center justify-center shrink-0 shadow-md shadow-[#227736]/30"
+                  >
+                    <Bell size={18} className="text-white" />
+                  </motion.div>
 
-                  <div className="flex items-start justify-between gap-3 pl-1">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                        {n.pinned && (
-                          <span className="inline-flex items-center gap-1 
-                            text-[10px] font-bold px-2 py-0.5 rounded-full 
-                            bg-[#fdf7ef] text-[#b86b0a] border border-[#f4a228]/40">
-                            <Pin size={9} /> Pinned
-                          </span>
-                        )}
-                        <span className="inline-flex items-center gap-1 
-                          text-[10px] font-bold px-2 py-0.5 rounded-full uppercase
-                          bg-[#eaf6ee] text-[#227736] border border-[#c8e6d1]">
-                          {n.category}
+                  <div className="flex-1 min-w-0 relative">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                      {n.pinned && (
+                        <span className="inline-flex items-center gap-1
+                          text-[9px] font-bold px-1.5 py-0.5 rounded-full
+                          bg-[#fdf7ef] text-[#b86b0a] border border-[#f4a228]/40">
+                          <Pin size={8} /> Pinned
                         </span>
-                      </div>
-                      <h3 className="font-semibold text-[#0f1d17] text-sm 
-                        group-hover:text-[#227736] transition-colors line-clamp-1">
-                        {n.title}
-                      </h3>
-                      <p className="text-xs text-[#5a6e63] mt-1 line-clamp-2">
-                        {n.summary}
-                      </p>
+                      )}
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase
+                        bg-[#eaf6ee] text-[#227736] border border-[#c8e6d1]">
+                        {n.category}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-sm text-[#0f1d17]
+                      group-hover:text-[#227736] transition-colors line-clamp-1">
+                      {n.title}
+                    </h3>
+                    <div className="flex items-center gap-3 text-[10px] text-[#5a6e63] mt-1.5">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={10} /> {formatDate(n.createdAt)}
+                      </span>
+                      {n.deadline && (
+                        <span className="flex items-center gap-1 text-[#f4a228] font-semibold">
+                          <Sparkles size={10} /> {daysLeft(n.deadline)}d left
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] 
-                    text-[#5a6e63] mt-3 pl-1">
-                    <span className="flex items-center gap-1">
-                      <Calendar size={11} /> {formatDate(n.createdAt)}
-                    </span>
-                    {n.deadline && (
-                      <span className="flex items-center gap-1 text-[#f4a228] font-semibold">
-                        <Sparkles size={11} /> {daysLeft(n.deadline)} days left
-                      </span>
-                    )}
-                  </div>
+                  <ArrowRight
+                    size={14}
+                    className="text-[#b0bfb7] group-hover:text-[#227736] group-hover:translate-x-1
+                      transition-all duration-300 shrink-0 mt-3"
+                  />
                 </motion.div>
               </Link>
             ))}
           </div>
         </motion.div>
 
+        {/* ---- Activity Donut Chart ---- */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          whileHover={{ y: -4 }}
+          className="rounded-2xl bg-white border border-[#e2ebe6] p-6
+            hover:shadow-2xl hover:shadow-[#227736]/10 hover:border-[#227736]/30
+            transition-all duration-500"
+        >
+          <div className="flex items-center gap-2.5 mb-5">
+            <motion.div
+              whileHover={{ rotate: 8, scale: 1.1 }}
+              className="w-8 h-8 rounded-lg bg-[#eaf6ee] border border-[#c8e6d1]
+                flex items-center justify-center shadow-sm shadow-[#227736]/10"
+            >
+              <Activity size={15} className="text-[#227736]" />
+            </motion.div>
+            <h2 className="font-bold text-lg text-[#0f1d17]">Activity</h2>
+          </div>
+
+          {/* Donut chart */}
+          <div className="relative flex items-center justify-center my-4">
+            <svg viewBox="0 0 120 120" className="w-40 h-40 -rotate-90">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="#f0f4f2" strokeWidth="14" />
+
+              <motion.circle
+                cx="60" cy="60" r="50"
+                fill="none"
+                stroke="#227736"
+                strokeWidth="14"
+                strokeLinecap="round"
+                strokeDasharray="314"
+                initial={{ strokeDashoffset: 314 }}
+                animate={{ strokeDashoffset: 314 * (1 - 0.45) }}
+                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
+              />
+
+              <motion.circle
+                cx="60" cy="60" r="50"
+                fill="none"
+                stroke="#f4a228"
+                strokeWidth="14"
+                strokeLinecap="round"
+                strokeDasharray="314"
+                initial={{ strokeDashoffset: 314 }}
+                animate={{ strokeDashoffset: 314 * (1 - 0.30) }}
+                transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
+                style={{ transform: "rotate(162deg)", transformOrigin: "60px 60px" }}
+              />
+
+              <motion.circle
+                cx="60" cy="60" r="50"
+                fill="none"
+                stroke="#58b277"
+                strokeWidth="14"
+                strokeLinecap="round"
+                strokeDasharray="314"
+                initial={{ strokeDashoffset: 314 }}
+                animate={{ strokeDashoffset: 314 * (1 - 0.25) }}
+                transition={{ duration: 1.2, ease: "easeOut", delay: 0.6 }}
+                style={{ transform: "rotate(270deg)", transformOrigin: "60px 60px" }}
+              />
+            </svg>
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0">
+              <motion.p
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8, type: "spring" }}
+                className="text-3xl font-extrabold text-[#0f1d17]"
+              >
+                17
+              </motion.p>
+              <p className="text-[9px] text-[#5a6e63] uppercase tracking-wider font-bold">
+                Total
+              </p>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="space-y-2 mt-4">
+            {[
+              { icon: Bell, label: "Notices", value: 45, color: "#227736", count: 8 },
+              { icon: MessageSquare, label: "Complaints", value: 30, color: "#f4a228", count: 5 },
+              { icon: FileCheck, label: "Claims", value: 25, color: "#58b277", count: 4 },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.9 + i * 0.1 }}
+                  className="flex items-center justify-between text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-5 h-5 rounded-md flex items-center justify-center"
+                      style={{ backgroundColor: `${item.color}15` }}
+                    >
+                      <Icon size={10} style={{ color: item.color }} />
+                    </div>
+                    <span className="text-[#5a6e63] font-medium">{item.label}</span>
+                  </div>
+                  <span className="font-bold text-[#0f1d17]">{item.count}</span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ==================== COMPLAINTS + LOST & FOUND ==================== */}
+      <div className="grid lg:grid-cols-2 gap-6">
+
         {/* ---- My Complaints ---- */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          whileHover={{ y: -4 }}
           className="rounded-2xl bg-white border border-[#e2ebe6] p-6
-            hover:shadow-lg hover:shadow-[#227736]/5 transition-shadow duration-300"
+            hover:shadow-2xl hover:shadow-[#f4a228]/10 hover:border-[#f4a228]/30
+            transition-all duration-500"
         >
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-lg flex items-center gap-2.5 text-[#0f1d17]">
-              <div className="w-8 h-8 rounded-lg bg-[#fdf7ef] border border-[#f4a228]/30
-                flex items-center justify-center">
+              <motion.div
+                whileHover={{ rotate: 8, scale: 1.1 }}
+                className="w-8 h-8 rounded-lg bg-[#fdf7ef] border border-[#f4a228]/30
+                  flex items-center justify-center shadow-sm shadow-[#f4a228]/10"
+              >
                 <MessageSquare size={15} className="text-[#f4a228]" />
-              </div>
-              My Complaints
+              </motion.div>
+              Complaints
             </h2>
+            <Link
+              href="/student/complaints"
+              className="group text-xs md:text-sm text-[#227736] hover:text-[#1c6430]
+                font-semibold flex items-center gap-1 transition-all"
+            >
+              See all
+              <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
 
           <div className="space-y-3">
@@ -460,67 +732,75 @@ export default function StudentDashboard() {
                   initial={{ opacity: 0, x: 8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.15 + i * 0.08 }}
-                  whileHover={{ x: 4 }}
-                  className="group p-3 rounded-xl border border-[#e2ebe6] 
-                    hover:border-[#227736]/30 hover:bg-[#f8faf9] 
-                    transition-all duration-300"
+                  whileHover={{ x: 4, scale: 1.01 }}
+                  className="group p-3 rounded-xl border border-[#e2ebe6]
+                    hover:border-[#f4a228]/40 hover:bg-[#fdf7ef]/30
+                    transition-all duration-300 flex items-center gap-3"
                 >
-                  <p className="font-semibold text-sm text-[#0f1d17] line-clamp-1 
-                    group-hover:text-[#227736] transition-colors">
-                    {c.title}
-                  </p>
-                  <div className="mt-2 flex items-center justify-between">
+                  <motion.div
+                    whileHover={{ rotate: 8, scale: 1.1 }}
+                    className="w-9 h-9 rounded-lg bg-[#fdf7ef] border border-[#f4a228]/30
+                      flex items-center justify-center shrink-0
+                      group-hover:bg-[#f4a228] group-hover:border-[#f4a228]
+                      group-hover:shadow-md group-hover:shadow-[#f4a228]/30
+                      transition-all duration-300"
+                  >
+                    <MessageSquare size={14} className="text-[#f4a228] group-hover:text-white transition-colors" />
+                  </motion.div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-[#0f1d17] line-clamp-1
+                      group-hover:text-[#227736] transition-colors">
+                      {c.title}
+                    </p>
                     <span
-                      className={`inline-flex items-center gap-1.5 
-                        text-[10px] font-bold px-2 py-0.5 rounded-full border 
+                      className={`inline-flex items-center gap-1 mt-1
+                        text-[9px] font-bold px-1.5 py-0.5 rounded-full border
                         ${statusColors[c.status]}`}
                     >
                       {statusIcon(c.status)}
                       {c.status}
                     </span>
                   </div>
+
+                  <ArrowRight
+                    size={13}
+                    className="text-[#b0bfb7] group-hover:text-[#f4a228] group-hover:translate-x-1
+                      transition-all duration-300 shrink-0"
+                  />
                 </motion.div>
               </Link>
             ))}
           </div>
-
-          <Link
-            href="/student/complaints"
-            className="group inline-flex items-center gap-1 text-xs md:text-sm 
-              text-[#227736] hover:text-[#1c6430] font-semibold 
-              mt-5 transition-all"
-          >
-            View all
-            <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
         </motion.div>
-      </div>
-
-      {/* ==================== LOST & FOUND + CLAIMS ==================== */}
-      <div className="grid lg:grid-cols-2 gap-6">
 
         {/* ---- Lost & Found ---- */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          whileHover={{ y: -4 }}
           className="rounded-2xl bg-white border border-[#e2ebe6] p-6
-            hover:shadow-lg hover:shadow-[#227736]/5 transition-shadow duration-300"
+            hover:shadow-2xl hover:shadow-[#227736]/10 hover:border-[#227736]/30
+            transition-all duration-500"
         >
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-lg flex items-center gap-2.5 text-[#0f1d17]">
-              <div className="w-8 h-8 rounded-lg bg-[#eaf6ee] border border-[#c8e6d1]
-                flex items-center justify-center">
+              <motion.div
+                whileHover={{ rotate: 8, scale: 1.1 }}
+                className="w-8 h-8 rounded-lg bg-[#eaf6ee] border border-[#c8e6d1]
+                  flex items-center justify-center shadow-sm shadow-[#227736]/10"
+              >
                 <Search size={15} className="text-[#227736]" />
-              </div>
+              </motion.div>
               Lost & Found
             </h2>
             <Link
               href="/student/lost-found"
-              className="group text-xs md:text-sm text-[#227736] hover:text-[#1c6430] 
+              className="group text-xs md:text-sm text-[#227736] hover:text-[#1c6430]
                 font-semibold flex items-center gap-1 transition-all"
             >
-              View all
+              See all
               <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -535,35 +815,37 @@ export default function StudentDashboard() {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + i * 0.08 }}
-                    whileHover={{ x: 6 }}
-                    className="group p-3 rounded-xl border border-[#e2ebe6] 
-                      hover:border-[#227736]/30 hover:bg-[#f8faf9] 
-                      transition-all duration-300 
-                      flex items-center justify-between gap-3"
+                    whileHover={{ x: 6, scale: 1.01 }}
+                    className="group p-3 rounded-xl border border-[#e2ebe6]
+                      hover:border-[#227736]/30 hover:bg-[#f8faf9]
+                      transition-all duration-300 flex items-center gap-3"
                   >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center 
-                        shrink-0 border transition-colors duration-300 
+                    <motion.div
+                      whileHover={{ rotate: 8, scale: 1.1 }}
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center
+                        shrink-0 border transition-all duration-300 shadow-sm
                         ${
                           isLost
-                            ? "bg-[#fdf7ef] border-[#f4a228]/30 text-[#f4a228] group-hover:bg-[#f4a228] group-hover:text-white"
-                            : "bg-[#eaf6ee] border-[#c8e6d1] text-[#227736] group-hover:bg-[#227736] group-hover:text-white"
-                        }`}>
-                        <Icon size={17} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-sm text-[#0f1d17] truncate 
-                          group-hover:text-[#227736] transition-colors">
-                          {it.title}
-                        </p>
-                        <p className="text-xs text-[#5a6e63] truncate mt-0.5 
-                          flex items-center gap-1">
-                          <MapPin size={10} /> {it.location}
-                        </p>
-                      </div>
+                            ? "bg-gradient-to-br from-[#fdf7ef] to-[#f9e6c8] border-[#f4a228]/30 text-[#f4a228] group-hover:shadow-md group-hover:shadow-[#f4a228]/30"
+                            : "bg-gradient-to-br from-[#eaf6ee] to-[#d4ead9] border-[#c8e6d1] text-[#227736] group-hover:shadow-md group-hover:shadow-[#227736]/30"
+                        }`}
+                    >
+                      <Icon size={18} />
+                    </motion.div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-[#0f1d17] truncate
+                        group-hover:text-[#227736] transition-colors">
+                        {it.title}
+                      </p>
+                      <p className="text-[10px] text-[#5a6e63] truncate mt-0.5
+                        flex items-center gap-1">
+                        <MapPin size={9} /> {it.location}
+                      </p>
                     </div>
+
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 uppercase
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shrink-0 uppercase
                         ${
                           isLost
                             ? "bg-[#fdf7ef] text-[#b86b0a] border-[#f4a228]/40"
@@ -577,98 +859,22 @@ export default function StudentDashboard() {
               );
             })}
           </div>
-        </motion.div>
 
-        {/* ---- My Claims ---- */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="rounded-2xl bg-white border border-[#e2ebe6] p-6
-            hover:shadow-lg hover:shadow-[#227736]/5 transition-shadow duration-300"
-        >
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-bold text-lg flex items-center gap-2.5 text-[#0f1d17]">
-              <div className="w-8 h-8 rounded-lg bg-[#fdf7ef] border border-[#f4a228]/30
-                flex items-center justify-center">
-                <FileCheck size={15} className="text-[#f4a228]" />
-              </div>
-              My Claims
-            </h2>
-            <Link
-              href="/student/claims"
-              className="group text-xs md:text-sm text-[#227736] hover:text-[#1c6430] 
-                font-semibold flex items-center gap-1 transition-all"
-            >
-              View all
-              <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {myClaims.map((c, i) => (
-              <motion.div
-                key={c.id}
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25 + i * 0.08 }}
-                whileHover={{ x: 4 }}
-                className="p-3 rounded-xl border border-[#e2ebe6] 
-                  hover:border-[#227736]/30 hover:bg-[#f8faf9] 
-                  transition-all duration-300"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm text-[#0f1d17] flex items-center gap-1.5">
-                      <FileCheck size={12} className="text-[#f4a228]" />
-                      Claim #{c.id}
-                    </p>
-                    <p className="text-xs text-[#5a6e63] line-clamp-1 mt-1">
-                      {c.proof}
-                    </p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center gap-1.5 
-                      text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 
-                      ${statusColors[c.status]}`}
-                  >
-                    {statusIcon(c.status)}
-                    {c.status}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          {/* Visual CTA */}
+          <motion.div
+            whileHover={{ scale: 1.01, y: -2 }}
+            className="mt-4 p-3 rounded-xl bg-gradient-to-br from-[#227736]/5 via-[#f4a228]/5 to-[#227736]/5
+              border border-dashed border-[#c8e6d1] flex items-center gap-3 cursor-pointer
+              hover:border-[#227736]/40 transition-all duration-300"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white border border-[#c8e6d1]
+              flex items-center justify-center shadow-sm">
+              <Plus size={14} className="text-[#227736]" />
+            </div>
+            <span className="text-xs font-bold text-[#227736]">Report new item</span>
+          </motion.div>
         </motion.div>
       </div>
-
-      {/* ==================== QUICK TIP ==================== */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="relative rounded-2xl border border-[#e2ebe6] bg-[#f8faf9] 
-          p-5 flex items-start gap-3 overflow-hidden"
-      >
-        <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full 
-          bg-[#f4a228]/10 blur-2xl" />
-
-        <div className="relative w-10 h-10 rounded-xl bg-[#fdf7ef] 
-          flex items-center justify-center shrink-0 border border-[#f4a228]/30">
-          <Lightbulb size={18} className="text-[#f4a228]" />
-        </div>
-
-        <div className="relative">
-          <p className="text-sm font-bold text-[#0f1d17] flex items-center gap-1.5">
-            <Sparkles size={13} className="text-[#227736]" />
-            Quick tip
-          </p>
-          <p className="text-xs text-[#5a6e63] mt-1 leading-relaxed">
-            Long notices now come with AI summaries — click any notice to see
-            the key points in seconds.
-          </p>
-        </div>
-      </motion.div>
     </div>
   );
 }

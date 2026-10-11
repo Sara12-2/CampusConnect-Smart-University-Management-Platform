@@ -3,8 +3,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileCheck, Check, X, Clock, User, ShieldCheck,
-  Calendar, Inbox, CheckCircle2, XCircle, Search,
-  AlertCircle, ChevronDown, ArrowRight,
+  Calendar, Inbox, CheckCircle2, XCircle,
+  AlertCircle, ArrowRight,
 } from "lucide-react";
 import { mockClaims, mockLostFound } from "@/data/mock-data";
 import { formatDate } from "@/lib/utils";
@@ -18,6 +18,7 @@ const statusConfig: Record<string, {
   bg: string;
   text: string;
   border: string;
+  bar: string;
 }> = {
   pending: {
     icon: Clock,
@@ -25,6 +26,7 @@ const statusConfig: Record<string, {
     bg: "bg-[#fdf2e3]",
     text: "text-[#B45A0B]",
     border: "border-[#E67E22]/40",
+    bar: "bg-[#E67E22]",
   },
   approved: {
     icon: CheckCircle2,
@@ -32,6 +34,7 @@ const statusConfig: Record<string, {
     bg: "bg-[#eaf6ee]",
     text: "text-[#227736]",
     border: "border-[#c8e6d1]",
+    bar: "bg-[#227736]",
   },
   rejected: {
     icon: XCircle,
@@ -39,6 +42,7 @@ const statusConfig: Record<string, {
     bg: "bg-[#fdeaea]",
     text: "text-[#dc3545]",
     border: "border-[#f5c2c7]",
+    bar: "bg-[#dc3545]",
   },
 };
 
@@ -50,10 +54,25 @@ export default function AdminClaims() {
   );
 
   const stats = [
-    { label: "Total", value: mockClaims.length, accent: false },
-    { label: "Pending", value: mockClaims.filter(c => c.status === "pending").length, accent: true },
-    { label: "Approved", value: mockClaims.filter(c => c.status === "approved").length, accent: false },
-    { label: "Rejected", value: mockClaims.filter(c => c.status === "rejected").length, accent: true },
+    { id: "all" as const, label: "Total", value: mockClaims.length, accent: false },
+    {
+      id: "pending" as const,
+      label: "Pending",
+      value: mockClaims.filter((c) => c.status === "pending").length,
+      accent: true,
+    },
+    {
+      id: "approved" as const,
+      label: "Approved",
+      value: mockClaims.filter((c) => c.status === "approved").length,
+      accent: false,
+    },
+    {
+      id: "rejected" as const,
+      label: "Rejected",
+      value: mockClaims.filter((c) => c.status === "rejected").length,
+      accent: true,
+    },
   ];
 
   return (
@@ -61,140 +80,143 @@ export default function AdminClaims() {
 
       {/* ==================== HEADER ==================== */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="flex flex-wrap items-start justify-between gap-4"
+        transition={{ duration: 0.4 }}
+        className="flex flex-wrap items-end justify-between gap-4
+          pb-5 border-b border-[#e2ebe6]"
       >
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full 
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full
             bg-[#fdf2e3] border border-[#E67E22]/30 mb-3">
-            <ShieldCheck size={12} className="text-[#E67E22]" />
+            <ShieldCheck size={11} className="text-[#E67E22]" />
             <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#B45A0B]">
               Verification Queue
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f1d17] 
-            tracking-tight flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#E67E22] to-[#D35400] 
-              flex items-center justify-center shadow-lg shadow-[#E67E22]/25">
-              <FileCheck size={18} className="text-white" />
-            </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f1d17] tracking-tight">
             Manage Claims
           </h1>
-          <p className="text-sm text-[#5a6e63] mt-2">
-            Review and verify student claims for Lost & Found items.
+          <p className="text-sm text-[#5a6e63] mt-1">
+            Review and verify student claims.
           </p>
         </div>
       </motion.div>
 
-      {/* ==================== STATS ==================== */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((s, i) => (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            whileHover={{ y: -5 }}
-            className="group relative bg-white rounded-2xl border border-[#e2ebe6] p-5 
-              transition-all duration-300 overflow-hidden
-              hover:shadow-xl hover:shadow-[#227736]/5 hover:border-[#227736]/30"
-          >
-            {/* Corner accent */}
-            <div
-              className={`absolute top-0 right-0 w-16 h-16 rounded-bl-full 
-                opacity-0 group-hover:opacity-100 transition-opacity duration-300 
-                ${s.accent ? "bg-[#E67E22]/10" : "bg-[#227736]/10"}`}
-            />
+      {/* ==================== STATS (HORIZONTAL — wide) ==================== */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {stats.map((s, i) => {
+          const active = filter === s.id;
+          return (
+            <motion.button
+              key={s.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.06 }}
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setFilter(s.id)}
+              className={`group relative text-left bg-white rounded-2xl border
+                transition-all duration-300 overflow-hidden
+                px-5 py-4
+                ${
+                  active
+                    ? s.accent
+                      ? "border-[#E67E22] shadow-lg shadow-[#E67E22]/15"
+                      : "border-[#227736] shadow-lg shadow-[#227736]/15"
+                    : "border-[#e2ebe6] hover:border-[#227736]/40"
+                }`}
+            >
+              {active && (
+                <motion.div
+                  layoutId="activeClaimStat"
+                  className={`absolute inset-0 ${
+                    s.accent
+                      ? "bg-gradient-to-r from-[#fdf2e3] to-[#fbe4c7]/20"
+                      : "bg-gradient-to-r from-[#eaf6ee] to-[#d4ead9]/20"
+                  }`}
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
 
-            <p className={`relative text-3xl font-extrabold tracking-tight 
-              ${s.accent ? "text-[#E67E22]" : "text-[#227736]"}`}>
-              {s.value}
-            </p>
-            <p className="relative text-xs text-[#5a6e63] mt-1 font-medium">
-              {s.label}
-            </p>
+              {/* Horizontal layout: label LEFT, value RIGHT */}
+              <div className="relative flex items-center justify-between gap-3">
+                <p className="text-[11px] text-[#5a6e63] font-bold
+                  uppercase tracking-wider">
+                  {s.label}
+                </p>
+                <p
+                  className={`text-2xl font-extrabold tracking-tight tabular-nums
+                    ${s.accent ? "text-[#E67E22]" : "text-[#227736]"}`}
+                >
+                  {s.value}
+                </p>
+              </div>
 
-            {/* Bottom accent line */}
-            <span
-              className={`absolute bottom-0 left-5 right-5 h-0.5 origin-left 
-                scale-x-0 group-hover:scale-x-100 transition-transform duration-500 
-                rounded-full ${s.accent ? "bg-[#E67E22]" : "bg-[#227736]"}`}
-            />
-          </motion.div>
-        ))}
+              {active && (
+                <span
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    s.accent ? "bg-[#E67E22]" : "bg-[#227736]"
+                  }`}
+                />
+              )}
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* ==================== FILTER TABS ==================== */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="flex flex-wrap items-center gap-2 p-1.5 bg-[#f8faf9] 
-          border border-[#e2ebe6] rounded-2xl"
+        className="flex flex-wrap items-center gap-2"
       >
         {[
           { id: "all", label: "All", icon: Inbox },
           { id: "pending", label: "Pending", icon: Clock },
           { id: "approved", label: "Approved", icon: CheckCircle2 },
           { id: "rejected", label: "Rejected", icon: XCircle },
-        ].map((tab, i) => {
+        ].map((tab) => {
           const Icon = tab.icon;
           const active = filter === tab.id;
           return (
-            <motion.button
+            <button
               key={tab.id}
               onClick={() => setFilter(tab.id as any)}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              className={`relative flex items-center gap-2 px-4 py-2 rounded-xl 
-                text-sm font-semibold transition-all duration-300 
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg
+                text-xs font-bold transition-all duration-200
                 ${
                   active
-                    ? "bg-[#227736] text-white shadow-lg shadow-[#227736]/25"
-                    : "text-[#5a6e63] hover:bg-white hover:text-[#227736]"
+                    ? "bg-[#227736] text-white shadow-md shadow-[#227736]/20"
+                    : "bg-white border border-[#e2ebe6] text-[#5a6e63] hover:border-[#227736]/40 hover:text-[#227736]"
                 }`}
             >
-              <Icon size={14} />
+              <Icon size={12} />
               {tab.label}
-
-              {/* Active dot indicator */}
-              {active && (
-                <motion.span
-                  layoutId="activeClaimTab"
-                  className="absolute inset-0 rounded-xl border-2 border-[#227736]/20"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-            </motion.button>
+            </button>
           );
         })}
 
-        {/* Count badge */}
-        <span className="ml-auto text-xs text-[#5a6e63] font-medium px-3">
+        <span className="ml-auto text-xs text-[#5a6e63] font-medium">
           {filteredClaims.length} {filteredClaims.length === 1 ? "claim" : "claims"}
         </span>
       </motion.div>
 
-      {/* ==================== CLAIMS LIST ==================== */}
+      {/* ==================== CLAIMS LIST (HORIZONTAL CARDS) ==================== */}
       {filteredClaims.length === 0 ? (
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-16 border border-dashed border-[#e2ebe6] rounded-2xl bg-[#f8faf9]"
         >
-          <motion.div
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 3, repeat: Infinity }}
-            className="w-16 h-16 mx-auto rounded-2xl bg-[#eaf6ee] border border-[#c8e6d1] 
-              flex items-center justify-center mb-4"
-          >
-            <Inbox size={26} className="text-[#227736]" />
-          </motion.div>
-          <h3 className="font-bold text-[#0f1d17]">No claims found</h3>
-          <p className="text-sm text-[#5a6e63] mt-1">
-            Try a different filter to see claims.
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#eaf6ee] border border-[#c8e6d1]
+            flex items-center justify-center mb-3">
+            <Inbox size={22} className="text-[#227736]" />
+          </div>
+          <h3 className="font-bold text-[#0f1d17] text-sm">No claims found</h3>
+          <p className="text-xs text-[#5a6e63] mt-1">
+            Try a different filter.
           </p>
         </motion.div>
       ) : (
@@ -209,215 +231,111 @@ export default function AdminClaims() {
                 <motion.div
                   key={c.id}
                   layout
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{
-                    delay: i * 0.05,
-                    duration: 0.5,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  whileHover={{ y: -3 }}
-                  className="group relative bg-white rounded-2xl border border-[#e2ebe6] 
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ delay: i * 0.04, duration: 0.4 }}
+                  whileHover={{ y: -2 }}
+                  className="group relative bg-white rounded-2xl border border-[#e2ebe6]
                     hover:border-[#227736]/30 overflow-hidden
-                    transition-all duration-300 
-                    hover:shadow-xl hover:shadow-[#227736]/5"
+                    transition-all duration-300 hover:shadow-lg hover:shadow-[#227736]/5"
                 >
                   {/* Left accent bar */}
-                  <span
-                    className={`absolute left-0 top-0 bottom-0 w-1 
-                      transition-transform duration-500 
-                      ${c.status === "pending" ? "bg-[#E67E22]" : 
-                        c.status === "approved" ? "bg-[#227736]" : "bg-[#dc3545]"}`}
-                  />
+                  <span className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.bar}`} />
 
-                  {/* Corner accent */}
-                  <div
-                    className={`absolute top-0 right-0 w-24 h-24 rounded-bl-full 
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-500 
-                      ${c.status === "pending" ? "bg-[#E67E22]/8" : 
-                        c.status === "approved" ? "bg-[#227736]/8" : "bg-[#dc3545]/8"}`}
-                  />
+                  {/* HORIZONTAL layout: icon | content | status | actions */}
+                  <div className="relative flex flex-col lg:flex-row lg:items-center gap-4
+                    p-4 pl-5">
 
-                  <div className="relative p-5 pl-6">
-                    {/* Header row */}
-                    <div className="flex items-start gap-4">
-                      {/* Icon */}
+                    {/* Icon + Title (LEFT) */}
+                    <div className="flex items-center gap-3 lg:flex-1 min-w-0">
                       <motion.div
                         whileHover={{ rotate: 8, scale: 1.08 }}
                         transition={{ type: "spring", stiffness: 300 }}
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center 
-                          shrink-0 shadow-md border 
-                          ${
-                            c.status === "pending"
-                              ? "bg-[#fdf2e3] border-[#E67E22]/30 text-[#E67E22] shadow-[#E67E22]/20"
-                              : c.status === "approved"
-                              ? "bg-[#eaf6ee] border-[#c8e6d1] text-[#227736] shadow-[#227736]/20"
-                              : "bg-[#fdeaea] border-[#f5c2c7] text-[#dc3545] shadow-red-500/20"
-                          }`}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center
+                          shrink-0 border ${cfg.bg} ${cfg.border} ${cfg.text}`}
                       >
-                        <FileCheck size={20} />
+                        <FileCheck size={16} />
                       </motion.div>
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-bold text-[#0f1d17] text-base">
-                                Claim for {item?.title || "Unknown Item"}
-                              </h3>
-                              <span
-                                className={`inline-flex items-center gap-1 
-                                  text-[10px] font-bold px-2 py-0.5 rounded-full 
-                                  border uppercase tracking-wider
-                                  ${cfg.bg} ${cfg.text} ${cfg.border}`}
-                              >
-                                <StatusIcon size={10} />
-                                {cfg.label}
-                              </span>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
-                              <span className="inline-flex items-center gap-1.5 
-                                text-xs text-[#5a6e63]">
-                                <User size={11} />
-                                <span className="font-medium text-[#0f1d17]">
-                                  {c.claimantName}
-                                </span>
-                              </span>
-                              <span className="inline-flex items-center gap-1.5 
-                                text-xs text-[#5a6e63]">
-                                <Calendar size={11} />
-                                {formatDate(c.createdAt)}
-                              </span>
-                            </div>
-                          </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-[#0f1d17] text-sm
+                          tracking-tight line-clamp-1">
+                          {item?.title || "Unknown Item"}
+                        </h3>
+                        <div className="flex items-center gap-3 mt-0.5 text-[10px] text-[#5a6e63]">
+                          <span className="inline-flex items-center gap-1">
+                            <User size={9} />
+                            <span className="font-medium text-[#0f1d17]">
+                              {c.claimantName}
+                            </span>
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar size={9} />
+                            {formatDate(c.createdAt)}
+                          </span>
                         </div>
-
-                        {/* Proof block */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.15 }}
-                          className="mt-4 p-3.5 rounded-xl bg-[#f8faf9] 
-                            border border-[#e2ebe6] relative overflow-hidden"
-                        >
-                          {/* Accent line */}
-                          <span
-                            className={`absolute left-0 top-0 bottom-0 w-0.5 
-                              ${c.status === "pending" ? "bg-[#E67E22]" : 
-                                c.status === "approved" ? "bg-[#227736]" : "bg-[#dc3545]"}`}
-                          />
-
-                          <div className="flex items-start gap-2 pl-2">
-                            <AlertCircle
-                              size={13}
-                              className="text-[#E67E22] mt-0.5 shrink-0"
-                            />
-                            <div>
-                              <p className="text-[10px] font-bold text-[#5a6e63] 
-                                uppercase tracking-wider mb-1">
-                                Ownership Proof
-                              </p>
-                              <p className="text-sm text-[#0f1d17] leading-relaxed">
-                                {c.proof}
-                              </p>
-                            </div>
-                          </div>
-                        </motion.div>
                       </div>
                     </div>
 
-                    {/* Actions (only for pending) */}
+                    {/* Proof (MIDDLE — expands on wide screens) */}
+                    <div className="lg:flex-1 flex items-start gap-2 px-3 py-2 rounded-lg
+                      bg-[#f8faf9] border border-[#e2ebe6]">
+                      <AlertCircle size={11} className="text-[#E67E22] mt-0.5 shrink-0" />
+                      <p className="text-[11px] text-[#5a6e63] leading-relaxed line-clamp-1 lg:line-clamp-2">
+                        {c.proof}
+                      </p>
+                    </div>
+
+                    {/* Status badge (RIGHT) */}
+                    <span
+                      className={`shrink-0 inline-flex items-center gap-1
+                        text-[10px] font-bold px-2.5 py-1 rounded-full
+                        border uppercase tracking-wider
+                        ${cfg.bg} ${cfg.text} ${cfg.border}`}
+                    >
+                      <StatusIcon size={9} />
+                      {cfg.label}
+                    </span>
+
+                    {/* Actions (FAR RIGHT) */}
                     {c.status === "pending" && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="mt-5 pt-4 border-t border-[#e2ebe6] 
-                          flex flex-col sm:flex-row gap-2"
-                      >
+                      <div className="flex items-center gap-2 shrink-0">
                         <motion.button
-                          whileHover={{ y: -2, scale: 1.02 }}
-                          whileTap={{ scale: 0.97 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                          className="flex-1 flex items-center justify-center gap-2 
-                            py-2.5 rounded-xl bg-[#227736] text-white text-sm font-bold 
-                            shadow-md shadow-[#227736]/25 
-                            hover:bg-[#1c6430] hover:shadow-lg hover:shadow-[#227736]/30
-                            transition-all duration-300"
+                          whileHover={{ y: -2 }}
+                          whileTap={{ scale: 0.96 }}
+                          className="flex items-center gap-1
+                            px-3.5 py-2 rounded-lg bg-[#227736] text-white text-xs font-bold
+                            shadow-md shadow-[#227736]/20 hover:bg-[#1c6430]
+                            transition-all duration-200"
                         >
-                          <Check size={15} strokeWidth={3} />
-                          Approve Claim
+                          <Check size={12} strokeWidth={3} />
+                          Approve
                         </motion.button>
 
                         <motion.button
-                          whileHover={{ y: -2, scale: 1.02 }}
-                          whileTap={{ scale: 0.97 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                          className="flex-1 flex items-center justify-center gap-2 
-                            py-2.5 rounded-xl bg-white text-[#dc3545] text-sm font-bold 
-                            border-2 border-[#dc3545]/30 
-                            hover:bg-[#fdeaea] hover:border-[#dc3545]
-                            transition-all duration-300"
+                          whileHover={{ y: -2 }}
+                          whileTap={{ scale: 0.96 }}
+                          className="flex items-center gap-1
+                            px-3.5 py-2 rounded-lg bg-white text-[#dc3545] text-xs font-bold
+                            border-2 border-[#dc3545]/30 hover:bg-[#fdeaea]
+                            hover:border-[#dc3545] transition-all duration-200"
                         >
-                          <X size={15} strokeWidth={3} />
-                          Reject Claim
+                          <X size={12} strokeWidth={3} />
+                          Reject
                         </motion.button>
-
-                        <motion.button
-                          whileHover={{ y: -2, scale: 1.02 }}
-                          whileTap={{ scale: 0.97 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                          className="flex items-center justify-center gap-2 
-                            py-2.5 px-4 rounded-xl bg-[#f8faf9] text-[#5a6e63] 
-                            text-sm font-bold border border-[#e2ebe6]
-                            hover:bg-white hover:text-[#227736] hover:border-[#227736]/40
-                            transition-all duration-300"
-                        >
-                          <Search size={14} />
-                          <span className="hidden sm:inline">Details</span>
-                        </motion.button>
-                      </motion.div>
+                      </div>
                     )}
 
-                    {/* Resolved footer (non-pending) */}
                     {c.status !== "pending" && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="mt-4 pt-3 border-t border-[#e2ebe6] 
-                          flex items-center justify-between"
+                      <motion.button
+                        whileHover={{ x: 3 }}
+                        className="shrink-0 flex items-center gap-1 text-xs font-bold
+                          text-[#227736] hover:text-[#1c6430] transition-colors px-2"
                       >
-                        <div className="flex items-center gap-2 text-xs">
-                          {c.status === "approved" ? (
-                            <>
-                              <CheckCircle2 size={14} className="text-[#227736]" />
-                              <span className="text-[#5a6e63]">
-                                Verified and approved
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle size={14} className="text-[#dc3545]" />
-                              <span className="text-[#5a6e63]">
-                                Claim rejected
-                              </span>
-                            </>
-                          )}
-                        </div>
-
-                        <motion.button
-                          whileHover={{ x: 3 }}
-                          className="flex items-center gap-1 text-xs font-bold 
-                            text-[#227736] hover:text-[#1c6430] transition-colors"
-                        >
-                          View details
-                          <ArrowRight size={11} />
-                        </motion.button>
-                      </motion.div>
+                        Details
+                        <ArrowRight size={11} />
+                      </motion.button>
                     )}
                   </div>
                 </motion.div>
