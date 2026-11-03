@@ -6,8 +6,9 @@ supporting both simple Gemini dialogue and full RAG semantic search.
 
 from fastapi import APIRouter, status
 from app.schemas.chat import ChatRequest, ChatResponse
-from app.services.rag_service import process_chat, ensure_vector_store_populated  # type: ignore
-from app.services.vector_store import get_document_count  # type: ignore
+from app.services.rag_service import process_chat, ensure_vector_store_populated
+from app.services.vector_store import get_document_count
+from app.services.ai_service import test_gemini_connection
 from app.config import settings
 
 
@@ -59,10 +60,22 @@ def chat_status():
     ensure_vector_store_populated()
     doc_count = get_document_count()
     has_api_key = bool(settings.gemini_api_key)
+    connectivity = test_gemini_connection()
     return {
         "status": "online",
         "gemini_configured": has_api_key,
+        "gemini_connected": connectivity.get("connected", False),
+        "gemini_details": connectivity,
         "model": settings.ai_model,
         "vector_store_documents": doc_count,
         "rag_ready": doc_count > 0,
     }
+
+
+@router.get(
+    "/test-connection",
+    summary="Test Google Gemini API connectivity",
+)
+def test_connection_endpoint():
+    """Live verification of the Gemini API key and model connectivity."""
+    return test_gemini_connection()

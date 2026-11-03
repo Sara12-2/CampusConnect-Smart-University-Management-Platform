@@ -1,4 +1,5 @@
 from pathlib import Path
+# pyrefly: ignore[missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -18,8 +19,8 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     chroma_dir: str = str(BACKEND_DIR / "vector_store")
-    ai_model: str = "gemini-flash-latest"
-    embedding_model: str = "text-embedding-004"
+    ai_model: str = "gemini-flash-lite-latest"
+    embedding_model: str = "gemini-embedding-001"
 
     model_config = SettingsConfigDict(
         env_file=str(ENV_PATH) if ENV_PATH.exists() else ".env",
@@ -27,4 +28,4 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()
+settings = Settings()

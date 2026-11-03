@@ -89,6 +89,7 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
     api_key = _get_api_key()
     if api_key:
         try:
+            # pyrefly: ignore[missing-import]
             from google import genai
 
             client = genai.Client(api_key=api_key)

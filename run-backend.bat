@@ -4,7 +4,13 @@ echo ====================================================
 echo Starting CampusConnect Backend Server...
 echo API Docs will be available at: http://localhost:8000/docs
 echo ====================================================
-if exist venv\Scripts\activate.bat (
+if exist "%~dp0.venv\Scripts\activate.bat" (
+    call "%~dp0.venv\Scripts\activate.bat"
+) else if exist ..\.venv\Scripts\activate.bat (
+    call ..\.venv\Scripts\activate.bat
+) else if exist .venv\Scripts\activate.bat (
+    call .venv\Scripts\activate.bat
+) else if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat
 )
 python -c "import fastapi" 2>nul

@@ -1,0 +1,13 @@
+.venv/
+venv/
+ENV/
+env/
+powershell.cmd
+*.zip
+.env
+.env.*
+*.env
+*.env.*
+__pycache__/
+*.pyc
+.DS_Store

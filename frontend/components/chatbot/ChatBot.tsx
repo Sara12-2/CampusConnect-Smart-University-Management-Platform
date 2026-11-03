@@ -14,10 +14,12 @@ import {
   FileText,
   Search,
   GraduationCap,
-  HelpCircle,
+  Activity,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getMockReply } from "./mockReplies";
 
 interface Message {
   id: string;
@@ -30,9 +32,9 @@ interface Message {
 
 const WELCOME_QUOTES = [
   "How can I help you navigate CampusConnect today?",
-  "Ask about exams, scholarships, or lodge complaints in English or Roman Urdu.",
+  "Ask about exams, scholarships, campus policies, or lodge complaints in English.",
   "Need help finding a lost item or checking the latest department notices?",
-  "Aap mujh se Urdu ya English dono mein university ke baray mein pooch saktay hain.",
+  "I am your official CampusConnect English AI guide. How can I assist you today?",
 ];
 
 const SUGGESTION_CARDS = [
@@ -61,14 +63,13 @@ const SUGGESTION_CARDS = [
     icon: GraduationCap,
     title: "Scholarships",
     subtitle: "Eligibility criteria & CGPA rules",
-    prompt: "Tell me about scholarship",
+    prompt: "Tell me about scholarship criteria and deadlines",
     color: "from-purple-500 to-pink-600",
   },
 ];
 
 function renderInline(text: string): React.ReactNode {
   if (!text) return "";
-  // Parse **bold** markers
   const parts = text.split(/(\*\*.*?\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
@@ -79,7 +80,6 @@ function renderInline(text: string): React.ReactNode {
         </strong>
       );
     }
-    // Remove any remaining raw asterisks so they never display
     const cleaned = part.replace(/\*+/g, "");
     return <span key={i}>{cleaned}</span>;
   });
@@ -94,17 +94,14 @@ function FormattedMessage({ content }: { content: string }) {
       {lines.map((line, idx) => {
         const trimmed = line.trim();
 
-        // Empty line
         if (!trimmed) {
           return <div key={idx} className="h-1" />;
         }
 
-        // Horizontal divider (--- or ***)
         if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
           return <div key={idx} className="my-1.5 border-t border-emerald-100" />;
         }
 
-        // Heading 3 (### Heading)
         if (trimmed.startsWith("### ")) {
           return (
             <div key={idx} className="font-bold text-[#144722] text-xs sm:text-sm mt-2 mb-0.5">
@@ -113,7 +110,6 @@ function FormattedMessage({ content }: { content: string }) {
           );
         }
 
-        // Heading 1 or 2 (## Heading)
         if (trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
           return (
             <div key={idx} className="font-bold text-[#144722] text-sm sm:text-base mt-2 mb-0.5">
@@ -122,7 +118,6 @@ function FormattedMessage({ content }: { content: string }) {
           );
         }
 
-        // Bullet point (* item or - item or • item)
         if (trimmed.startsWith("* ") || trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
           const bulletText = trimmed.replace(/^[\*\-•]\s+/, "");
           return (
@@ -133,7 +128,6 @@ function FormattedMessage({ content }: { content: string }) {
           );
         }
 
-        // Numbered list item (1. item or 2. item)
         const numMatch = trimmed.match(/^(\d+\.)\s+(.+)$/);
         if (numMatch) {
           return (
@@ -144,7 +138,6 @@ function FormattedMessage({ content }: { content: string }) {
           );
         }
 
-        // Standard paragraph line
         return (
           <p key={idx} className="my-0.5">
             {renderInline(trimmed)}
@@ -162,36 +155,44 @@ export default function ChatBot() {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [welcomeQuoteIdx, setWelcomeQuoteIdx] = useState(0);
-  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+
+  // Gemini Connectivity State
+  const [geminiConnected, setGeminiConnected] = useState<boolean | null>(null);
+  const [geminiModel, setGeminiModel] = useState<string>("gemini-flash-lite-latest");
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Health-check backend API
-  useEffect(() => {
-    let isMounted = true;
-    const checkBackend = async () => {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
-        const res = await fetch("http://127.0.0.1:8000/health", {
-          method: "GET",
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        if (isMounted) setBackendOnline(res.ok);
-      } catch {
-        if (isMounted) setBackendOnline(false);
+  // Live Test Google Gemini Connectivity
+  const runConnectivityTest = async () => {
+    setTestingConnection(true);
+    setConnectionMessage("Testing Gemini API connection...");
+    try {
+      const res = await fetch("/api/chat/test");
+      const data = await res.json();
+      if (res.ok && data.connected) {
+        setGeminiConnected(true);
+        setGeminiModel(data.displayName || data.model || "Gemini 2.5 Flash");
+        setConnectionMessage(`✅ Connected to ${data.displayName || data.model} (${data.latencyMs}ms)`);
+      } else {
+        setGeminiConnected(false);
+        setConnectionMessage(`❌ Gemini Error: ${data.error || "Connection failed"}`);
       }
-    };
-    checkBackend();
-    const interval = setInterval(checkBackend, 6000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    } catch (err: any) {
+      setGeminiConnected(false);
+      setConnectionMessage(`❌ Connectivity test failed: ${err.message}`);
+    } finally {
+      setTestingConnection(false);
+      setTimeout(() => setConnectionMessage(null), 5000);
+    }
+  };
+
+  // Initial check on mount
+  useEffect(() => {
+    runConnectivityTest();
   }, []);
 
-  // Time-based greeting (e.g. Good morning / afternoon / evening)
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -199,7 +200,6 @@ export default function ChatBot() {
     return "Good evening";
   }, []);
 
-  // Rotate greeting quote when chatbot is opened
   useEffect(() => {
     if (open) {
       setWelcomeQuoteIdx(Math.floor(Math.random() * WELCOME_QUOTES.length));
@@ -233,44 +233,61 @@ export default function ChatBot() {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 40000);
-      const response = await fetch("http://127.0.0.1:8000/api/chat/", {
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+      // Connect to Gemini chat route
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: content,
-          use_rag: true,
+          history: messages.slice(-4).map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
         }),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
-      }
-      setBackendOnline(true);
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `API returned ${response.status}`);
+      }
+
+      setGeminiConnected(true);
+
+      const rawSources = Array.isArray(data.sources) ? data.sources : [];
+      // Clean sources: filter out model names and tech terms
+      const cleanSources = rawSources.filter((s: string) => {
+        const lower = (s || "").toLowerCase();
+        return (
+          !lower.includes("gemini") &&
+          !lower.includes("google") &&
+          !lower.includes("backend rag") &&
+          !lower.includes("flash")
+        );
+      });
+
       const botMsg: Message = {
         id: `b-${Date.now()}`,
         role: "bot",
         content: data.reply || "Sorry, I could not generate a reply.",
         time: now(),
-        sources: Array.isArray(data.sources) ? data.sources : [],
-        mode: data.mode || "rag",
+        sources: cleanSources,
+        mode: data.mode || "verified",
       };
       setMessages((m) => [...m, botMsg]);
-    } catch {
-      // Offline fallback to intelligent local reply
-      setBackendOnline(false);
-      const reply = getMockReply(content);
+    } catch (err: any) {
+      setGeminiConnected(false);
       const botMsg: Message = {
         id: `b-${Date.now()}`,
         role: "bot",
-        content: reply,
+        content: `⚠️ **Connection Error**: Unable to get reply from Google Gemini API.\n\n*Error details:* ${err.message || "Failed to reach Gemini API"}.\n\nPlease check your internet connection or verify your \`GEMINI_API_KEY\` setting.`,
         time: now(),
         sources: [],
-        mode: "local",
+        mode: "error",
       };
       setMessages((m) => [...m, botMsg]);
     } finally {
@@ -345,7 +362,12 @@ export default function ChatBot() {
                   <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shadow-inner">
                     <Sparkles size={18} className="text-[#f4a228]" />
                   </div>
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#58b277] ring-2 ring-[#227736]" />
+                  <span
+                    className={cn(
+                      "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[#227736]",
+                      geminiConnected ? "bg-[#58b277]" : "bg-amber-400"
+                    )}
+                  />
                 </div>
 
                 <div>
@@ -353,32 +375,44 @@ export default function ChatBot() {
                     <p className="font-bold text-sm tracking-tight text-white">
                       CampusConnect AI
                     </p>
-                    {backendOnline === true ? (
+                    {geminiConnected === true ? (
                       <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-400/25 text-emerald-200 border border-emerald-400/35 tracking-wider flex items-center gap-1 shadow-xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                        Live RAG
+                        Gemini Live
                       </span>
-                    ) : backendOnline === false ? (
+                    ) : geminiConnected === false ? (
                       <span
                         className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-400/30 tracking-wider flex items-center gap-1 cursor-help"
-                        title="Backend API not running. Run run-backend.bat to connect Gemini RAG API."
+                        title="Gemini API is not connected. Click test connection."
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
-                        Offline Mode
+                        <AlertCircle size={10} className="text-amber-300" />
+                        Key Disconnected
                       </span>
                     ) : (
-                      <span className="text-[9px] font-medium uppercase px-1.5 py-0.5 rounded-full bg-white/15 text-white/80 tracking-wider">
+                      <span className="text-[9px] font-medium uppercase px-1.5 py-0.5 rounded-full bg-white/15 text-white/80 tracking-wider flex items-center gap-1">
+                        <Activity size={10} className="animate-spin" />
                         Connecting...
                       </span>
                     )}
                   </div>
                   <p className="text-[11px] text-white/80 flex items-center gap-1">
-                    English & Roman Urdu Support
+                    English AI Campus Assistant
                   </p>
                 </div>
               </div>
 
               <div className="relative flex items-center gap-1 z-10">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={runConnectivityTest}
+                  disabled={testingConnection}
+                  title="Test Gemini API Connection"
+                  className="p-1.5 rounded-lg hover:bg-white/15 text-white/80 hover:text-white transition-colors"
+                  aria-label="Test Connection"
+                >
+                  <RefreshCw size={14} className={cn(testingConnection && "animate-spin")} />
+                </motion.button>
                 {messages.length > 0 && (
                   <motion.button
                     whileHover={{ scale: 1.1, rotate: -90 }}
@@ -412,11 +446,27 @@ export default function ChatBot() {
               </div>
             </div>
 
+            {/* Connection Status Toast / Banner */}
+            {connectionMessage && (
+              <div className="bg-emerald-800 text-white text-[11px] px-3 py-1.5 flex items-center justify-between border-b border-emerald-700/60">
+                <span className="flex items-center gap-1.5 font-medium truncate">
+                  <Activity size={12} className="text-[#f4a228] shrink-0" />
+                  {connectionMessage}
+                </span>
+                <button
+                  onClick={() => setConnectionMessage(null)}
+                  className="text-white/70 hover:text-white ml-2 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {/* ============ BODY ============ */}
             {!minimized && (
               <>
                 <div className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-[#f8faf9]">
-                  {/* ====== GEMINI / CHATGPT STYLE WELCOME SCREEN ====== */}
+                  {/* ====== WELCOME SCREEN ====== */}
                   {messages.length === 0 ? (
                     <div className="py-2 px-1 flex flex-col justify-between h-full">
                       {/* Greeting Headline */}
@@ -428,7 +478,7 @@ export default function ChatBot() {
                       >
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[#227736] text-xs font-semibold mb-3 shadow-xs">
                           <Sparkles size={13} className="text-[#f4a228]" />
-                          <span>Gemini 2.0 & ChromaDB RAG</span>
+                          <span>CampusConnect AI Assistant</span>
                         </div>
 
                         <h3 className="text-xl font-extrabold text-[#0f1d17] tracking-tight">
@@ -439,7 +489,7 @@ export default function ChatBot() {
                         </p>
                       </motion.div>
 
-                      {/* Interactive Prompt Cards Grid (like ChatGPT/Gemini) */}
+                      {/* Interactive Prompt Cards */}
                       <div className="grid grid-cols-2 gap-2 my-2">
                         {SUGGESTION_CARDS.map((card, idx) => {
                           const Icon = card.icon;
@@ -475,21 +525,17 @@ export default function ChatBot() {
                         })}
                       </div>
 
-                      {/* Roman Urdu Quick Pill */}
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="mt-2 text-center"
-                      >
+                      {/* Connectivity verification */}
+                      <div className="mt-3 text-center">
                         <button
-                          onClick={() => handleSend("Mai complaint kaise darj karun?")}
-                          className="text-[11px] px-3 py-1.5 rounded-full bg-emerald-50 text-[#1c6430] border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-all font-medium inline-flex items-center gap-1.5"
+                          onClick={runConnectivityTest}
+                          disabled={testingConnection}
+                          className="text-[11px] text-[#5a6e63] hover:text-[#227736] transition-colors inline-flex items-center gap-1.5"
                         >
-                          <span>🇵🇰 Roman Urdu:</span>
-                          <span className="font-semibold underline">Mai complaint kaise darj karun?</span>
+                          <CheckCircle2 size={12} className={cn(geminiConnected ? "text-emerald-600" : "text-amber-500")} />
+                          <span>Status: {geminiConnected ? "Gemini Connected & Ready" : "Check Connection"}</span>
                         </button>
-                      </motion.div>
+                      </div>
                     </div>
                   ) : (
                     /* ====== ACTIVE MESSAGE LIST ====== */
@@ -525,6 +571,8 @@ export default function ChatBot() {
                             "max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed",
                             msg.role === "user"
                               ? "bg-[#227736] text-white rounded-br-md shadow-md shadow-[#227736]/25 whitespace-pre-line"
+                              : msg.mode === "error"
+                              ? "bg-red-50 text-red-900 border border-red-200 rounded-bl-md shadow-xs"
                               : "bg-white text-[#0f1d17] border border-[#e2ebe6] rounded-bl-md shadow-xs"
                           )}
                         >
@@ -534,16 +582,16 @@ export default function ChatBot() {
                             <FormattedMessage content={msg.content} />
                           )}
 
-                          {/* Grounded RAG Citations */}
+                          {/* Grounded Official Sources */}
                           {msg.sources && msg.sources.length > 0 && (
-                            <div className="mt-2 pt-2 border-t border-emerald-100 flex flex-wrap gap-1">
-                              <span className="text-[10px] font-semibold text-[#227736] flex items-center">
-                                📚 Sources:
+                            <div className="mt-2 pt-2 border-t border-emerald-100 flex flex-wrap items-center gap-1">
+                              <span className="text-[10px] font-semibold text-[#1c6430] flex items-center">
+                                📚 Official Sources:
                               </span>
                               {msg.sources.map((src, i) => (
                                 <span
                                   key={i}
-                                  className="text-[10px] bg-[#eaf6ee] text-[#1c6430] px-1.5 py-0.5 rounded-md border border-[#c8e6d1]"
+                                  className="text-[10px] bg-emerald-50 text-[#144722] font-medium px-2 py-0.5 rounded-md border border-emerald-200/80"
                                 >
                                   {src}
                                 </span>
@@ -561,12 +609,12 @@ export default function ChatBot() {
                               <span
                                 className={cn(
                                   "px-1.5 py-0.5 rounded text-[9px] font-semibold border flex items-center gap-1",
-                                  msg.mode === "rag"
-                                    ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                                    : "bg-amber-50 text-amber-800 border-amber-200"
+                                  msg.mode === "error"
+                                    ? "bg-red-100 text-red-800 border-red-300"
+                                    : "bg-emerald-50 text-emerald-800 border-emerald-300"
                                 )}
                               >
-                                {msg.mode === "rag" ? "🟢 Live Gemini RAG" : "🟡 Offline Assistant"}
+                                {msg.mode === "error" ? "⚠️ Error" : "🟢 CampusConnect AI"}
                               </span>
                             )}
                             <span className="opacity-60">{msg.time}</span>
@@ -636,7 +684,7 @@ export default function ChatBot() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Ask in English or Roman Urdu..."
+                        placeholder="Ask CampusConnect Assistant in English..."
                         rows={1}
                         className="w-full resize-none rounded-xl border border-[#e2ebe6] bg-[#f8faf9] px-3.5 py-2.5 text-xs sm:text-sm outline-none text-[#0f1d17] focus:border-[#227736] focus:bg-white focus:ring-3 focus:ring-[#227736]/10 transition-all duration-200 placeholder:text-[#5a6e63] max-h-24"
                         style={{ minHeight: 40 }}
