@@ -1,3 +1,33 @@
-"backend/vector_store/" 
-"*.sqlite3" 
-"*.bin" 
+# Python
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.pyc
+
+# Environment
+.env
+.env.*
+*.env
+*.env.*
+
+# Node
+node_modules/
+.next/
+out/
+
+# Vector Database
+backend/vector_store/
+backend/vector_store_temp/
+
+# Generated files
+*.sqlite3
+*.zip
+
+# IDE and OS
+.vscode/
+.DS_Store
+
+# Other
+powershell.cmd

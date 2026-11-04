@@ -1,41 +1,36 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Python cache
+__pycache__/
+*.pyc
 
-# testing
-/coverage
+# Environment variables and secrets
+.env
+.env.*
+*.env
+*.env.*
 
-# next.js
-/.next/
-/out/
+# Node.js
+node_modules/
+.next/
+out/
 
-# production
-/build
+# Vector Database
+backend/vector_store/
+backend/vector_store_temp/
 
-# misc
+# Database files
+*.sqlite3
+
+# Generated files
+*.zip
+
+# OS files
 .DS_Store
-*.pem
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Other
+powershell.cmd

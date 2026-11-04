@@ -14,9 +14,9 @@ import {
   FileText,
   Search,
   GraduationCap,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getMockReply } from "./mockReplies";
 
 interface Message {
   id: string;
@@ -29,21 +29,42 @@ interface Message {
 
 const WELCOME_QUOTES = [
   "How can I help you navigate CampusConnect today?",
-  "Ask about exams, scholarships, or lodge complaints in English or Roman Urdu.",
+  "Ask about exams, scholarships, campus policies, or lodge complaints in English.",
   "Need help finding a lost item or checking the latest department notices?",
-  "Aap mujh se Urdu ya English dono mein university ke baray mein pooch saktay hain.",
+  "I am your official CampusConnect English AI guide. How can I assist you today?",
 ];
 
 const SUGGESTION_CARDS = [
-  { icon: Bell, title: "Exam Schedule", subtitle: "When is the midterm?", prompt: "What is the exam schedule?" },
-  { icon: FileText, title: "Lodge Complaint", subtitle: "Report Wi-Fi or electricity", prompt: "How do I submit a complaint?" },
-  { icon: Search, title: "Lost & Found", subtitle: "Claim or report lost items", prompt: "How do I claim a lost item?" },
-  { icon: GraduationCap, title: "Scholarships", subtitle: "Eligibility criteria", prompt: "Tell me about scholarship" },
+  {
+    icon: Bell,
+    title: "Exam Schedule",
+    subtitle: "When is the midterm examination?",
+    prompt: "What is the exam schedule?",
+    color: "from-emerald-500 to-green-600",
+  },
+  {
+    icon: FileText,
+    title: "Lodge Complaint",
+    subtitle: "How to report Wi-Fi or electricity issues",
+    prompt: "How do I submit a complaint?",
+    color: "from-blue-500 to-indigo-600",
+  },
+  {
+    icon: Search,
+    title: "Lost & Found",
+    subtitle: "How to claim or report lost property",
+    prompt: "How do I claim a lost item?",
+    color: "from-amber-500 to-orange-600",
+  },
+  {
+    icon: GraduationCap,
+    title: "Scholarships",
+    subtitle: "Eligibility criteria & CGPA rules",
+    prompt: "Tell me about scholarship",
+    color: "from-purple-500 to-pink-600",
+  },
 ];
 
-/* ============================================================
-   INLINE MARKDOWN PARSER
-   ============================================================ */
 function renderInline(text: string): React.ReactNode {
   if (!text) return "";
   const parts = text.split(/(\*\*.*?\*\*)/g);
@@ -70,7 +91,10 @@ function FormattedMessage({ content }: { content: string }) {
       {lines.map((line, idx) => {
         const trimmed = line.trim();
 
-        if (!trimmed) return <div key={idx} className="h-1" />;
+        // Empty line
+        if (!trimmed) {
+          return <div key={idx} className="h-1" />;
+        }
 
         if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
           return <div key={idx} className="my-1.5 border-t border-[#e2ebe6]" />;
@@ -132,49 +156,34 @@ export default function ChatBot() {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [welcomeQuoteIdx, setWelcomeQuoteIdx] = useState(0);
-  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+
+  // Gemini Connectivity State
+  const [geminiConnected, setGeminiConnected] = useState<boolean | null>(null);
+  const [geminiModel, setGeminiModel] = useState<string>("gemini-flash-lite-latest");
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // ============================================================
-  // HEALTH CHECK — backend detection
-  // Timeout: 8000ms (was 3500ms) — Windows cold start friendly
-  // Interval: 10000ms (was 6000ms)
-  // ============================================================
+  // Health-check backend API
   useEffect(() => {
     let isMounted = true;
-
     const checkBackend = async () => {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
         const res = await fetch("http://127.0.0.1:8000/health", {
           method: "GET",
           signal: controller.signal,
         });
-
         clearTimeout(timeoutId);
-
-        if (isMounted) {
-          setBackendOnline(res.ok);
-          if (res.ok) {
-            console.log("✅ Backend is ONLINE");
-          } else {
-            console.warn("⚠️ Backend responded with", res.status);
-          }
-        }
-      } catch (err) {
-        if (isMounted) {
-          setBackendOnline(false);
-          console.warn("❌ Backend health check failed:", err);
-        }
+        if (isMounted) setBackendOnline(res.ok);
+      } catch {
+        if (isMounted) setBackendOnline(false);
       }
     };
-
     checkBackend();
-    const interval = setInterval(checkBackend, 10000);
-
+    const interval = setInterval(checkBackend, 6000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -226,48 +235,46 @@ export default function ChatBot() {
       // 1️⃣ TRY REAL BACKEND (Gemini AI + RAG)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 40000);
-
       const response = await fetch("http://127.0.0.1:8000/api/chat/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content, use_rag: true }),
+        body: JSON.stringify({
+          message: content,
+          use_rag: true,
+        }),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
-      }
-
-      setBackendOnline(true);
       const data = await response.json();
-      console.log("✅ Real API response:", data);
 
+      if (!response.ok) {
+        throw new Error(data.error || `API returned ${response.status}`);
+      }
+      setBackendOnline(true);
+
+      const data = await response.json();
       const botMsg: Message = {
         id: `b-${Date.now()}`,
         role: "bot",
         content: data.reply || "Sorry, I could not generate a reply.",
         time: now(),
-        sources: Array.isArray(data.sources) ? data.sources : [],
-        mode: data.mode || "rag",
+        sources: cleanSources,
+        mode: data.mode || "verified",
       };
       setMessages((m) => [...m, botMsg]);
-    } catch (err) {
-      // 2️⃣ FALLBACK TO MOCK (backend offline)
-      console.warn("⚠️ Backend call failed, using mock reply:", err);
+    } catch {
+      // Offline fallback to intelligent local reply
       setBackendOnline(false);
-
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
-      const mockReply = getMockReply(content);
+      const reply = getMockReply(content);
       const botMsg: Message = {
         id: `b-${Date.now()}`,
         role: "bot",
-        content: mockReply,
+        content: reply,
         time: now(),
         sources: [],
-        mode: "local",
+        mode: "error",
       };
       setMessages((m) => [...m, botMsg]);
     } finally {
@@ -336,16 +343,7 @@ export default function ChatBot() {
                     flex items-center justify-center border border-white/25">
                     <Sparkles size={16} className="text-white" />
                   </div>
-                  <span
-                    className={cn(
-                      "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[#1c6430]",
-                      backendOnline === true
-                        ? "bg-[#58b277]"
-                        : backendOnline === false
-                        ? "bg-[#E67E22]"
-                        : "bg-white/40"
-                    )}
-                  />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#58b277] ring-2 ring-[#227736]" />
                 </div>
 
                 <div>
@@ -354,29 +352,31 @@ export default function ChatBot() {
                       CampusConnect AI
                     </p>
                     {backendOnline === true ? (
-                      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5
-                        rounded-full bg-white/15 border border-white/20 tracking-wider">
-                        Live
+                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-400/25 text-emerald-200 border border-emerald-400/35 tracking-wider flex items-center gap-1 shadow-xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                        Live RAG
                       </span>
                     ) : backendOnline === false ? (
-                      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5
-                        rounded-full bg-white/15 border border-white/20 tracking-wider">
-                        Offline
+                      <span
+                        className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-400/30 tracking-wider flex items-center gap-1 cursor-help"
+                        title="Backend API not running. Run run-backend.bat to connect Gemini RAG API."
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
+                        Offline Mode
                       </span>
                     ) : (
-                      <span className="text-[9px] font-medium uppercase px-1.5 py-0.5
-                        rounded-full bg-white/10 tracking-wider opacity-70">
-                        Connecting
+                      <span className="text-[9px] font-medium uppercase px-1.5 py-0.5 rounded-full bg-white/15 text-white/80 tracking-wider">
+                        Connecting...
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-white/70">
-                    English & Roman Urdu
+                  <p className="text-[11px] text-white/80 flex items-center gap-1">
+                    English & Roman Urdu Support
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-0.5">
+              <div className="relative flex items-center gap-1 z-10">
                 {messages.length > 0 && (
                   <button
                     onClick={clearChat}
@@ -407,23 +407,52 @@ export default function ChatBot() {
               </div>
             </div>
 
+            {/* Connection Status Toast / Banner */}
+            {connectionMessage && (
+              <div className="bg-emerald-800 text-white text-[11px] px-3 py-1.5 flex items-center justify-between border-b border-emerald-700/60">
+                <span className="flex items-center gap-1.5 font-medium truncate">
+                  <Activity size={12} className="text-[#f4a228] shrink-0" />
+                  {connectionMessage}
+                </span>
+                <button
+                  onClick={() => setConnectionMessage(null)}
+                  className="text-white/70 hover:text-white ml-2 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             {/* ============ BODY ============ */}
             {!minimized && (
               <>
                 <div className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-[#f8faf9]">
+                  {/* ====== GEMINI / CHATGPT STYLE WELCOME SCREEN ====== */}
                   {messages.length === 0 ? (
-                    <div className="flex flex-col h-full">
-                      <div className="text-center pt-3 pb-4">
-                        <h3 className="text-lg font-extrabold text-[#0f1d17] tracking-tight">
-                          {greeting}, <span className="text-[#227736]">Scholar</span>
+                    <div className="py-2 px-1 flex flex-col justify-between h-full">
+                      {/* Greeting Headline */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="text-center pt-2 pb-4"
+                      >
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[#227736] text-xs font-semibold mb-3 shadow-xs">
+                          <Sparkles size={13} className="text-[#f4a228]" />
+                          <span>Gemini 2.0 & ChromaDB RAG</span>
+                        </div>
+
+                        <h3 className="text-xl font-extrabold text-[#0f1d17] tracking-tight">
+                          {greeting}, <span className="bg-gradient-to-r from-[#227736] via-[#28a745] to-[#f4a228] bg-clip-text text-transparent">Scholar</span> 👋
                         </h3>
                         <p className="text-xs text-[#5a6e63] mt-1.5 px-4 leading-relaxed">
                           {WELCOME_QUOTES[welcomeQuoteIdx]}
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        {SUGGESTION_CARDS.map((card) => {
+                      {/* Interactive Prompt Cards Grid (like ChatGPT/Gemini) */}
+                      <div className="grid grid-cols-2 gap-2 my-2">
+                        {SUGGESTION_CARDS.map((card, idx) => {
                           const Icon = card.icon;
                           return (
                             <button
@@ -454,15 +483,19 @@ export default function ChatBot() {
                         })}
                       </div>
 
-                      <div className="mt-3 text-center">
+                      {/* Roman Urdu Quick Pill */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="mt-2 text-center"
+                      >
                         <button
                           onClick={() => handleSend("Mai complaint kaise darj karun?")}
-                          className="text-[11px] px-3 py-1.5 rounded-full
-                            bg-[#eaf6ee] text-[#1c6430] border border-[#c8e6d1]
-                            hover:bg-[#d4ead9] hover:border-[#227736]
-                            transition-all font-medium"
+                          className="text-[11px] px-3 py-1.5 rounded-full bg-emerald-50 text-[#1c6430] border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-all font-medium inline-flex items-center gap-1.5"
                         >
-                          Roman Urdu: <span className="font-bold underline">Mai complaint kaise darj karun?</span>
+                          <span>🇵🇰 Roman Urdu:</span>
+                          <span className="font-semibold underline">Mai complaint kaise darj karun?</span>
                         </button>
                       </div>
                     </div>
@@ -489,8 +522,8 @@ export default function ChatBot() {
                           className={cn(
                             "max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed",
                             msg.role === "user"
-                              ? "bg-[#227736] text-white rounded-br-md shadow-sm whitespace-pre-line"
-                              : "bg-white text-[#0f1d17] border border-[#e2ebe6] rounded-bl-md"
+                              ? "bg-[#227736] text-white rounded-br-md shadow-md shadow-[#227736]/25 whitespace-pre-line"
+                              : "bg-white text-[#0f1d17] border border-[#e2ebe6] rounded-bl-md shadow-xs"
                           )}
                         >
                           {msg.role === "user" ? (
@@ -499,16 +532,16 @@ export default function ChatBot() {
                             <FormattedMessage content={msg.content} />
                           )}
 
+                          {/* Grounded RAG Citations */}
                           {msg.sources && msg.sources.length > 0 && (
-                            <div className="mt-2 pt-2 border-t border-[#e2ebe6] flex flex-wrap gap-1">
-                              <span className="text-[9px] font-bold text-[#227736]">
-                                Sources:
+                            <div className="mt-2 pt-2 border-t border-emerald-100 flex flex-wrap gap-1">
+                              <span className="text-[10px] font-semibold text-[#227736] flex items-center">
+                                📚 Sources:
                               </span>
                               {msg.sources.map((src, i) => (
                                 <span
                                   key={i}
-                                  className="text-[9px] bg-[#eaf6ee] text-[#1c6430]
-                                    px-1.5 py-0.5 rounded border border-[#c8e6d1]"
+                                  className="text-[10px] bg-[#eaf6ee] text-[#1c6430] px-1.5 py-0.5 rounded-md border border-[#c8e6d1]"
                                 >
                                   {src}
                                 </span>
@@ -525,10 +558,10 @@ export default function ChatBot() {
                             {msg.role === "bot" && (
                               <span
                                 className={cn(
-                                  "px-1.5 py-0.5 rounded text-[9px] font-semibold border",
+                                  "px-1.5 py-0.5 rounded text-[9px] font-semibold border flex items-center gap-1",
                                   msg.mode === "rag"
-                                    ? "bg-[#eaf6ee] text-[#227736] border-[#c8e6d1]"
-                                    : "bg-[#fdf7ef] text-[#b86b0a] border-[#f4a228]/30"
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                    : "bg-amber-50 text-amber-800 border-amber-200"
                                 )}
                                 title={
                                   msg.mode === "rag"
@@ -536,7 +569,7 @@ export default function ChatBot() {
                                     : "Offline fallback response"
                                 }
                               >
-                                {msg.mode === "rag" ? "Live" : "Offline"}
+                                {msg.mode === "rag" ? "🟢 Live Gemini RAG" : "🟡 Offline Assistant"}
                               </span>
                             )}
                             <span className="opacity-60">{msg.time}</span>
@@ -581,19 +614,17 @@ export default function ChatBot() {
                 {/* ============ FOOTER ============ */}
                 <div className="border-t border-[#e2ebe6] p-3 bg-white shrink-0">
                   <div className="flex items-end gap-2">
-                    <textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Ask in English or Roman Urdu..."
-                      rows={1}
-                      className="flex-1 resize-none rounded-xl border border-[#e2ebe6]
-                        bg-[#f8faf9] px-3.5 py-2.5 text-xs sm:text-sm outline-none
-                        text-[#0f1d17] focus:border-[#227736] focus:bg-white
-                        focus:ring-3 focus:ring-[#227736]/10 transition-all duration-200
-                        placeholder:text-[#5a6e63] max-h-24"
-                      style={{ minHeight: 40 }}
-                    />
+                    <div className="relative flex-1">
+                      <textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Ask in English or Roman Urdu..."
+                        rows={1}
+                        className="w-full resize-none rounded-xl border border-[#e2ebe6] bg-[#f8faf9] px-3.5 py-2.5 text-xs sm:text-sm outline-none text-[#0f1d17] focus:border-[#227736] focus:bg-white focus:ring-3 focus:ring-[#227736]/10 transition-all duration-200 placeholder:text-[#5a6e63] max-h-24"
+                        style={{ minHeight: 40 }}
+                      />
+                    </div>
 
                     <button
                       onClick={() => handleSend()}

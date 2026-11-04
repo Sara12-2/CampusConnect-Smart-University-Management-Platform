@@ -10,15 +10,16 @@ from pydantic import (
     Field,
 )
 
-from app.database import (
-    claims,
-    complaints,
-    lost_found_items,
-    notices,
-    staff,
-    users,
-    next_staff_id,
-)
+import app.database as database
+
+
+claims = getattr(database, "claims")
+complaints = getattr(database, "complaints")
+lost_found_items = getattr(database, "lost_found_items")
+notices = getattr(database, "notices")
+staff = getattr(database, "staff")
+users = getattr(database, "users")
+next_staff_id = getattr(database, "next_staff_id")
 
 from app.routers.auth import require_admin
 

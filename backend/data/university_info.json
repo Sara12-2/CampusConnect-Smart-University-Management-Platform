@@ -57,7 +57,7 @@
     },
     "library_policy": {
       "title": "Library Book Borrowing & Returns",
-      "rule": "Undergraduate students can borrow up to 3 books for a duration of 14 days. Overdue items incur a fine of Rs. 20 per day per book. Reference books cannot be issued outside the library."
+      "rule": "Undergraduate students can borrow up to 3 books for a duration of 14 days. Overdue items incur a fine of Rs. 200 per day per book. Reference books cannot be issued outside the library."
     },
     "fee_and_refund_policy": {
       "title": "Semester Fee Clearance & Refund",

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = True
 
+    database_url: str = "postgresql+psycopg2://campusconnect_user:campusconnect_dev_pass@localhost:5432/campusconnect"
     secret_key: str = "campusconnect-development-secret-key"
     access_token_expire_minutes: int = 60
 
@@ -18,8 +19,8 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     chroma_dir: str = str(BACKEND_DIR / "vector_store")
-    ai_model: str = "gemini-flash-latest"
-    embedding_model: str = "text-embedding-004"
+    ai_model: str = "gemini-flash-lite-latest"
+    embedding_model: str = "gemini-embedding-001"
 
     model_config = SettingsConfigDict(
         env_file=str(ENV_PATH) if ENV_PATH.exists() else ".env",
@@ -27,4 +28,4 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()
+settings = Settings()

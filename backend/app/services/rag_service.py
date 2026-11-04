@@ -1,8 +1,8 @@
 """CampusConnect RAG (Retrieval-Augmented Generation) Service.
 
 Combines ChromaDB semantic document retrieval with Google Gemini AI to provide
-grounded, hallucination-free, bilingual answers to university queries with strict
-topic-accurate source citations (English & Roman Urdu) and robust self-identity handling.
+grounded, hallucination-free English answers to university queries with strict
+topic-accurate source citations and robust self-identity handling.
 """
 
 import os
@@ -18,19 +18,14 @@ from app.services import vector_store
 
 from app.utils.text_chunker import chunk_markdown_sections
 from app.services.ai_service import (
-    detect_language,
-    is_roman_urdu,
     is_identity_query,
     is_greeting_query,
     is_out_of_domain,
     is_university_query,
     get_out_of_scope_message,
     IDENTITY_REPLY_EN,
-    IDENTITY_REPLY_UR,
     GREETING_REPLY_EN,
-    GREETING_REPLY_UR,
     OUT_OF_SCOPE_REPLY_EN,
-    OUT_OF_SCOPE_REPLY_UR,
 )
 
 logger = logging.getLogger(__name__)
@@ -200,7 +195,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 2. Scholarship / Financial Aid
     is_scholarship = any(kw in clean_words for kw in [
-        "scholarship", "scholarships", "wazifa", "wazaif", "financial"
+        "scholarship", "scholarships", "financial"
     ]) or "financial aid" in clean or "merit scholarship" in clean or "need-based" in clean or "fee concession" in clean
     if is_scholarship:
         docs = []
@@ -224,8 +219,8 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 3. Exam Schedule & Midterm/Finals
     is_exam = any(kw in clean_words for kw in [
-        "exam", "exams", "midterm", "datesheet", "paper", "papers", "imtihaan", "intehan", "commence"
-    ]) or "mid-term" in clean or "date sheet" in clean or "final exam" in clean or "exam schedule" in clean or "paper kab" in clean or "exam date" in clean
+        "exam", "exams", "midterm", "datesheet", "paper", "papers", "commence"
+    ]) or "mid-term" in clean or "date sheet" in clean or "final exam" in clean or "exam schedule" in clean  or "exam date" in clean
     if is_exam:
         docs = []
         sources = []
@@ -248,7 +243,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 4. Attendance Policy (75% rule)
     is_attendance = any(kw in clean_words for kw in [
-        "attendance", "hazri", "shortage", "debarment", "absence"
+        "attendance", "shortage", "debarment", "absence"
     ]) or "75%" in clean or "75 percent" in clean or "medical certificate" in clean or "leave" in clean_words
     if is_attendance:
         docs = []
@@ -265,7 +260,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
     # 5. Lost & Found: Claiming an item
     is_claim = any(kw in clean_words for kw in [
         "claim", "claiming", "claimant"
-    ]) or "claim item" in clean or "claim this item" in clean or "claim found" in clean or "proof of ownership" in clean or "mera saman" in clean or "verify claim" in clean
+    ]) or "claim item" in clean or "claim this item" in clean or "claim found" in clean or "proof of ownership" in clean  or "verify claim" in clean
     if is_claim:
         docs = []
         sources = []
@@ -287,8 +282,8 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 6. Lost & Found: Reporting a lost item (when NOT claiming)
     is_lost_report = any(kw in clean_words for kw in [
-        "lost", "gum", "khogaya"
-    ]) or "lost item" in clean or "report lost" in clean or "kho gaya" in clean or "kho gayi" in clean or "report item" in clean or "wallet" in clean_words or "keys" in clean_words
+        "lost"
+    ]) or "lost item" in clean or "report lost" in clean  or "report item" in clean or "wallet" in clean_words or "keys" in clean_words
     if is_lost_report:
         docs = []
         sources = []
@@ -333,7 +328,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 8. Complaints & Grievance Redressal
     is_complaint = any(kw in clean_words for kw in [
-        "complaint", "complaints", "shikayat", "grievance", "redressal"
+        "complaint", "complaints", "grievance", "redressal"
     ]) or "file complaint" in clean or "submit complaint" in clean or "lodge complaint" in clean
     if is_complaint:
         docs = []
@@ -357,7 +352,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
     # 9. Fee Payment & Refund Policy
     is_fee = any(kw in clean_words for kw in [
         "fee", "fees", "tuition", "refund", "installment", "challan", "dues"
-    ]) or "refund policy" in clean or "late fee" in clean or "fee wapsi" in clean
+    ]) or "refund policy" in clean or "late fee" in clean 
     if is_fee:
         docs = []
         sources = []
@@ -372,14 +367,14 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 10. Library Use & Book Borrowing
     is_library = any(kw in clean_words for kw in [
-        "library", "borrow", "kitab", "kitabein", "overdue"
+        "library", "borrow", "overdue"
     ]) or "library book" in clean or "borrow book" in clean or "issue book" in clean or "library fine" in clean
     if is_library:
         docs = []
         sources = []
         library_doc_text = (
             "Library Use and Borrowing Regulations: Undergraduate students can borrow up to 3 books "
-            "for a duration of 14 days. Overdue items incur a fine of Rs. 20 per day per book. "
+            "for a duration of 14 days. Overdue items incur a fine of Rs. 200 per day per book. "
             "Reference books and journals cannot be issued outside the library."
         )
         docs.append({
@@ -392,7 +387,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 11. Code of Conduct, Harassment & Campus Discipline
     is_discipline = any(kw in clean_words for kw in [
-        "harassment", "ragging", "cheating", "conduct", "discipline", "smoking", "zabta"
+        "harassment", "ragging", "cheating", "conduct", "discipline", "smoking"
     ]) or "code of conduct" in clean or "id card" in clean or "identity card" in clean
     if is_discipline:
         docs = []
@@ -408,7 +403,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 12. Office Timings & Administration Info
     is_timings = any(kw in clean_words for kw in [
-        "timing", "timings", "auqat", "administration"
+        "timing", "timings", "administration"
     ]) or "office hours" in clean or "office timings" in clean or "admin block" in clean or "working hours" in clean
     if is_timings:
         docs = []
@@ -424,7 +419,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 13. Contacts, Helplines & Emergency Numbers
     is_contacts = any(kw in clean_words for kw in [
-        "contact", "phone", "helpline", "email", "rabta", "emergency", "hotline", "1122"
+        "contact", "phone", "helpline", "email", "emergency", "hotline", "1122"
     ]) or "contact number" in clean or "phone number" in clean or "helpdesk number" in clean
     if is_contacts:
         docs = []
@@ -456,7 +451,7 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
 
     # 15. Campus Cleanliness Drive
     is_cleanliness = any(kw in clean_words for kw in [
-        "cleanliness", "safai", "plantation"
+        "cleanliness", "plantation"
     ]) or "tree plantation" in clean or "green campus" in clean
     if is_cleanliness:
         return [{
@@ -499,22 +494,26 @@ def process_chat(
             "mode": "rag" if use_rag else "simple",
         }
 
-    lang = detect_language(clean_message)
-
-    # 1. Introductory & Self-Identity Queries ("Who are you?", "Apne baray mein batao", "Tum kon ho?")
-    if is_identity_query(clean_message):
-        reply = IDENTITY_REPLY_UR if lang == "roman_urdu" else IDENTITY_REPLY_EN
+    # 0. Strictly decline Roman Urdu or Urdu queries immediately
+    if ai_service.is_roman_urdu(clean_message):
         return {
-            "reply": reply,
+            "reply": ai_service.NON_ENGLISH_REJECT_REPLY,
+            "sources": [],
+            "mode": "verified",
+        }
+
+    # 1. Introductory & Self-Identity Queries ("Who are you?")
+    if is_identity_query(clean_message):
+        return {
+            "reply": IDENTITY_REPLY_EN,
             "sources": [],
             "mode": "rag" if use_rag else "simple",
         }
 
-    # 2. Standalone Greeting Queries ("Salam", "Hi", "AOA")
+    # 2. Standalone Greeting Queries ("Hi", "Hello")
     if is_greeting_query(clean_message):
-        reply = GREETING_REPLY_UR if lang == "roman_urdu" else GREETING_REPLY_EN
         return {
-            "reply": reply,
+            "reply": GREETING_REPLY_EN,
             "sources": [],
             "mode": "rag" if use_rag else "simple",
         }
@@ -540,7 +539,13 @@ def process_chat(
             context="",
             history=history,
         )
-        if "don't have information" in reply.lower() or "maloomat nahi" in reply.lower():
+        if ai_service.is_refusal_or_non_english(reply):
+            return {
+                "reply": ai_service.NON_ENGLISH_REJECT_REPLY,
+                "sources": [],
+                "mode": "verified",
+            }
+        if "don't have information" in reply.lower():
             reply = get_out_of_scope_message(clean_message)
         return {
             "reply": reply,
@@ -629,8 +634,15 @@ def process_chat(
         history=history,
     )
 
+    if ai_service.is_refusal_or_non_english(reply):
+        return {
+            "reply": ai_service.NON_ENGLISH_REJECT_REPLY,
+            "sources": [],
+            "mode": "verified",
+        }
+
     # If the response indicates unknown / no information, replace with standard notice & clear sources
-    if "don't have information" in reply.lower() or "maloomat nahi" in reply.lower():
+    if "don't have information" in reply.lower():
         reply = get_out_of_scope_message(clean_message)
         sources = []
 
