@@ -35,17 +35,18 @@ def load_faqs() -> List[Dict[str, Any]]:
         data = json.load(f)
 
     docs = []
-    for item in data[:10]:
+    for item in data:
         q = item.get("question", "")
         a = item.get("answer", "")
+        title = item.get("title") or q
         tags = ", ".join(item.get("tags", []))
-        text = f"Question: {q}\nAnswer: {a}\nTags: {tags}"
+        text = f"Title: {title}\nQuestion: {q}\nAnswer: {a}\nTags: {tags}"
         docs.append({
             "id": item.get("id", f"faq_{len(docs)+1}"),
             "text": text,
             "metadata": {
                 "source": "faqs.json",
-                "title": q,
+                "title": title,
                 "category": item.get("category", "general"),
             },
         })
@@ -61,10 +62,8 @@ def load_policies() -> List[Dict[str, Any]]:
         raw_text = f.read()
 
     sections = chunk_markdown_sections(raw_text)
-    # Ensure exactly 6 policy chunks to meet standard distribution
-    target_sections = sections[:6] if len(sections) >= 6 else sections
     docs = []
-    for i, sec in enumerate(target_sections, start=1):
+    for i, sec in enumerate(sections, start=1):
         docs.append({
             "id": f"policy_{i:02d}",
             "text": sec["content"],
@@ -105,20 +104,20 @@ def load_notices() -> List[Dict[str, Any]]:
     samples = [
         {
             "id": "notice_01",
-            "title": "Midterm examination schedule",
-            "text": "Notice: Midterm examination schedule\nMidterm examinations will commence on October 20. Detailed date sheets and exam hall allotments are published on the portal. Bring your original student ID card and ensure fee clearance.",
+            "title": "Notice: Midterm Examination Schedule",
+            "text": "Notice: Midterm Examination Schedule\nMidterm examinations will commence on October 20. Detailed date sheets and exam hall allotments are published on the portal. Bring your original student ID card and ensure fee clearance.",
             "category": "exam",
         },
         {
             "id": "notice_02",
-            "title": "Merit and need-based scholarship applications",
-            "text": "Notice: Merit and need-based scholarship applications\nApplications for Fall semester merit and need-based scholarships are now open. Minimum CGPA of 3.50 required for merit scholarships. Deadline is October 15 at Student Affairs.",
+            "title": "Notice: Merit and Need-Based Scholarships",
+            "text": "Notice: Merit and Need-Based Scholarships\nApplications for Fall semester merit and need-based scholarships are now open. Minimum CGPA of 3.50 required for merit scholarships. Deadline is October 15 at Student Affairs.",
             "category": "scholarship",
         },
         {
             "id": "notice_03",
-            "title": "Campus cleanliness and tree plantation drive",
-            "text": "Notice: Campus cleanliness and tree plantation drive\nJoin the university cleanliness and green campus initiative this Friday. Certificates will be awarded by the Directorate of Student Affairs.",
+            "title": "Notice: Campus Cleanliness & Tree Plantation Drive",
+            "text": "Notice: Campus Cleanliness & Tree Plantation Drive\nJoin the university cleanliness and green campus initiative this Friday. Certificates will be awarded by the Directorate of Student Affairs.",
             "category": "event",
         },
     ]

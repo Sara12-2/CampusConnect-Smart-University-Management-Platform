@@ -66,6 +66,95 @@ const SUGGESTION_CARDS = [
   },
 ];
 
+function renderInline(text: string): React.ReactNode {
+  if (!text) return "";
+  // Parse **bold** markers
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+      const boldText = part.slice(2, -2).replace(/\*/g, "").trim();
+      return (
+        <strong key={i} className="font-semibold text-[#0f1d17]">
+          {boldText}
+        </strong>
+      );
+    }
+    // Remove any remaining raw asterisks so they never display
+    const cleaned = part.replace(/\*+/g, "");
+    return <span key={i}>{cleaned}</span>;
+  });
+}
+
+function FormattedMessage({ content }: { content: string }) {
+  if (!content) return null;
+  const lines = content.split("\n");
+
+  return (
+    <div className="space-y-1 text-xs sm:text-sm leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+
+        // Empty line
+        if (!trimmed) {
+          return <div key={idx} className="h-1" />;
+        }
+
+        // Horizontal divider (--- or ***)
+        if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+          return <div key={idx} className="my-1.5 border-t border-emerald-100" />;
+        }
+
+        // Heading 3 (### Heading)
+        if (trimmed.startsWith("### ")) {
+          return (
+            <div key={idx} className="font-bold text-[#144722] text-xs sm:text-sm mt-2 mb-0.5">
+              {renderInline(trimmed.replace(/^###\s+/, ""))}
+            </div>
+          );
+        }
+
+        // Heading 1 or 2 (## Heading)
+        if (trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
+          return (
+            <div key={idx} className="font-bold text-[#144722] text-sm sm:text-base mt-2 mb-0.5">
+              {renderInline(trimmed.replace(/^#{1,2}\s+/, ""))}
+            </div>
+          );
+        }
+
+        // Bullet point (* item or - item or • item)
+        if (trimmed.startsWith("* ") || trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
+          const bulletText = trimmed.replace(/^[\*\-•]\s+/, "");
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-1 my-0.5">
+              <span className="text-[#227736] font-bold select-none leading-tight">•</span>
+              <span className="flex-1">{renderInline(bulletText)}</span>
+            </div>
+          );
+        }
+
+        // Numbered list item (1. item or 2. item)
+        const numMatch = trimmed.match(/^(\d+\.)\s+(.+)$/);
+        if (numMatch) {
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-1 my-0.5">
+              <span className="font-bold text-[#227736] select-none leading-tight">{numMatch[1]}</span>
+              <span className="flex-1">{renderInline(numMatch[2])}</span>
+            </div>
+          );
+        }
+
+        // Standard paragraph line
+        return (
+          <p key={idx} className="my-0.5">
+            {renderInline(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ChatBot() {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -73,8 +162,34 @@ export default function ChatBot() {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [welcomeQuoteIdx, setWelcomeQuoteIdx] = useState(0);
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Health-check backend API
+  useEffect(() => {
+    let isMounted = true;
+    const checkBackend = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch("http://127.0.0.1:8000/health", {
+          method: "GET",
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (isMounted) setBackendOnline(res.ok);
+      } catch {
+        if (isMounted) setBackendOnline(false);
+      }
+    };
+    checkBackend();
+    const interval = setInterval(checkBackend, 6000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Time-based greeting (e.g. Good morning / afternoon / evening)
   const greeting = useMemo(() => {
@@ -117,18 +232,23 @@ export default function ChatBot() {
     setTyping(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/chat/", {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 40000);
+      const response = await fetch("http://127.0.0.1:8000/api/chat/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: content,
           use_rag: true,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`API returned ${response.status}`);
       }
+      setBackendOnline(true);
 
       const data = await response.json();
       const botMsg: Message = {
@@ -142,6 +262,7 @@ export default function ChatBot() {
       setMessages((m) => [...m, botMsg]);
     } catch {
       // Offline fallback to intelligent local reply
+      setBackendOnline(false);
       const reply = getMockReply(content);
       const botMsg: Message = {
         id: `b-${Date.now()}`,
@@ -232,9 +353,24 @@ export default function ChatBot() {
                     <p className="font-bold text-sm tracking-tight text-white">
                       CampusConnect AI
                     </p>
-                    <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full bg-white/15 text-white/90 tracking-wider">
-                      RAG
-                    </span>
+                    {backendOnline === true ? (
+                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-400/25 text-emerald-200 border border-emerald-400/35 tracking-wider flex items-center gap-1 shadow-xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                        Live RAG
+                      </span>
+                    ) : backendOnline === false ? (
+                      <span
+                        className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-400/30 tracking-wider flex items-center gap-1 cursor-help"
+                        title="Backend API not running. Run run-backend.bat to connect Gemini RAG API."
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
+                        Offline Mode
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-medium uppercase px-1.5 py-0.5 rounded-full bg-white/15 text-white/80 tracking-wider">
+                        Connecting...
+                      </span>
+                    )}
                   </div>
                   <p className="text-[11px] text-white/80 flex items-center gap-1">
                     English & Roman Urdu Support
@@ -386,13 +522,17 @@ export default function ChatBot() {
                         <motion.div
                           whileHover={{ y: -1 }}
                           className={cn(
-                            "max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm whitespace-pre-line leading-relaxed",
+                            "max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed",
                             msg.role === "user"
-                              ? "bg-[#227736] text-white rounded-br-md shadow-md shadow-[#227736]/25"
+                              ? "bg-[#227736] text-white rounded-br-md shadow-md shadow-[#227736]/25 whitespace-pre-line"
                               : "bg-white text-[#0f1d17] border border-[#e2ebe6] rounded-bl-md shadow-xs"
                           )}
                         >
-                          {msg.content}
+                          {msg.role === "user" ? (
+                            msg.content
+                          ) : (
+                            <FormattedMessage content={msg.content} />
+                          )}
 
                           {/* Grounded RAG Citations */}
                           {msg.sources && msg.sources.length > 0 && (
@@ -413,11 +553,23 @@ export default function ChatBot() {
 
                           <div
                             className={cn(
-                              "text-[10px] mt-1.5 opacity-60",
-                              msg.role === "user" ? "text-right" : "text-left"
+                              "text-[10px] mt-2 flex items-center gap-2",
+                              msg.role === "user" ? "justify-end opacity-70" : "justify-between"
                             )}
                           >
-                            {msg.time}
+                            {msg.role === "bot" && (
+                              <span
+                                className={cn(
+                                  "px-1.5 py-0.5 rounded text-[9px] font-semibold border flex items-center gap-1",
+                                  msg.mode === "rag"
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                    : "bg-amber-50 text-amber-800 border-amber-200"
+                                )}
+                              >
+                                {msg.mode === "rag" ? "🟢 Live Gemini RAG" : "🟡 Offline Assistant"}
+                              </span>
+                            )}
+                            <span className="opacity-60">{msg.time}</span>
                           </div>
                         </motion.div>
 

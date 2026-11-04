@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
+# pyrefly: ignore [missing-import]
 from fastapi import HTTPException
 
 from app.database import notices
@@ -156,11 +157,3 @@ def delete_notice(notice_id: str):
 
     notices.remove(notice)
 
-
-# Explicitly expose chatbot services for static analyzers
-from app.services import (  # type: ignore
-    ai_service as ai_service,
-    embedding_service as embedding_service,
-    vector_store as vector_store,
-    rag_service as rag_service,
-)

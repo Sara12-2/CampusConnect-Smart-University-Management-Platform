@@ -2,12 +2,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare, User, Filter, Clock, AlertCircle, CheckCircle2,
-  CircleDot, Search, Calendar, Wrench, ChevronDown, ArrowRight,
-  Inbox, TrendingUp, MapPin, Tag,
+  MessageSquare, User, Clock, AlertCircle, CheckCircle2,
+  CircleDot, Search, Calendar, Wrench, ChevronDown,
+  Inbox, Tag, X,
 } from "lucide-react";
 import { mockComplaints } from "@/data/mock-data";
 import { formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 /* ============================================================
    STATUS CONFIG
@@ -39,10 +40,10 @@ const statusConfig: Record<string, {
   "in-progress": {
     icon: Clock,
     label: "In Progress",
-    bg: "bg-[#fdf2e3]",
-    text: "text-[#B45A0B]",
-    border: "border-[#E67E22]/40",
-    bar: "bg-[#E67E22]",
+    bg: "bg-[#fdf7ef]",
+    text: "text-[#b86b0a]",
+    border: "border-[#f4a228]/30",
+    bar: "bg-[#f4a228]",
   },
   resolved: {
     icon: CheckCircle2,
@@ -50,17 +51,8 @@ const statusConfig: Record<string, {
     bg: "bg-[#eaf6ee]",
     text: "text-[#227736]",
     border: "border-[#c8e6d1]",
-    bar: "bg-[#28a745]",
+    bar: "bg-[#227736]",
   },
-};
-
-const categoryIcon: Record<string, typeof Tag> = {
-  classroom: Tag,
-  lab: Wrench,
-  electricity: AlertCircle,
-  wifi: AlertCircle,
-  furniture: Wrench,
-  other: Tag,
 };
 
 export default function AdminComplaints() {
@@ -79,331 +71,260 @@ export default function AdminComplaints() {
   });
 
   const stats = [
-    { label: "Total", value: mockComplaints.length, accent: false, icon: Inbox },
-    { label: "In Progress", value: mockComplaints.filter(c => c.status === "in-progress").length, accent: true, icon: Clock },
-    { label: "Resolved", value: mockComplaints.filter(c => c.status === "resolved").length, accent: false, icon: CheckCircle2 },
-    { label: "Submitted", value: mockComplaints.filter(c => c.status === "submitted").length, accent: true, icon: CircleDot },
+    { id: "all" as const, label: "Total", value: mockComplaints.length, icon: Inbox },
+    { id: "submitted" as const, label: "Submitted", value: mockComplaints.filter(c => c.status === "submitted").length, icon: CircleDot },
+    { id: "in-progress" as const, label: "In Progress", value: mockComplaints.filter(c => c.status === "in-progress").length, icon: Clock },
+    { id: "resolved" as const, label: "Resolved", value: mockComplaints.filter(c => c.status === "resolved").length, icon: CheckCircle2 },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
 
       {/* ==================== HEADER ==================== */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="flex flex-wrap items-start justify-between gap-4"
-      >
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-5 border-b border-[#e2ebe6]">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full 
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full
             bg-[#eaf6ee] border border-[#c8e6d1] mb-3">
-            <Wrench size={12} className="text-[#227736]" />
+            <Wrench size={11} className="text-[#227736]" />
             <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#227736]">
               Issue Management
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f1d17] 
-            tracking-tight flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#227736] to-[#28a745] 
-              flex items-center justify-center shadow-lg shadow-[#227736]/25">
-              <MessageSquare size={18} className="text-white" />
-            </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f1d17] tracking-tight">
             Manage Complaints
           </h1>
-          <p className="text-sm text-[#5a6e63] mt-2">
+          <p className="text-sm text-[#5a6e63] mt-1">
             Review, assign, and resolve campus issues reported by students.
           </p>
         </div>
-      </motion.div>
+      </div>
 
-      {/* ==================== STATS ==================== */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* ==================== STATS (Clickable) ==================== */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((s, i) => {
           const Icon = s.icon;
+          const isActive = filter === s.id;
           return (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }}
+            <motion.button
+              key={s.id}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              whileHover={{ y: -5 }}
-              className="group relative bg-white rounded-2xl border border-[#e2ebe6] p-5 
-                transition-all duration-300 overflow-hidden
-                hover:shadow-xl hover:shadow-[#227736]/5 hover:border-[#227736]/30"
+              transition={{ delay: i * 0.05 }}
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setFilter(s.id)}
+              className={cn(
+                "group relative text-left bg-white rounded-2xl border p-4 transition-all duration-300 overflow-hidden",
+                isActive
+                  ? "border-[#227736] shadow-md shadow-[#227736]/15"
+                  : "border-[#e2ebe6] hover:border-[#227736]/40"
+              )}
             >
-              <div
-                className={`absolute top-0 right-0 w-16 h-16 rounded-bl-full 
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-300 
-                  ${s.accent ? "bg-[#E67E22]/10" : "bg-[#227736]/10"}`}
-              />
+              {isActive && (
+                <motion.div
+                  layoutId="activeComplaintStat"
+                  className="absolute inset-0 bg-gradient-to-br from-[#eaf6ee] to-[#d4ead9]/30"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
 
-              <div className="relative flex items-center gap-3 mb-2">
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center 
-                    ${
-                      s.accent
-                        ? "bg-[#fdf2e3] border border-[#E67E22]/30 text-[#E67E22]"
-                        : "bg-[#eaf6ee] border border-[#c8e6d1] text-[#227736]"
-                    }`}
-                >
-                  <Icon size={14} />
+              <div className="relative flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-[#eaf6ee] border border-[#c8e6d1]
+                  flex items-center justify-center">
+                  <Icon size={14} className="text-[#227736]" />
                 </div>
+                {isActive && (
+                  <CheckCircle2 size={13} className="text-[#227736]" />
+                )}
               </div>
-
-              <p className={`relative text-3xl font-extrabold tracking-tight 
-                ${s.accent ? "text-[#E67E22]" : "text-[#227736]"}`}>
+              <p className="relative text-2xl font-extrabold text-[#0f1d17] tracking-tight tabular-nums">
                 {s.value}
               </p>
-              <p className="relative text-xs text-[#5a6e63] mt-1 font-medium">
+              <p className="relative text-[10px] text-[#5a6e63] font-bold uppercase tracking-wider mt-0.5">
                 {s.label}
               </p>
 
-              <span
-                className={`absolute bottom-0 left-5 right-5 h-0.5 origin-left 
-                  scale-x-0 group-hover:scale-x-100 transition-transform duration-500 
-                  rounded-full ${s.accent ? "bg-[#E67E22]" : "bg-[#227736]"}`}
-              />
-            </motion.div>
+              {isActive && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#227736]" />
+              )}
+            </motion.button>
           );
         })}
       </div>
 
-      {/* ==================== FILTER BAR ==================== */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="rounded-2xl border border-[#e2ebe6] bg-[#f8faf9] p-3 md:p-4"
-      >
-        <div className="flex flex-col md:flex-row gap-3 md:items-center">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search
-              size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a6e63]"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by title, student, or category..."
-              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl 
-                bg-white border-2 border-[#e2ebe6] 
-                text-[#0f1d17] placeholder:text-[#5a6e63]/60
-                outline-none transition-all duration-300 
-                focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10"
-            />
-          </div>
-
-          {/* Filter icon + tabs */}
-          <div className="flex items-center gap-2 p-1 bg-white border border-[#e2ebe6] rounded-xl">
-            {[
-              { id: "all", label: "All" },
-              { id: "submitted", label: "Submitted" },
-              { id: "in-progress", label: "In Progress" },
-              { id: "resolved", label: "Resolved" },
-            ].map((tab) => {
-              const active = filter === tab.id;
-              return (
-                <motion.button
-                  key={tab.id}
-                  onClick={() => setFilter(tab.id as any)}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  className={`relative px-3 py-1.5 text-xs font-bold rounded-lg 
-                    transition-all duration-300 whitespace-nowrap
-                    ${
-                      active
-                        ? "bg-[#227736] text-white shadow-md shadow-[#227736]/25"
-                        : "text-[#5a6e63] hover:text-[#227736] hover:bg-[#eaf6ee]"
-                    }`}
-                >
-                  {tab.label}
-                </motion.button>
-              );
-            })}
-          </div>
+      {/* ==================== SEARCH ==================== */}
+      <div className="flex flex-col md:flex-row gap-3 md:items-center">
+        <div className="relative flex-1">
+          <Search
+            size={15}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a6e63]"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by title, student, or category..."
+            className="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl
+              bg-white border border-[#e2ebe6] text-[#0f1d17]
+              placeholder:text-[#5a6e63]/60
+              outline-none transition-all duration-200
+              focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10
+              hover:border-[#c8e6d1]"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1
+                rounded-md text-[#5a6e63] hover:text-[#227736]
+                hover:bg-[#eaf6ee] transition-all"
+              aria-label="Clear"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
-      </motion.div>
+
+        {/* Filter tabs */}
+        <div className="flex items-center gap-1 p-1 bg-white border border-[#e2ebe6] rounded-xl shrink-0">
+          {[
+            { id: "all", label: "All" },
+            { id: "submitted", label: "Submitted" },
+            { id: "in-progress", label: "In Progress" },
+            { id: "resolved", label: "Resolved" },
+          ].map((tab) => {
+            const active = filter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setFilter(tab.id as any)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 whitespace-nowrap",
+                  active
+                    ? "bg-[#227736] text-white shadow-sm shadow-[#227736]/20"
+                    : "text-[#5a6e63] hover:text-[#0f1d17] hover:bg-[#f8faf9]"
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ==================== COMPLAINTS LIST ==================== */}
       {filtered.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-16"
-        >
-          <motion.div
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 3, repeat: Infinity }}
-            className="w-16 h-16 mx-auto rounded-2xl bg-[#eaf6ee] border border-[#c8e6d1] 
-              flex items-center justify-center mb-4"
-          >
+        <div className="text-center py-16 border border-dashed border-[#e2ebe6]
+          rounded-2xl bg-[#f8faf9]">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-[#eaf6ee]
+            border border-[#c8e6d1] flex items-center justify-center mb-4">
             <Inbox size={26} className="text-[#227736]" />
-          </motion.div>
+          </div>
           <h3 className="font-bold text-[#0f1d17]">No complaints found</h3>
           <p className="text-sm text-[#5a6e63] mt-1">
             Try changing the filters or search query.
           </p>
-        </motion.div>
+        </div>
       ) : (
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
             {filtered.map((c, i) => {
               const cfg = statusConfig[c.status] || statusConfig.submitted;
               const StatusIcon = cfg.icon;
-              const CatIcon = categoryIcon[c.category] || Tag;
 
               return (
                 <motion.div
                   key={c.id}
                   layout
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{
-                    delay: i * 0.05,
-                    duration: 0.5,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ delay: i * 0.04, duration: 0.3 }}
                   whileHover={{ y: -3 }}
-                  className="group relative bg-white rounded-2xl border border-[#e2ebe6] 
+                  className="group relative bg-white rounded-2xl border border-[#e2ebe6]
                     hover:border-[#227736]/30 overflow-hidden
-                    transition-all duration-300 
-                    hover:shadow-xl hover:shadow-[#227736]/5"
+                    transition-all duration-300 hover:shadow-lg hover:shadow-[#227736]/5"
                 >
                   {/* Left accent bar */}
-                  <span className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.bar}`} />
+                  <span className={cn("absolute left-0 top-0 bottom-0 w-1", cfg.bar)} />
 
-                  {/* Corner accent */}
-                  <div
-                    className={`absolute top-0 right-0 w-24 h-24 rounded-bl-full 
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-500 
-                      ${
-                        c.status === "in-progress"
-                          ? "bg-[#E67E22]/8"
-                          : "bg-[#227736]/8"
-                      }`}
-                  />
+                  <div className="relative p-4 pl-5">
+                    <div className="flex items-start gap-4 flex-wrap lg:flex-nowrap">
 
-                  <div className="relative p-5 pl-6">
-                    {/* Header row */}
-                    <div className="flex items-start gap-4">
-                      {/* Category icon */}
+                      {/* Icon */}
                       <motion.div
-                        whileHover={{ rotate: 8, scale: 1.08 }}
+                        whileHover={{ rotate: 6, scale: 1.05 }}
                         transition={{ type: "spring", stiffness: 300 }}
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center 
-                          shrink-0 shadow-md border 
-                          ${
-                            c.status === "in-progress"
-                              ? "bg-[#fdf2e3] border-[#E67E22]/30 text-[#E67E22] shadow-[#E67E22]/20"
-                              : c.status === "resolved"
-                              ? "bg-[#eaf6ee] border-[#c8e6d1] text-[#227736] shadow-[#227736]/20"
-                              : c.status === "assigned"
-                              ? "bg-[#eaf6ee] border-[#c8e6d1] text-[#227736] shadow-[#227736]/20"
-                              : "bg-[#f8faf9] border-[#e2ebe6] text-[#5a6e63] shadow-black/5"
-                          }`}
+                        className={cn(
+                          "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border",
+                          cfg.bg, cfg.border, cfg.text
+                        )}
                       >
-                        <CatIcon size={20} />
+                        <MessageSquare size={17} />
                       </motion.div>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                              <span
-                                className={`inline-flex items-center gap-1 
-                                  text-[10px] font-bold px-2 py-0.5 rounded-full 
-                                  border uppercase tracking-wider
-                                  ${cfg.bg} ${cfg.text} ${cfg.border}`}
-                              >
-                                <StatusIcon size={10} />
-                                {cfg.label}
-                              </span>
-                              <span className="inline-flex items-center gap-1 
-                                text-[10px] font-bold px-2 py-0.5 rounded-full 
-                                border uppercase tracking-wider
-                                bg-white text-[#5a6e63] border-[#e2ebe6]">
-                                <CatIcon size={10} />
-                                {c.category}
-                              </span>
-                            </div>
-
-                            <h3 className="font-bold text-[#0f1d17] text-base 
-                              group-hover:text-[#227736] transition-colors">
-                              {c.title}
-                            </h3>
-                            <p className="text-sm text-[#5a6e63] mt-1.5 line-clamp-2 
-                              leading-relaxed">
-                              {c.description}
-                            </p>
-                          </div>
+                        {/* Badges */}
+                        <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                          <span className={cn(
+                            "inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                            cfg.bg, cfg.text, cfg.border
+                          )}>
+                            <StatusIcon size={9} />
+                            {cfg.label}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold
+                            uppercase tracking-wider px-2 py-0.5 rounded-full border
+                            bg-white text-[#5a6e63] border-[#e2ebe6]">
+                            <Tag size={9} />
+                            {c.category}
+                          </span>
                         </div>
 
-                        {/* Meta row */}
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 
-                          text-xs text-[#5a6e63]">
-                          <span className="inline-flex items-center gap-1.5">
-                            <User size={11} />
+                        {/* Title */}
+                        <h3 className="font-bold text-[#0f1d17] text-sm md:text-base
+                          group-hover:text-[#227736] transition-colors line-clamp-1">
+                          {c.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="text-xs text-[#5a6e63] mt-1 line-clamp-1">
+                          {c.description}
+                        </p>
+
+                        {/* Meta */}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2
+                          text-[11px] text-[#5a6e63]">
+                          <span className="inline-flex items-center gap-1">
+                            <User size={10} />
                             <span className="font-medium text-[#0f1d17]">
                               {c.studentName}
                             </span>
                           </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar size={11} />
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar size={10} />
                             {formatDate(c.createdAt)}
                           </span>
                           {c.assignedTo && (
-                            <span className="inline-flex items-center gap-1.5 
-                              text-[#227736] font-semibold">
-                              <Wrench size={11} />
-                              Assigned to {c.assignedTo}
+                            <span className="inline-flex items-center gap-1 text-[#227736] font-semibold">
+                              <Wrench size={10} />
+                              {c.assignedTo}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Status dropdown */}
-                      <div className="hidden md:flex flex-col gap-2 shrink-0">
-                        <div className="relative">
-                          <select
-                            defaultValue={c.status}
-                            className="appearance-none text-xs font-bold rounded-xl 
-                              border-2 border-[#e2ebe6] bg-white 
-                              pl-3 pr-8 py-2 
-                              text-[#0f1d17] cursor-pointer
-                              outline-none transition-all duration-300 
-                              hover:border-[#227736]/40 
-                              focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10"
-                          >
-                            <option value="submitted">Submitted</option>
-                            <option value="assigned">Assigned</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="resolved">Resolved</option>
-                          </select>
-                          <ChevronDown
-                            size={12}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 
-                              text-[#5a6e63] pointer-events-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Mobile status row */}
-                    <div className="md:hidden mt-4 pt-4 border-t border-[#e2ebe6]">
-                      <div className="relative">
+                      {/* Status dropdown — RIGHT SIDE */}
+                      <div className="relative shrink-0 ml-auto">
                         <select
                           defaultValue={c.status}
-                          className="w-full appearance-none text-xs font-bold rounded-xl 
-                            border-2 border-[#e2ebe6] bg-white 
-                            pl-3 pr-8 py-2 
+                          className="appearance-none text-xs font-bold rounded-lg
+                            border border-[#e2ebe6] bg-white
+                            pl-3 pr-8 py-2
                             text-[#0f1d17] cursor-pointer
-                            outline-none transition-all duration-300 
-                            focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10"
+                            outline-none transition-all duration-200
+                            hover:border-[#227736]/40
+                            focus:border-[#227736]"
                         >
                           <option value="submitted">Submitted</option>
                           <option value="assigned">Assigned</option>
@@ -412,39 +333,24 @@ export default function AdminComplaints() {
                         </select>
                         <ChevronDown
                           size={12}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2
                             text-[#5a6e63] pointer-events-none"
                         />
                       </div>
                     </div>
-
-                    {/* Hover details link */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      whileHover={{ opacity: 1 }}
-                      className="mt-3 pt-3 border-t border-[#e2ebe6] 
-                        flex items-center justify-between opacity-0 group-hover:opacity-100 
-                        transition-opacity duration-300"
-                    >
-                      <span className="text-xs text-[#5a6e63]">
-                        Complaint ID: <span className="font-mono font-bold text-[#0f1d17]">
-                          #{c.id}
-                        </span>
-                      </span>
-                      <motion.button
-                        whileHover={{ x: 3 }}
-                        className="flex items-center gap-1 text-xs font-bold 
-                          text-[#227736] hover:text-[#1c6430] transition-colors"
-                      >
-                        View full details
-                        <ArrowRight size={11} />
-                      </motion.button>
-                    </motion.div>
                   </div>
                 </motion.div>
               );
             })}
           </AnimatePresence>
+        </div>
+      )}
+
+      {/* Footer count */}
+      {filtered.length > 0 && (
+        <div className="text-center text-xs text-[#5a6e63] py-2">
+          Showing <span className="font-bold text-[#0f1d17]">{filtered.length}</span> of{" "}
+          <span className="font-bold text-[#0f1d17]">{mockComplaints.length}</span> complaints
         </div>
       )}
     </div>

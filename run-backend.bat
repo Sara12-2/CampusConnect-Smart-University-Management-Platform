@@ -7,5 +7,13 @@ echo ====================================================
 if exist venv\Scripts\activate.bat (
     call venv\Scripts\activate.bat
 )
-call uvicorn app.main:app --reload --port 8000
+python -c "import fastapi" 2>nul
+if %errorlevel% neq 0 (
+    echo ====================================================
+    echo Installing backend dependencies...
+    echo ====================================================
+    pip install -r requirements.txt
+)
+
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 pause

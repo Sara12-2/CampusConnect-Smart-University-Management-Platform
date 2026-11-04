@@ -6,7 +6,7 @@ supporting both simple Gemini dialogue and full RAG semantic search.
 
 from fastapi import APIRouter, status
 from app.schemas.chat import ChatRequest, ChatResponse
-from app.services.rag_service import process_chat  # type: ignore
+from app.services.rag_service import process_chat, ensure_vector_store_populated  # type: ignore
 from app.services.vector_store import get_document_count  # type: ignore
 from app.config import settings
 
@@ -49,12 +49,14 @@ def chat_endpoint(request: ChatRequest) -> ChatResponse:
     )
 
 
-@router.get(
+@router.api_route(
     "/status",
+    methods=["GET", "HEAD"],
     summary="Get Chatbot & Vector Store status",
 )
 def chat_status():
     """Returns vector store document count and AI configuration status."""
+    ensure_vector_store_populated()
     doc_count = get_document_count()
     has_api_key = bool(settings.gemini_api_key)
     return {
