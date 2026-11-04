@@ -9,7 +9,7 @@ import {
   X,
   ArrowRight,
   LogIn,
-  LayoutDashboard,
+
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

@@ -123,12 +123,11 @@ export default function Card({
     radiusMap[radius],
     variants[variant],
     paddings[padding],
-    hover && [
-      "hover:shadow-xl hover:-translate-y-1",
-      variant === "dark"
+      hover && "hover:shadow-xl hover:-translate-y-1",
+    hover &&
+      (variant === "dark"
         ? "hover:shadow-black/25 hover:border-[#E67E22]/40"
-        : "hover:shadow-[#227736]/10 hover:border-[#227736]/40",
-    ],
+        : "hover:shadow-[#227736]/10 hover:border-[#227736]/40"),
     onClick && "cursor-pointer",
     className
   );

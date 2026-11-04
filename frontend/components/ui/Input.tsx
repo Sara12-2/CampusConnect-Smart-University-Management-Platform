@@ -28,7 +28,7 @@ export default function Input({ label, error, icon, className, ...props }: Props
             "w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm",
             "focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none",
             "transition-all duration-200 placeholder:text-slate-400",
-            icon && "pl-10",
+                        !!icon && "pl-10",
             error && "border-red-400 focus:border-red-500 focus:ring-red-100",
             className
           )}
