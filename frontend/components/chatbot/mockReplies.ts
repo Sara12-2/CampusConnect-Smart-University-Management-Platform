@@ -108,3 +108,6 @@ How can I help you today?`;
   // English Fallback
   return OUT_OF_SCOPE_REPLY_EN;
 }
+
+// Backwards compatibility alias
+export const getMockReply = getFallbackReply;
