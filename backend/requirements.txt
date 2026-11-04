@@ -7,4 +7,5 @@ python-jose[cryptography]
 bcrypt
 python-multipart
 google-genai
-chromadb
+chromadbSQLAlchemy 
+psycopg2-binary 
