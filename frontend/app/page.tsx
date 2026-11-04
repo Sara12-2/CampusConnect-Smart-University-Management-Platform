@@ -1,18 +1,34 @@
 "use client";
-import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import { motion, useMotionValue, useTransform, useSpring, useReducedMotion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import {
   Bell, MessageSquare, Search, ShieldCheck, Users, GraduationCap,
   ArrowRight, CheckCircle2, Sparkles, TrendingUp,
   Play, Lock, Globe, Check, ChevronRight,
-  FileCheck, Clock, Send, Home, User,
+  FileCheck, Clock, Send, Home, User, ChevronDown, Loader2,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
 
 /* ============================================================
-   DATA
+   TYPES
+   ============================================================ */
+
+interface Notice {
+  id: number;
+  title: string;
+  content: string;
+  summary?: string;
+  category?: string;
+  priority?: string;
+  is_published?: boolean;
+  created_at?: string;
+}
+
+/* ============================================================
+   STATIC DATA
    ============================================================ */
 
 const primaryFeatures = [
@@ -48,6 +64,33 @@ const projectStats = [
   { icon: ShieldCheck, value: 2, label: "Access Roles", accent: true, isText: null },
 ];
 
+const faqs = [
+  {
+    q: "Do I need to pay to use CampusConnect?",
+    a: "No. CampusConnect is completely free for students, faculty, and university staff. There are no setup costs or hidden fees.",
+  },
+  {
+    q: "How does the AI summary feature work?",
+    a: "Long university notices are automatically condensed into clear, actionable summaries using AI. You can read the key points in seconds while still having access to the full original notice.",
+  },
+  {
+    q: "Is my data secure?",
+    a: "Yes. All data is encrypted in transit and at rest. Passwords are securely hashed, and access is role-based so students can only see their own submissions.",
+  },
+  {
+    q: "Can I use CampusConnect on my phone?",
+    a: "Absolutely. CampusConnect is fully responsive and works on desktop, tablet, and mobile devices. The interface adapts to any screen size.",
+  },
+  {
+    q: "Who can see my complaints?",
+    a: "Only you and the assigned university staff can see your complaint details. Other students cannot view your submissions.",
+  },
+];
+
+/* ============================================================
+   ANIMATION VARIANTS
+   ============================================================ */
+
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
@@ -80,7 +123,7 @@ function CountUp({ to, duration = 1.2 }: { to: number; duration?: number }) {
 }
 
 /* ============================================================
-   UI PREVIEWS
+   UI PREVIEWS (Used inside primary features)
    ============================================================ */
 
 function NoticePreview() {
@@ -225,6 +268,7 @@ function PhoneMockup() {
   const screenRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [scrollDist, setScrollDist] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     const measure = () => {
@@ -246,7 +290,7 @@ function PhoneMockup() {
   return (
     <div className="relative w-full flex items-center justify-center min-h-[600px]">
       <motion.div
-        animate={{ scale: [1, 1.08, 1], opacity: [0.35, 0.55, 0.35] }}
+        animate={shouldReduceMotion ? {} : { scale: [1, 1.08, 1], opacity: [0.35, 0.55, 0.35] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         className="absolute w-[420px] h-[520px] rounded-full blur-3xl
           bg-gradient-to-br from-[#28a745]/40 via-[#227736]/20 to-[#E67E22]/30
@@ -258,7 +302,7 @@ function PhoneMockup() {
         animate={{ opacity: 1, y: 0, rotate: 0 }}
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         whileHover={{ y: -8, rotate: 0 }}
-        className="relative z-10"
+        className="relative z-10 scale-[0.85] sm:scale-95 md:scale-100 origin-center"
         style={{ transformStyle: "preserve-3d" }}
       >
         <div className="relative w-[300px] h-[610px] rounded-[42px]
@@ -302,7 +346,7 @@ function PhoneMockup() {
               <motion.div
                 ref={contentRef}
                 animate={{
-                  y: scrollDist > 0 ? [0, -scrollDist, 0] : 0,
+                  y: shouldReduceMotion ? 0 : scrollDist > 0 ? [0, -scrollDist, 0] : 0,
                 }}
                 transition={{
                   duration: 14,
@@ -559,11 +603,93 @@ function PhoneMockup() {
 }
 
 /* ============================================================
-   PAGE
+   FAQ ACCORDION
+   ============================================================ */
+
+function FaqItem({ faq, index }: { faq: { q: string; a: string }; index: number }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.05 }}
+      className="border border-[#e2ebe6] rounded-xl bg-white overflow-hidden transition-all hover:border-[#227736]/30"
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full px-5 py-4 flex items-center justify-between gap-4 text-left"
+      >
+        <span className="text-sm md:text-base font-bold text-[#0f1d17]">
+          {faq.q}
+        </span>
+        <motion.div
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown size={18} className="text-[#227736] shrink-0" />
+        </motion.div>
+      </button>
+      <motion.div
+        initial={false}
+        animate={{
+          height: open ? "auto" : 0,
+          opacity: open ? 1 : 0,
+        }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="overflow-hidden"
+      >
+        <p className="px-5 pb-4 text-sm text-[#5a6e63] leading-relaxed">
+          {faq.a}
+        </p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ============================================================
+   MAIN PAGE
    ============================================================ */
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("notices");
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [noticesLoading, setNoticesLoading] = useState(true);
+  const [noticesError, setNoticesError] = useState(false);
+
+  // Fetch latest notices from API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchNotices = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        const res = await fetch("http://127.0.0.1:8000/api/notices", {
+          method: "GET",
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        if (isMounted) {
+          setNotices(Array.isArray(data) ? data.slice(0, 3) : []);
+          setNoticesError(false);
+        }
+      } catch {
+        if (isMounted) setNoticesError(true);
+      } finally {
+        if (isMounted) setNoticesLoading(false);
+      }
+    };
+    fetchNotices();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <>
@@ -572,7 +698,6 @@ export default function HomePage() {
       <main className="min-h-screen bg-white text-[#0f1d17] overflow-x-hidden">
 
         {/* ================= HERO ================= */}
-        {/* ✅ pt-4 md:pt-6 = navbar (73px) + small gap, items-start = top aligned */}
         <section className="relative bg-gradient-to-b from-[#165127] to-[#1c6430] text-white overflow-hidden">
           <div
             className="absolute inset-0 opacity-[0.08]"
@@ -590,7 +715,7 @@ export default function HomePage() {
               bg-[#E67E22]/50 blur-3xl pointer-events-none"
           />
 
-          <div className="relative max-w-7xl mx-auto px-6 pt-16 md:pt-24 pb-16">
+        <div className="relative max-w-7xl mx-auto px-6 pt-24 md:pt-28 pb-16">
             <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
 
               {/* LEFT */}
@@ -679,8 +804,8 @@ export default function HomePage() {
                     ))}
                   </div>
                   <div className="text-xs">
-                    <p className="font-bold text-white">Trusted by 2,400+ students</p>
-                    <p className="text-white/60 mt-0.5">across 12 departments</p>
+                    <p className="font-bold text-white">Trusted by students</p>
+                    <p className="text-white/60 mt-0.5">across multiple departments</p>
                   </div>
                 </motion.div>
               </motion.div>
@@ -851,7 +976,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ================= PRODUCT SHOWCASE ================= */}
+        {/* ================= PRODUCT SHOWCASE (REAL DATA) ================= */}
         <section className="py-20 md:py-28 bg-white">
           <div className="max-w-6xl mx-auto px-6">
             <motion.div
@@ -930,42 +1055,66 @@ export default function HomePage() {
 
               <div className="p-6 md:p-10">
                 {activeTab === "notices" && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    {[
-                      { title: "Mid-Term Exam Schedule", tag: "EXAM", pinned: true, ai: "Exams begin 20 Oct. Bring ID card and fee slip.", accent: true },
-                      { title: "Scholarship Applications Open", tag: "FEE", pinned: false, ai: "Merit-based. CGPA 3.5+. Deadline 15 Oct.", accent: false },
-                      { title: "Annual Sports Gala 2025", tag: "EVENT", pinned: false, ai: "5-10 Nov. Register with Sports Dept.", accent: true },
-                    ].map((n, i) => (
-                      <div key={i} className="bg-white rounded-xl border
-                        border-[#e2ebe6] p-4 hover:shadow-md transition-shadow duration-300">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={`text-[9px] font-bold px-2 py-0.5
-                            rounded-full text-white ${
-                              n.accent ? "bg-[#E67E22]" : "bg-[#227736]"
-                            }`}>
-                            {n.tag}
-                          </span>
-                          {n.pinned && (
-                            <span className="text-[9px] font-bold text-[#227736]">
-                              Pinned
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs font-bold text-[#0f1d17]">{n.title}</p>
-                        <div className="mt-3 pt-3 border-t border-[#e2ebe6]">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Sparkles size={10} className="text-[#E67E22]" />
-                            <span className="text-[9px] font-bold text-[#227736]">
-                              AI SUMMARY
-                            </span>
+                  <>
+                    {noticesLoading ? (
+                      <div className="grid md:grid-cols-3 gap-4">
+                        {[1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="bg-white rounded-xl border border-[#e2ebe6] p-4 animate-pulse"
+                          >
+                            <div className="h-4 bg-[#e2ebe6] rounded mb-3 w-1/3" />
+                            <div className="h-3 bg-[#e2ebe6] rounded mb-2 w-3/4" />
+                            <div className="h-3 bg-[#e2ebe6] rounded w-1/2" />
                           </div>
-                          <p className="text-[10px] text-[#5a6e63] leading-relaxed">
-                            {n.ai}
-                          </p>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    ) : noticesError || notices.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-[#eaf6ee] border border-[#c8e6d1] flex items-center justify-center mb-4">
+                          <Bell size={26} className="text-[#227736]" />
+                        </div>
+                        <h3 className="font-bold text-[#0f1d17]">No notices available yet</h3>
+                        <p className="text-sm text-[#5a6e63] mt-1 max-w-sm mx-auto">
+                          Notices will appear here once they are published by the administration.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid md:grid-cols-3 gap-4">
+                        {notices.map((n) => (
+                          <div
+                            key={n.id}
+                            className="bg-white rounded-xl border border-[#e2ebe6] p-4 hover:shadow-md transition-shadow duration-300"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full text-white bg-[#E67E22]">
+                                {n.category || "NOTICE"}
+                              </span>
+                              {n.priority === "high" && (
+                                <span className="text-[9px] font-bold text-[#E67E22]">
+                                  Priority
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-bold text-[#0f1d17] line-clamp-2">
+                              {n.title}
+                            </p>
+                            <div className="mt-3 pt-3 border-t border-[#e2ebe6]">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <Sparkles size={10} className="text-[#E67E22]" />
+                                <span className="text-[9px] font-bold text-[#227736]">
+                                  AI SUMMARY
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-[#5a6e63] leading-relaxed line-clamp-2">
+                                {n.summary || n.content?.slice(0, 100) + "..."}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {activeTab === "complaints" && (
@@ -1020,15 +1169,14 @@ export default function HomePage() {
                         <p className="text-sm font-bold text-[#0f1d17]">{it.title}</p>
                         <p className="text-xs text-[#5a6e63] mt-1">{it.loc}</p>
                         {it.type === "FOUND" && (
-                          <motion.button
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="mt-4 w-full text-xs font-bold
+                          <Link
+                            href="/student/lost-found"
+                            className="mt-4 block text-center w-full text-xs font-bold
                               text-white bg-[#227736] hover:bg-[#1c6430]
                               py-2 rounded-lg transition-all duration-300"
                           >
                             Claim this item
-                          </motion.button>
+                          </Link>
                         )}
                       </div>
                     ))}
@@ -1185,6 +1333,35 @@ export default function HomePage() {
                   </motion.div>
                 );
               })}
+            </div>
+          </div>
+        </section>
+
+        {/* ================= FAQ ================= */}
+        <section className="py-20 md:py-28 bg-[#f8faf9]">
+          <div className="max-w-3xl mx-auto px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <p className="text-[11px] font-bold text-[#227736]
+                uppercase tracking-[0.22em] mb-4">
+                FAQ
+              </p>
+              <h2 className="text-[32px] md:text-[42px] font-extrabold
+                text-[#0f1d17] tracking-[-0.03em] leading-[1.1]">
+                Frequently asked
+                <br />
+                <span className="text-[#227736]">questions.</span>
+              </h2>
+            </motion.div>
+
+            <div className="space-y-3">
+              {faqs.map((faq, i) => (
+                <FaqItem key={i} faq={faq} index={i} />
+              ))}
             </div>
           </div>
         </section>
