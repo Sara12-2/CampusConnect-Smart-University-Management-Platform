@@ -1,0 +1,3 @@
+"backend/vector_store/" 
+"*.sqlite3" 
+"*.bin" 
