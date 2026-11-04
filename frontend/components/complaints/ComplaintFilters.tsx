@@ -201,8 +201,7 @@ export default function ComplaintFilters({
                 type="button"
                 onClick={() => onStatusChange(t.value)}
                 className={cn(
-                  "relative px-3 py-1.5 text-xs font-bold rounded-lg 
-                    transition-all duration-300 whitespace-nowrap",
+                  "relative px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-300 whitespace-nowrap",
                   active
                     ? "text-white"
                     : "text-[#5a6e63] hover:text-[#227736] hover:bg-white"

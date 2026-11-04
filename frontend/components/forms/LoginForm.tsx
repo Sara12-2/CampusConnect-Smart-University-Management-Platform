@@ -75,9 +75,7 @@ export default function LoginForm({
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.98 }}
               className={cn(
-                "relative flex items-center justify-center gap-1.5 
-                  py-2.5 text-sm font-bold rounded-lg 
-                  transition-all duration-300",
+                "relative flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold rounded-lg transition-all duration-300",
                 active
                   ? "text-white"
                   : "text-[#5a6e63] hover:text-[#227736]"

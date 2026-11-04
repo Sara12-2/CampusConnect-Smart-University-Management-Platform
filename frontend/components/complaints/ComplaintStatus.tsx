@@ -67,8 +67,7 @@ export default function ComplaintStatus({ status, compact = false }: Props) {
       >
         <div
           className={cn(
-            "w-5 h-5 rounded-full bg-gradient-to-br text-white 
-              flex items-center justify-center shadow-sm",
+            "w-5 h-5 rounded-full bg-gradient-to-br text-white flex items-center justify-center shadow-sm",
             step.gradient
           )}
         >

@@ -173,8 +173,7 @@ export default function RecentActivity({
                 transition={{ delay: i * 0.06, duration: 0.4 }}
                 whileHover={{ x: 4 }}
                 className={cn(
-                  "group/item relative flex items-start gap-3 p-3 rounded-xl 
-                    border transition-all duration-300 overflow-hidden",
+                 "group/item relative flex items-start gap-3 p-3 rounded-xl border transition-all duration-300 overflow-hidden",
                   item.href
                     ? "border-transparent hover:bg-[#f8faf9] hover:border-[#e2ebe6] cursor-pointer"
                     : "border-transparent"
@@ -184,9 +183,7 @@ export default function RecentActivity({
                 {item.href && (
                   <span
                     className={cn(
-                      "absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full 
-                        origin-top scale-y-0 group-hover/item:scale-y-100 
-                        transition-transform duration-300",
+                     "absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full origin-top scale-y-0 group-hover/item:scale-y-100 transition-transform duration-300",
                       item.type === "notice" || item.type === "claim"
                         ? "bg-[#227736]"
                         : "bg-[#E67E22]"
@@ -199,9 +196,7 @@ export default function RecentActivity({
                   whileHover={{ rotate: 8, scale: 1.08 }}
                   transition={{ type: "spring", stiffness: 300 }}
                   className={cn(
-                    "w-9 h-9 rounded-xl bg-gradient-to-br text-white 
-                      flex items-center justify-center shrink-0 
-                      shadow-md transition-shadow duration-300",
+                   "w-9 h-9 rounded-xl bg-gradient-to-br text-white flex items-center justify-center shrink-0 shadow-md transition-shadow duration-300",
                     cfg.gradient,
                     item.type === "notice" || item.type === "claim"
                       ? "shadow-[#227736]/25"
@@ -215,8 +210,7 @@ export default function RecentActivity({
                 <div className="flex-1 min-w-0">
                   <p
                     className={cn(
-                      "text-sm font-bold text-[#0f1d17] line-clamp-1 
-                        transition-colors duration-300",
+                      "text-sm font-bold text-[#0f1d17] line-clamp-1 transition-colors duration-300",
                       item.href && "group-hover/item:text-[#227736]"
                     )}
                   >
@@ -233,9 +227,7 @@ export default function RecentActivity({
                   <div className="flex items-center gap-2 mt-1.5">
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1 
-                          text-[9px] font-extrabold uppercase tracking-wider 
-                          px-1.5 py-0.5 rounded-md border",
+                       "inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md border",
                         cfg.bg, cfg.text, cfg.border
                       )}
                     >

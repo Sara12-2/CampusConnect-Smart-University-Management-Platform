@@ -21,6 +21,7 @@ interface Props {
   href?: string;
   onClick?: () => void;
   type?: "button" | "submit";
+  form?: string;
   className?: string;
   disabled?: boolean;
 }
@@ -68,6 +69,7 @@ export default function Button({
   href,
   onClick,
   type = "button",
+  form,
   className,
   disabled,
 }: Props) {
@@ -117,6 +119,7 @@ export default function Button({
       whileTap={{ scale: 0.97 }}
       transition={{ type: "spring", stiffness: 400, damping: 20 }}
       type={type}
+      form={form}
       onClick={onClick}
       disabled={disabled}
       className={classes}
