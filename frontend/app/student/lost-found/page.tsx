@@ -7,6 +7,7 @@ import {
   Glasses, Backpack, Coffee, ArrowRight, CheckCircle2, Sparkles,
   Image as ImageIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 /* ============================================================
@@ -104,7 +105,7 @@ const mockLostFound = [
    CATEGORY → FALLBACK ICON
    ============================================================ */
 
-const categoryIcon = {
+const categoryIcon: Record<string, LucideIcon> = {
   wallet: Wallet,
   bottle: Coffee,
   key: Key,

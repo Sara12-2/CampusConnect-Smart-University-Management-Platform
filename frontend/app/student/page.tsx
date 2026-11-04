@@ -32,6 +32,7 @@ export default function StudentDashboard() {
       accent: false,
       trend: "+3",
       sparkline: [4, 6, 5, 8, 7, 10, 12],
+      shadow: "shadow-[#227736]/30",
     },
     {
       icon: MessageSquare,
@@ -41,6 +42,7 @@ export default function StudentDashboard() {
       accent: true,
       trend: "-1",
       sparkline: [8, 7, 9, 6, 8, 5, 4],
+      shadow: "shadow-[#f4a228]/30",
     },
     {
       icon: Search,
@@ -50,6 +52,7 @@ export default function StudentDashboard() {
       accent: false,
       trend: "+2",
       sparkline: [3, 5, 4, 6, 8, 7, 9],
+      shadow: "shadow-[#227736]/30",
     },
     {
       icon: FileCheck,
@@ -59,6 +62,7 @@ export default function StudentDashboard() {
       accent: true,
       trend: "+1",
       sparkline: [1, 2, 2, 3, 4, 3, 5],
+      shadow: "shadow-[#f4a228]/30",
     },
   ];
 
