@@ -33,7 +33,12 @@ export interface Notification {
   createdAt: string;
 }
 
-export type ComplaintStatus = "submitted" | "assigned" | "in-progress" | "resolved";
+export type ComplaintStatus =
+  | "submitted"
+  | "assigned"
+  | "in-progress"
+  | "resolved"
+  | "rejected";
 
 export interface Complaint {
   id: string;
@@ -41,6 +46,7 @@ export interface Complaint {
   description: string;
   category: "classroom" | "lab" | "electricity" | "wifi" | "furniture" | "other";
   status: ComplaintStatus;
+  priority?: string;
   images: string[];
   studentId: string;
   studentName: string;
