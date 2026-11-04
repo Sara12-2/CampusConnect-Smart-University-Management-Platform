@@ -1,5 +1,5 @@
 "use client";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, type Variants } from "framer-motion";
 import { useRef } from "react";
 import {
   GraduationCap, Target, Users, Sparkles, ShieldCheck, BookOpen,
@@ -110,7 +110,7 @@ const milestones = [
    ANIMATION VARIANTS
    ============================================================ */
 
-const container = {
+const container: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -118,12 +118,12 @@ const container = {
   },
 };
 
-const item = {
+const item: Variants = {
   hidden: { opacity: 0, y: 20 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 
@@ -279,7 +279,7 @@ export default function AboutPage() {
                   <motion.span
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
-                    transition={{ duration: 1, delay: 1, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: 1, delay: 1, ease: [0.22, 1, 0.36, 1] as const }}
                     className="absolute -bottom-2 left-0 right-0 h-[3px] origin-left bg-gradient-to-r from-[#E67E22] to-transparent rounded-full"
                   />
                 </span>

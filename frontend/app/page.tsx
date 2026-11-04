@@ -1,5 +1,5 @@
 "use client";
-import { motion, useMotionValue, useTransform, useSpring, useReducedMotion } from "framer-motion";
+import { motion, useMotionValue, useTransform, useSpring, useReducedMotion, type Variants } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -58,10 +58,10 @@ const howItWorks = [
 ];
 
 const projectStats = [
-  { icon: FileCheck, value: 3, label: "Core Modules", accent: false, isText: null },
-  { icon: Sparkles, value: 0, label: "AI-Powered Summaries", accent: true, isText: "AI" },
-  { icon: Clock, value: 0, label: "Real-Time Updates", accent: false, isText: "Live" },
-  { icon: ShieldCheck, value: 2, label: "Access Roles", accent: true, isText: null },
+  { icon: FileCheck, value: 3, label: "Core Modules", accent: false, isText: null as string | null },
+  { icon: Sparkles, value: 0, label: "AI-Powered Summaries", accent: true, isText: "AI" as string | null },
+  { icon: Clock, value: 0, label: "Real-Time Updates", accent: false, isText: "Live" as string | null },
+  { icon: ShieldCheck, value: 2, label: "Access Roles", accent: true, isText: null as string | null },
 ];
 
 const faqs = [
@@ -91,14 +91,14 @@ const faqs = [
    ANIMATION VARIANTS
    ============================================================ */
 
-const container = {
+const container: Variants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
 };
 
-const item = {
+const item: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
 /* ============================================================
@@ -178,10 +178,10 @@ function ComplaintPreview() {
       </div>
       <div className="space-y-1.5">
         {[
-          { label: "Submitted", done: true },
-          { label: "Assigned to IT", done: true },
+          { label: "Submitted", done: true, active: false },
+          { label: "Assigned to IT", done: true, active: false },
           { label: "In Progress", done: true, active: true },
-          { label: "Resolved", done: false },
+          { label: "Resolved", done: false, active: false },
         ].map((s, i) => (
           <div key={i} className="flex items-center gap-2">
             <div
@@ -254,7 +254,7 @@ function LostFoundPreview() {
   );
 }
 
-const previewMap: Record<string, () => JSX.Element> = {
+const previewMap: Record<string, () => React.JSX.Element> = {
   notice: NoticePreview,
   complaint: ComplaintPreview,
   "lost-found": LostFoundPreview,
@@ -300,7 +300,7 @@ function PhoneMockup() {
       <motion.div
         initial={{ opacity: 0, y: 30, rotate: -2 }}
         animate={{ opacity: 1, y: 0, rotate: 0 }}
-        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] as const }}
         whileHover={{ y: -8, rotate: 0 }}
         className="relative z-10 scale-[0.85] sm:scale-95 md:scale-100 origin-center"
         style={{ transformStyle: "preserve-3d" }}
@@ -747,7 +747,7 @@ export default function HomePage() {
                     <motion.span
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
-                      transition={{ duration: 1, delay: 1, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{ duration: 1, delay: 1, ease: [0.22, 1, 0.36, 1] as const }}
                       className="absolute -bottom-1 left-0 right-0 h-[3px] origin-left
                         bg-[#E67E22] rounded-full"
                     />
@@ -1405,7 +1405,7 @@ export default function HomePage() {
                     initial={{ scaleX: 0 }}
                     whileInView={{ scaleX: 1 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 1, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: 1, delay: 0.6, ease: [0.22, 1, 0.36, 1] as const }}
                     className="absolute -bottom-1 left-0 right-0 h-[3px] origin-left
                       bg-[#E67E22] rounded-full"
                   />
