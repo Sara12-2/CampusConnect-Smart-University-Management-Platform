@@ -78,8 +78,8 @@ async function callDirectGroq(message: string, history: any[] = []): Promise<str
   }
 
   const candidateModels = [
-    "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
     "qwen/qwen3.8-27b",
   ];
 
@@ -120,7 +120,7 @@ async function callDirectGroq(message: string, history: any[] = []): Promise<str
           model,
           messages,
           temperature: 0.2,
-          max_tokens: 1024,
+          max_tokens: 600,
         }),
         signal: controller.signal,
       });

@@ -382,9 +382,9 @@ test_gemini_connection = test_groq_connection
 def _call_groq_rest(messages: List[Dict[str, str]], api_key: str) -> Optional[str]:
     """Call Groq chat completions endpoint via REST."""
     candidate_models = [
-        getattr(settings, "groq_model", "openai/gpt-oss-120b"),
-        "openai/gpt-oss-120b",
+        getattr(settings, "groq_model", "openai/gpt-oss-20b"),
         "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
         "qwen/qwen3.8-27b",
     ]
 
@@ -395,7 +395,7 @@ def _call_groq_rest(messages: List[Dict[str, str]], api_key: str) -> Optional[st
                 "model": model_name,
                 "messages": messages,
                 "temperature": 0.2,
-                "max_tokens": 1024,
+                "max_tokens": 600,
             }
             req_data = json.dumps(payload).encode("utf-8")
             req = urllib.request.Request(
@@ -486,9 +486,9 @@ def generate_chat_response(
 
     # 1. Try official groq SDK
     candidate_models = [
-        getattr(settings, "groq_model", "openai/gpt-oss-120b"),
-        "openai/gpt-oss-120b",
+        getattr(settings, "groq_model", "openai/gpt-oss-20b"),
         "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
         "qwen/qwen3.8-27b",
     ]
 
@@ -503,7 +503,7 @@ def generate_chat_response(
                     model=model_name,
                     messages=messages,  # type: ignore
                     temperature=0.2,
-                    max_tokens=1024,
+                    max_tokens=600,
                 )
                 if chat_completion.choices and chat_completion.choices[0].message.content:
                     reply = chat_completion.choices[0].message.content.strip()

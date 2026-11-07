@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 10
 
     groq_api_key: str = ""
-    groq_model: str = "openai/gpt-oss-120b"
+    groq_model: str = "openai/gpt-oss-20b"
     gemini_api_key: str = ""
     chroma_dir: str = str(BACKEND_DIR / "vector_store")
-    ai_model: str = "openai/gpt-oss-120b"
+    ai_model: str = "openai/gpt-oss-20b"
     embedding_model: str = "gemini-embedding-001"
 
     model_config = SettingsConfigDict(
