@@ -1,717 +1,243 @@
 "use client";
-import { useState } from "react";
+
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Mail, Phone, MapPin, Send, CheckCircle2, MessageSquare,
-  Clock, ShieldCheck, Globe, ArrowRight, Sparkles, AlertCircle,
-  User, AtSign, Tag, FileText, Loader2, Building2,
+  Mail, Phone, MapPin, Clock, Send, CheckCircle2,
+  ArrowRight, MessageSquare, Users, HelpCircle, ChevronDown, Rocket, ShieldCheck
 } from "lucide-react";
+import { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import Input from "@/components/ui/Input";
-import Textarea from "@/components/ui/Textarea";
+import Button from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 /* ============================================================
    DATA
    ============================================================ */
-const contactInfo = [
-  {
-    icon: Mail,
-    label: "Email Us",
-    value: "info@campusconnect.edu",
-    href: "mailto:info@campusconnect.edu",
-    accent: false,
-  },
-  {
-    icon: Phone,
-    label: "Call Us",
-    value: "+92 300 0000000",
-    href: "tel:+923000000000",
-    accent: true,
-  },
-  {
-    icon: MapPin,
-    label: "Visit Us",
-    value: "University Campus, Pakistan",
-    href: "#",
-    accent: false,
-  },
-  {
-    icon: Clock,
-    label: "Office Hours",
-    value: "Mon–Fri · 9:00 AM – 5:00 PM",
-    href: "#",
-    accent: true,
-  },
+
+const contactCards = [
+  { icon: Mail, title: "Email Us", value: "info@campusconnect.edu", color: "green" },
+  { icon: Phone, title: "Call Us", value: "+92 300 1234567", color: "orange" },
+  { icon: MapPin, title: "Visit Us", value: "University Campus, Layyah", color: "green" },
+  { icon: Clock, title: "Office Hours", value: "Mon – Fri : 9 AM – 5 PM", color: "orange" },
 ];
 
-const reasons = [
-  { icon: MessageSquare, label: "General inquiry" },
-  { icon: Building2, label: "Partnership" },
-  { icon: ShieldCheck, label: "Report an issue" },
-  { icon: Sparkles, label: "Feature request" },
+const otherWays = [
+  { icon: Users, title: "Join Our Community", desc: "Be a part of our growing community." },
+  { icon: MessageSquare, title: "Follow Us on Linkedin", desc: "Stay updated with the latest news." },
+  { icon: HelpCircle, title: "Support Center", desc: "Find answers to common questions." },
 ];
+
+const subjects = [
+  "General Inquiry",
+  "Technical Support",
+  "Feedback"
+];
+
+/* ============================================================
+   PAGE
+   ============================================================ */
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState("Select a subject");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (sending) return;
-    setSending(true);
-
-    setTimeout(() => {
-      setSending(false);
-      setSent(true);
-      setForm({ name: "", email: "", subject: "", message: "" });
-      setTimeout(() => setSent(false), 4000);
-    }, 900);
+    setSent(true);
+    setTimeout(() => setSent(false), 3000);
   };
 
   return (
     <>
       <Navbar />
 
-      <main className="relative min-h-screen bg-white text-[#0f1d17] overflow-x-hidden">
-
-        {/* ==================== HERO ==================== */}
-        <section className="relative bg-gradient-to-br from-[#165127] via-[#1c6430] to-[#227736] 
-          text-white overflow-hidden">
-
-          {/* Mesh pattern */}
-          <div
-            className="absolute inset-0 opacity-[0.08]"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-              backgroundSize: "32px 32px",
-            }}
-          />
-
-          {/* Animated orange glow */}
-          <motion.div
-            animate={{ scale: [1, 1.25, 1], opacity: [0.25, 0.4, 0.25], x: [0, 20, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full 
-              bg-[#E67E22]/40 blur-3xl pointer-events-none"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.3, 0.15], y: [0, -20, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full 
-              bg-[#28a745]/40 blur-3xl pointer-events-none"
-          />
-
-          {/* Floating sparkles */}
-          {[...Array(5)].map((_, i) => (
-            <motion.span
-              key={i}
-              animate={{ y: [0, -18, 0], opacity: [0.3, 1, 0.3], scale: [1, 1.3, 1] }}
-              transition={{
-                duration: 3 + i * 0.4,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: i * 0.4,
-              }}
-              className={`absolute rounded-full ${
-                i % 2 === 0
-                  ? "bg-[#E67E22] shadow-lg shadow-[#E67E22]/50"
-                  : "bg-white shadow-lg shadow-white/50"
-              }`}
-              style={{
-                width: i % 3 === 0 ? 8 : 5,
-                height: i % 3 === 0 ? 8 : 5,
-                top: `${20 + i * 14}%`,
-                left: `${15 + i * 16}%`,
-              }}
-            />
-          ))}
-
-          {/* Big decorative icon */}
-          <MessageSquare
-            size={200}
-            strokeWidth={0.6}
-            className="absolute -bottom-10 -right-4 text-white/[0.05] 
-              pointer-events-none select-none"
-          />
-
-          <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-20 md:pt-28 md:pb-24 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="max-w-3xl mx-auto"
-            >
-              {/* Badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.15 }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full 
-                  bg-white/10 backdrop-blur-sm border border-white/15 mb-6"
-              >
-                <motion.span
-                  animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="w-1.5 h-1.5 rounded-full bg-[#E67E22]"
-                />
-                <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-white/90">
-                  We're here to help
-                </span>
-              </motion.div>
-
-              {/* Heading */}
-              <motion.h1
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="text-4xl md:text-5xl lg:text-6xl font-extrabold 
-                  leading-[1.05] tracking-[-0.03em]"
-              >
-                Get in{" "}
-                <span className="relative inline-block">
-                  <span className="bg-gradient-to-r from-white via-[#E67E22] to-white 
-                    bg-clip-text text-transparent">
-                    touch
-                  </span>
-                  <motion.span
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 1, delay: 1, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute -bottom-2 left-0 right-0 h-[3px] origin-left 
-                      bg-[#E67E22] rounded-full"
-                  />
-                </span>
-              </motion.h1>
-
-              {/* Subtext */}
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="mt-6 text-base md:text-lg text-white/85 leading-relaxed 
-                  max-w-2xl mx-auto"
-              >
-                Have a question, feedback, or need support? Our team responds
-                within 24 hours — usually much sooner.
-              </motion.p>
-
-              {/* Trust badges */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="mt-8 flex flex-wrap justify-center items-center 
-                  gap-x-6 gap-y-3 text-xs md:text-sm"
-              >
-                {[
-                  { icon: Clock, label: "24h response time" },
-                  { icon: ShieldCheck, label: "Secure & private" },
-                  { icon: Globe, label: "Available globally" },
-                ].map((b, i) => {
-                  const Icon = b.icon;
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.7 + i * 0.1 }}
-                      whileHover={{ y: -3, scale: 1.05 }}
-                      className="flex items-center gap-2 text-white/85 cursor-default"
-                    >
-                      <Icon size={14} className="text-[#E67E22]" />
-                      <span className="font-medium">{b.label}</span>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* ==================== CONTACT INFO CARDS ==================== */}
-        <section className="relative py-16 md:py-20 bg-white overflow-hidden">
-          <div className="max-w-6xl mx-auto px-6">
-            {/* Section label */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center max-w-2xl mx-auto mb-12"
-            >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full 
-                  bg-[#eaf6ee] border border-[#c8e6d1] mb-4 cursor-default"
-              >
-                <Sparkles size={12} className="text-[#227736]" />
-                <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#227736]">
-                  Contact Information
-                </span>
-              </motion.div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-[#0f1d17] 
-                tracking-[-0.02em] leading-[1.1]">
-                Multiple ways to reach us.
-              </h2>
-            </motion.div>
-
-            {/* Info cards */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {contactInfo.map((c, i) => {
-                const Icon = c.icon;
-                return (
-                  <motion.a
-                    key={c.label}
-                    href={c.href}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.08, duration: 0.5 }}
-                    whileHover={{ y: -6 }}
-                    className={`group relative rounded-2xl border p-5 
-                      transition-all duration-300 overflow-hidden
-                      ${
-                        c.accent
-                          ? "border-[#E67E22]/30 hover:border-[#E67E22]/60 hover:shadow-xl hover:shadow-[#E67E22]/10"
-                          : "border-[#e2ebe6] hover:border-[#227736]/40 hover:shadow-xl hover:shadow-[#227736]/10"
-                      } bg-white`}
-                  >
-                    {/* Corner accent */}
-                    <div
-                      className={`absolute top-0 right-0 w-20 h-20 rounded-bl-full 
-                        opacity-0 group-hover:opacity-100 transition-opacity duration-500 
-                        ${c.accent ? "bg-[#E67E22]/10" : "bg-[#227736]/10"}`}
-                    />
-
-                    <motion.div
-                      whileHover={{ rotate: 8, scale: 1.1 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                      className={`relative w-11 h-11 rounded-xl flex items-center 
-                        justify-center mb-4 shadow-md transition-all duration-300 
-                        ${
-                          c.accent
-                            ? "bg-gradient-to-br from-[#E67E22] to-[#D35400] text-white shadow-[#E67E22]/30"
-                            : "bg-gradient-to-br from-[#227736] to-[#28a745] text-white shadow-[#227736]/30"
-                        }`}
-                    >
-                      <Icon size={18} strokeWidth={2.2} />
-                    </motion.div>
-
-                    <p className="relative text-[10px] font-bold text-[#5a6e63] 
-                      uppercase tracking-wider mb-1">
-                      {c.label}
-                    </p>
-                    <p className="relative font-bold text-[#0f1d17] text-sm 
-                      group-hover:text-[#227736] transition-colors">
-                      {c.value}
-                    </p>
-
-                    <span
-                      className={`absolute bottom-0 left-5 right-5 h-0.5 origin-left 
-                        scale-x-0 group-hover:scale-x-100 transition-transform duration-500 
-                        rounded-full ${c.accent ? "bg-[#E67E22]" : "bg-[#227736]"}`}
-                    />
-                  </motion.a>
-                );
-              })}
+      <main className="min-h-screen bg-[#fafcfb] text-[#0f1d17] overflow-x-hidden pt-28 pb-20 selection:bg-[#E67E22] selection:text-white">
+        
+        <div className="max-w-7xl mx-auto px-6">
+          
+          {/* ==================== HERO SECTION ==================== */}
+          <section className="relative flex flex-col lg:flex-row items-center justify-between gap-12 mb-24 mt-10">
+            <div className="flex-1 max-w-2xl text-center lg:text-left">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#eaf6ee] border border-[#c8e6d1] text-[#227736] text-[10px] font-bold tracking-widest uppercase mb-6 shadow-sm">
+                <MessageSquare size={12} /> Get In Touch
+              </span>
+              <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-[#0f1d17] leading-[1.1]">
+                Contact <span className="text-[#E67E22]">Us</span>
+              </h1>
+              <p className="mt-6 text-lg text-[#5a6e63] leading-relaxed max-w-lg mx-auto lg:mx-0">
+                {`Have questions, suggestions, or need support? We're here to help — reach out to us anytime!`}
+              </p>
+              <div className="w-20 h-1.5 bg-[#E67E22] rounded-full mt-8 mx-auto lg:mx-0" />
             </div>
-          </div>
-        </section>
 
-        {/* ==================== FORM + SIDEBAR ==================== */}
-        <section className="relative pb-20 md:pb-28 bg-[#f8faf9] border-y border-[#e2ebe6] 
-          overflow-hidden">
-          <div className="max-w-6xl mx-auto px-6 pt-16 md:pt-20">
-            <div className="grid lg:grid-cols-5 gap-8">
-
-              {/* ============ LEFT — Form ============ */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="lg:col-span-3 order-2 lg:order-1"
+            <div className="flex-1 relative w-full max-w-lg lg:max-w-none flex justify-center perspective-1000">
+              <motion.div 
+                animate={{ y: [0, -15, 0] }} 
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="relative z-10 w-full max-w-md bg-white p-3 rounded-[2rem] shadow-2xl border border-[#e2ebe6]"
+                style={{ transform: "rotateY(-5deg) rotateX(5deg)", transformStyle: "preserve-3d" }}
               >
-                <div className="relative rounded-3xl bg-white border border-[#e2ebe6] 
-                  p-6 md:p-8 overflow-hidden">
-
-                  {/* Top gradient line */}
-                  <div className="absolute top-0 left-8 right-8 h-0.5 
-                    bg-gradient-to-r from-[#227736] via-[#28a745] to-[#E67E22] rounded-full" />
-
-                  {/* Header */}
-                  <div className="relative mb-6">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full 
-                      bg-[#fdf2e3] border border-[#E67E22]/30 mb-3">
-                      <Send size={11} className="text-[#E67E22]" />
-                      <span className="text-[10px] font-bold tracking-[0.15em] 
-                        uppercase text-[#B45A0B]">
-                        Send a Message
-                      </span>
-                    </div>
-
-                    <h2 className="text-2xl md:text-3xl font-extrabold text-[#0f1d17] 
-                      tracking-tight">
-                      Let's talk.
-                    </h2>
-                    <p className="mt-2 text-sm text-[#5a6e63]">
-                      Fill the form and we'll get back to you as soon as possible.
-                    </p>
+                <div className="relative w-full h-[280px] md:h-[320px] rounded-[1.5rem] overflow-hidden bg-[#e2ebe6]">
+                  <img 
+                    src="https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                    alt="University Map" 
+                    className="w-full h-full object-cover opacity-90 mix-blend-multiply"
+                  />
+                  <div className="absolute inset-0 bg-[#227736]/10 mix-blend-overlay" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                     <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 2, repeat: Infinity }} className="bg-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-[#e2ebe6]">
+                       <MapPin size={16} className="text-[#E67E22]" />
+                       <span className="text-xs font-bold text-[#0f1d17]">University of Layyah</span>
+                     </motion.div>
+                     <div className="w-8 h-2 bg-black/20 rounded-full blur-sm mt-2" />
                   </div>
+                </div>
+                <div className="px-4 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-extrabold text-[#0f1d17]">Our Location</h3>
+                    <p className="text-xs text-[#5a6e63] mt-0.5">Layyah, Punjab, Pakistan</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-[#eaf6ee] flex items-center justify-center text-[#227736] shadow-sm">
+                    <MapPin size={18} />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </section>
 
-                  {/* Success message */}
-                  <AnimatePresence>
-                    {sent && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10, height: 0 }}
-                        animate={{ opacity: 1, y: 0, height: "auto" }}
-                        exit={{ opacity: 0, y: -10, height: 0 }}
-                        className="mb-5 p-4 rounded-2xl bg-[#eaf6ee] 
-                          border-2 border-[#c8e6d1] flex items-start gap-3"
-                      >
+          {/* ==================== 4 INFO CARDS ==================== */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+            {contactCards.map((c, i) => {
+              const isGreen = c.color === "green";
+              return (
+                <motion.div key={c.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className={cn("p-5 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-all flex items-center gap-4", isGreen ? "border-[#e2ebe6] hover:border-[#227736]/40" : "border-[#e2ebe6] hover:border-[#E67E22]/40")}>
+                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm", isGreen ? "bg-[#227736] text-white shadow-[#227736]/20" : "bg-[#E67E22] text-white shadow-[#E67E22]/20")}>
+                    <c.icon size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#5a6e63] mb-1">{c.title}</p>
+                    <p className="text-sm font-extrabold text-[#0f1d17]">{c.value}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </section>
+
+          {/* ==================== FORM & OTHER WAYS ==================== */}
+          <section className="grid lg:grid-cols-2 gap-8">
+            
+            {/* LEFT: Contact Form */}
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white p-8 md:p-10 rounded-[2rem] border border-[#e2ebe6] shadow-sm relative overflow-hidden">
+              {/* Badge color changed to green */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#eaf6ee] border border-[#c8e6d1] mb-4">
+                <Send size={12} className="text-[#227736]" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-[#227736]">Send a Message</span>
+              </div>
+              <h2 className="text-3xl font-extrabold text-[#0f1d17] mb-2">{`Let's talk.`}</h2>
+              <p className="text-sm text-[#5a6e63] mb-8">{`Fill in the form and we'll get back to you as soon as possible.`}</p>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Your Name *</label>
+                    {/* Focus color changed to green */}
+                    <input type="text" placeholder="Enter your name" required className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Email Address *</label>
+                    <input type="email" placeholder="you@example.com" required className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all" />
+                  </div>
+                </div>
+                
+                {/* ✅ CUSTOM DROPDOWN (Green Theme) */}
+                <div>
+                  <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Subject</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsOpen(!isOpen)}
+                      className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all text-left flex items-center justify-between"
+                    >
+                      <span className={selectedSubject === "Select a subject" ? "text-[#5a6e63]" : "text-[#0f1d17] font-medium"}>
+                        {selectedSubject}
+                      </span>
+                      <ChevronDown size={16} className={cn("text-[#227736] transition-transform duration-200", isOpen && "rotate-180")} />
+                    </button>
+
+                    <AnimatePresence>
+                      {isOpen && (
                         <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 300 }}
-                          className="w-9 h-9 rounded-xl bg-[#227736] 
-                            flex items-center justify-center shrink-0"
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="absolute z-20 w-full mt-2 bg-white border border-[#e2ebe6] rounded-xl shadow-xl overflow-hidden"
                         >
-                          <CheckCircle2 size={18} className="text-white" />
+                          {subjects.map((sub, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSubject(sub);
+                                setIsOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-3 text-sm text-[#0f1d17] hover:bg-[#eaf6ee] hover:text-[#227736] transition-colors"
+                            >
+                              {sub}
+                            </button>
+                          ))}
                         </motion.div>
-                        <div>
-                          <p className="font-bold text-[#0f1d17] text-sm">
-                            Message sent successfully
-                          </p>
-                          <p className="text-xs text-[#5a6e63] mt-0.5">
-                            We'll get back to you within 24 hours.
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Form */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <Input
-                        label="Your Name"
-                        placeholder="Sara Manzoor"
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        icon={<User size={14} />}
-                        required
-                      />
-                      <Input
-                        label="Email Address"
-                        type="email"
-                        placeholder="sara@example.com"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        icon={<AtSign size={14} />}
-                        required
-                      />
-                    </div>
-
-                    <Input
-                      label="Subject"
-                      placeholder="How can we help you?"
-                      value={form.subject}
-                      onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                      icon={<Tag size={14} />}
-                      required
-                    />
-
-                    <Textarea
-                      label="Your Message"
-                      rows={5}
-                      placeholder="Tell us more about your query..."
-                      value={form.message}
-                      onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      required
-                    />
-
-                    <div className="pt-2">
-                      <motion.button
-                        type="submit"
-                        disabled={sending}
-                        whileHover={{ y: -3, scale: 1.01 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                        className="group relative w-full inline-flex items-center 
-                          justify-center gap-2 px-6 py-3.5 rounded-xl 
-                          bg-[#227736] text-white text-sm font-bold 
-                          shadow-lg shadow-[#227736]/25 
-                          hover:bg-[#1c6430] hover:shadow-xl hover:shadow-[#227736]/30
-                          disabled:opacity-60 disabled:cursor-not-allowed
-                          transition-all duration-300 overflow-hidden"
-                      >
-                        {/* Shine sweep */}
-                        <span className="absolute inset-0 -translate-x-full 
-                          group-hover:translate-x-full transition-transform duration-700 
-                          bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-                        {sending ? (
-                          <>
-                            <Loader2 size={16} className="animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          <>
-                            <Send size={16} />
-                            Send Message
-                            <ArrowRight
-                              size={16}
-                              className="group-hover:translate-x-1 transition-transform"
-                            />
-                          </>
-                        )}
-                      </motion.button>
-                    </div>
-
-                    <p className="flex items-center justify-center gap-1.5 
-                      text-[10px] text-[#5a6e63]">
-                      <ShieldCheck size={11} className="text-[#227736]" />
-                      Your information is safe and never shared.
-                    </p>
-                  </form>
-                </div>
-              </motion.div>
-
-              {/* ============ RIGHT — Sidebar ============ */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="lg:col-span-2 order-1 lg:order-2 space-y-5"
-              >
-                {/* Why reach out */}
-                <div className="relative rounded-2xl bg-white border border-[#e2ebe6] 
-                  p-6 overflow-hidden">
-                  <div
-                    className="absolute -top-8 -right-8 w-24 h-24 rounded-full 
-                      bg-[#E67E22]/10 blur-2xl"
-                  />
-
-                  <div className="relative">
-                    <h3 className="font-bold text-[#0f1d17] text-base mb-1 
-                      flex items-center gap-2">
-                      <MessageSquare size={15} className="text-[#227736]" />
-                      Why reach out?
-                    </h3>
-                    <p className="text-xs text-[#5a6e63]">
-                      Common reasons people contact us.
-                    </p>
-
-                    <div className="mt-5 space-y-2.5">
-                      {reasons.map((r, i) => {
-                        const Icon = r.icon;
-                        return (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, x: -8 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.2 + i * 0.08 }}
-                            whileHover={{ x: 4 }}
-                            className="flex items-center gap-2.5 p-2.5 rounded-lg 
-                              hover:bg-[#f8faf9] transition-all duration-300 cursor-default"
-                          >
-                            <div className="w-7 h-7 rounded-lg bg-[#eaf6ee] 
-                              border border-[#c8e6d1] flex items-center justify-center 
-                              shrink-0">
-                              <Icon size={12} className="text-[#227736]" />
-                            </div>
-                            <span className="text-xs font-medium text-[#0f1d17]">
-                              {r.label}
-                            </span>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 
-                {/* Response time card */}
-                <motion.div
-                  whileHover={{ y: -4 }}
-                  className="relative rounded-2xl bg-gradient-to-br 
-                    from-[#165127] via-[#1c6430] to-[#227736] 
-                    p-6 text-white overflow-hidden"
-                >
-                  {/* Mesh */}
-                  <div
-                    className="absolute inset-0 opacity-[0.08]"
-                    style={{
-                      backgroundImage:
-                        "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-                      backgroundSize: "20px 20px",
-                    }}
-                  />
-
-                  {/* Glow */}
-                  <motion.div
-                    animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -top-12 -right-12 w-40 h-40 rounded-full 
-                      bg-[#E67E22]/40 blur-3xl pointer-events-none"
-                  />
-
-                  <div className="relative">
-                    <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur 
-                      flex items-center justify-center border border-white/25 mb-4">
-                      <Clock size={20} />
-                    </div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] uppercase 
-                      text-white/70 mb-1">
-                      Average Response
-                    </p>
-                    <p className="text-3xl font-extrabold tracking-tight">
-                      Under 24h
-                    </p>
-                    <p className="mt-2 text-xs text-white/75 leading-relaxed">
-                      Our support team works Monday through Friday, 9 AM to
-                      5 PM. Weekend messages get priority on Monday morning.
-                    </p>
-
-                    <div className="mt-5 pt-4 border-t border-white/15 
-                      flex items-center gap-2 text-xs">
-                      <motion.span
-                        animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="w-1.5 h-1.5 rounded-full bg-[#E67E22]"
-                      />
-                      <span className="text-white/85 font-medium">
-                        Support team is online
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Alternative contact */}
-                <div className="relative rounded-2xl border border-[#E67E22]/30 
-                  bg-[#fdf2e3]/40 p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#E67E22] 
-                      flex items-center justify-center shrink-0 shadow-md 
-                      shadow-[#E67E22]/25">
-                      <AlertCircle size={16} className="text-white" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#0f1d17]">
-                        Need urgent help?
-                      </p>
-                      <p className="text-xs text-[#5a6e63] mt-1 leading-relaxed">
-                        For time-sensitive issues, email us directly at{" "}
-                        <a
-                          href="mailto:urgent@campusconnect.edu"
-                          className="font-bold text-[#E67E22] hover:underline"
-                        >
-                          urgent@campusconnect.edu
-                        </a>
-                      </p>
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Your Message *</label>
+                  <textarea rows={4} placeholder="Write your message here..." required className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all resize-none" />
                 </div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
 
-        {/* ==================== FINAL CTA ==================== */}
-        <section className="py-20 md:py-24 bg-white">
-          <div className="max-w-5xl mx-auto px-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="relative rounded-3xl bg-gradient-to-br 
-                from-[#165127] via-[#227736] to-[#1c6430] 
-                p-10 md:p-14 text-center text-white overflow-hidden"
-            >
-              <div
-                className="absolute inset-0 opacity-[0.08]"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-                  backgroundSize: "32px 32px",
-                }}
-              />
-
-              <motion.div
-                animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.35, 0.2], x: [0, 20, 0] }}
-                transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-20 -right-20 w-72 h-72 rounded-full 
-                  bg-[#E67E22]/50 blur-3xl pointer-events-none"
-              />
-              <motion.div
-                animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }}
-                transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full 
-                  bg-[#28a745]/40 blur-3xl pointer-events-none"
-              />
-
-              <div className="relative">
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-14 h-14 mx-auto rounded-2xl bg-white/15 backdrop-blur 
-                    flex items-center justify-center mb-5 border border-white/25"
-                >
-                  <Sparkles size={24} />
-                </motion.div>
-
-                <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.02em]">
-                  Ready to explore
-                  <br />
-                  <span className="text-[#E67E22]">CampusConnect?</span>
-                </h2>
-
-                <p className="mt-4 text-sm md:text-base text-white/80 max-w-xl mx-auto">
-                  Join thousands of students and administrators already using
-                  the platform.
+                {/* ✅ Send Button Color Changed to Green */}
+                <button type="submit" className="w-full py-4 rounded-xl bg-gradient-to-r from-[#227736] to-[#1c6430] hover:from-[#1c6430] hover:to-[#144d25] text-white font-bold text-sm shadow-lg shadow-[#227736]/20 hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                  {sent ? <CheckCircle2 size={18} /> : <Send size={18} />}
+                  {sent ? "Message Sent!" : "Send Message"}
+                </button>
+                
+                <p className="text-center text-[10px] text-[#5a6e63] font-semibold flex items-center justify-center gap-1 mt-2">
+                  <ShieldCheck size={12} /> Your information is safe with us.
                 </p>
+              </form>
+            </motion.div>
 
-                <div className="mt-8 flex flex-wrap gap-3 justify-center">
-                  <motion.a
-                    href="/register"
-                    whileHover={{ y: -4, scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl 
-                      bg-white text-[#227736] text-sm font-bold 
-                      shadow-xl shadow-black/20 hover:bg-[#eaf6ee]
-                      transition-all duration-300"
-                  >
-                    Get Started
-                    <ArrowRight size={16} />
-                  </motion.a>
-
-                  <motion.a
-                    href="/services"
-                    whileHover={{ y: -4, scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl 
-                      bg-transparent text-white text-sm font-bold 
-                      border-2 border-white/30 hover:bg-white/10 
-                      hover:border-[#E67E22]/60
-                      transition-all duration-300"
-                  >
-                    Explore Platform
-                  </motion.a>
+            {/* RIGHT: Other Ways */}
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-6 h-full flex flex-col">
+              <div className="bg-white p-8 rounded-[2rem] border border-[#e2ebe6] shadow-sm flex-1">
+                <h3 className="text-xl font-extrabold text-[#0f1d17] mb-6 flex items-center gap-2">
+                  <MessageSquare size={20} className="text-[#227736]" />
+                  Other Ways to Reach Us
+                </h3>
+                <div className="space-y-4">
+                  {otherWays.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-[#f8faf9] border border-transparent hover:border-[#e2ebe6] transition-all cursor-pointer group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-[#eaf6ee] flex items-center justify-center text-[#227736] group-hover:scale-110 transition-transform">
+                          <item.icon size={20} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#0f1d17] group-hover:text-[#227736] transition-colors">{item.title}</p>
+                          <p className="text-xs text-[#5a6e63] mt-0.5">{item.desc}</p>
+                        </div>
+                      </div>
+                      <ArrowRight size={18} className="text-[#5a6e63] group-hover:text-[#227736] group-hover:translate-x-1 transition-all" />
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
-          </div>
-        </section>
+          </section>
+
+        </div>
       </main>
 
       <Footer />
