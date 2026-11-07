@@ -25,26 +25,26 @@ IDENTITY_REPLY_EN = (
     "Smart University Management Platform.\n\n"
     "I am here to assist university students, faculty, and administrative staff. "
     "Here is what I can help you with:\n\n"
-    "📢 Smart Notice Board: Official announcements, examination schedules, deadlines, and AI summaries.\n\n"
-    "📝 Complaints & Grievance Redressal: Submitting and tracking issues (Wi-Fi, electricity, lab equipment, maintenance).\n\n"
-    "🔍 Lost & Found: Reporting lost items, finding misplaced property, and filing verified ownership claims.\n\n"
-    "🎓 Scholarships & Financial Aid: Merit & need-based scholarship criteria, CGPA rules, and submission dates.\n\n"
-    "🏛️ University Guidelines: Campus policies, office timings, departmental contacts, and administration.\n\n"
+    "**Smart Notice Board**: Official announcements, examination schedules, deadlines, and AI summaries.\n\n"
+    "**Complaints & Grievance Redressal**: Submitting and tracking issues (Wi-Fi, electricity, lab equipment, maintenance).\n\n"
+    "**Lost & Found**: Reporting lost items, finding misplaced property, and filing verified ownership claims.\n\n"
+    "**Scholarships & Financial Aid**: Merit & need-based scholarship criteria, CGPA rules, and submission dates.\n\n"
+    "**University Guidelines**: Campus policies, office timings, departmental contacts, and administration.\n\n"
     "How can I help you today?"
 )
 
 GREETING_REPLY_EN = (
-    "Hello! 👋 Welcome to CampusConnect. How can I assist you today with notices, "
+    "Hello!  Welcome to CampusConnect. How can I assist you today with notices, "
     "complaints, lost & found items, scholarships, or campus policies?"
 )
 
 OUT_OF_SCOPE_REPLY_EN = (
     "I don't have information about that. I can only provide answers about CampusConnect and university operations:\n\n"
-    "📢 Smart Notice Board: Announcements, exam schedules, deadlines, and official events.\n\n"
-    "📝 Complaints & Grievances: Submitting, tracking, Wi-Fi, electricity, lab, and maintenance issues.\n\n"
-    "🔍 Lost & Found: Reporting lost belongings, claiming found items, and proof of ownership.\n\n"
-    "🎓 Scholarships & Financial Aid: Eligibility criteria, CGPA requirements, and application deadlines.\n\n"
-    "🏛️ University Information: Campus policies, office timings, administration, and contact details.\n\n"
+    "**Smart Notice Board**: Announcements, exam schedules, deadlines, and official events.\n\n"
+    "**Complaints & Grievances**: Submitting, tracking, Wi-Fi, electricity, lab, and maintenance issues.\n\n"
+    "**Lost & Found**: Reporting lost belongings, claiming found items, and proof of ownership.\n\n"
+    "**Scholarships & Financial Aid**: Eligibility criteria, CGPA requirements, and application deadlines.\n\n"
+    "**University Information**: Campus policies, office timings, administration, and contact details.\n\n"
     "Please feel free to ask questions related to these university topics, or contact the university office for further assistance."
 )
 
@@ -594,7 +594,7 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
             return f"{best_section}\n\n(Note: Generated from verified CampusConnect knowledge base)."
 
     if "thank" in m or "thanks" in m:
-        return "You're welcome! Feel free to ask if you need any more help with CampusConnect. 😊"
+        return "You're welcome! Feel free to ask if you need any more help with CampusConnect. "
 
     if any(k in m for k in ["complaint", "problem", "lodge", "issue"]):
         return (
