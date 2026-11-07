@@ -1,4 +1,5 @@
 from pathlib import Path
+# pyrefly: ignore[missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -17,9 +18,11 @@ class Settings(BaseSettings):
     upload_dir: str = str(BACKEND_DIR / "uploads")
     max_upload_size_mb: int = 10
 
+    groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-20b"
     gemini_api_key: str = ""
     chroma_dir: str = str(BACKEND_DIR / "vector_store")
-    ai_model: str = "gemini-flash-lite-latest"
+    ai_model: str = "openai/gpt-oss-20b"
     embedding_model: str = "gemini-embedding-001"
 
     model_config = SettingsConfigDict(

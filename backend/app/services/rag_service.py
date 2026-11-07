@@ -159,9 +159,42 @@ def sanitize_source_title(raw_title: str) -> str:
     return clean
 
 
+def find_policy(keyword: str) -> Optional[Dict[str, Any]]:
+    """Find policy by keyword in title or content, independent of file section order."""
+    policies = _get_policies()
+    kw = keyword.lower()
+    for p in policies.values():
+        if kw in p.get("title", "").lower():
+            return p
+    for p in policies.values():
+        if kw in p.get("document", "").lower():
+            return p
+    return policies.get(kw)
+
+
+def find_guide(keyword: str) -> Optional[Dict[str, Any]]:
+    """Find guide by keyword in title or content, independent of file section order."""
+    guides = _get_guides()
+    kw = keyword.lower()
+    for g in guides.values():
+        if kw in g.get("title", "").lower():
+            return g
+    for g in guides.values():
+        if kw in g.get("document", "").lower():
+            return g
+    return guides.get(kw)
+
+
 def ensure_vector_store_populated() -> None:
-    """Non-blocking check for vector store status."""
-    pass
+    """Checks if vector store is populated; auto-populates from scripts.ingest_chroma if empty."""
+    try:
+        from app.services.vector_store import get_document_count
+        if get_document_count() == 0:
+            logger.info("ChromaDB vector store is empty. Populating now...")
+            import scripts.ingest_chroma as ingest
+            ingest.run_ingestion()
+    except Exception as exc:
+        logger.debug(f"ensure_vector_store_populated note: {exc}")
 
 
 def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str, Any]], List[str]]]:
@@ -207,20 +240,21 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
             "metadata": {"title": NOTICES_DATA[1]["title"]},
         })
         sources.append("Notice: Merit and Need-Based Scholarships")
-        # Guide 6: How to Apply for Scholarships
-        if "guide_06" in guides:
+        # Guide 6: How to Apply for Scholarships (dynamic title match)
+        guide_sch = find_guide("scholarship") or guides.get("guide_06")
+        if guide_sch:
             docs.append({
-                "id": "guide_06",
-                "document": guides["guide_06"]["document"],
-                "metadata": {"title": "Guide 6: How to Apply for Merit and Need-Based Scholarships"},
+                "id": guide_sch.get("id", "guide_06"),
+                "document": guide_sch["document"],
+                "metadata": {"title": guide_sch.get("title", "Guide 6: How to Apply for Merit and Need-Based Scholarships")},
             })
-            sources.append("Guide 6: How to Apply for Merit and Need-Based Scholarships")
+            sources.append(sanitize_source_title(guide_sch.get("title", "Guide 6: How to Apply for Merit and Need-Based Scholarships")))
         return docs[:2], sources[:2]
 
     # 3. Exam Schedule & Midterm/Finals
     is_exam = any(kw in clean_words for kw in [
         "exam", "exams", "midterm", "datesheet", "paper", "papers", "commence"
-    ]) or "mid-term" in clean or "date sheet" in clean or "final exam" in clean or "exam schedule" in clean  or "exam date" in clean
+    ]) or "mid-term" in clean or "date sheet" in clean or "final exam" in clean or "exam schedule" in clean or "exam date" in clean
     if is_exam:
         docs = []
         sources = []
@@ -232,13 +266,14 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
         sources.append("Notice: Midterm Examination Schedule")
         # If inquiry also specifically asks about grading, weightage, or passing regulations
         if any(gw in clean_words for gw in ["weightage", "cgpa", "gpa", "probation", "grading", "marks"]):
-            if "policy_05" in policies:
+            policy_exam = find_policy("examination") or policies.get("policy_05")
+            if policy_exam:
                 docs.append({
-                    "id": "policy_05",
-                    "document": policies["policy_05"]["document"],
-                    "metadata": {"title": "Policy 5: Examination and Grading Regulations"},
+                    "id": policy_exam.get("id", "policy_05"),
+                    "document": policy_exam["document"],
+                    "metadata": {"title": policy_exam.get("title", "Policy 5: Examination and Grading Regulations")},
                 })
-                sources.append("Policy 5: Examination and Grading Regulations")
+                sources.append(sanitize_source_title(policy_exam.get("title", "Policy 5: Examination and Grading Regulations")))
         return docs[:2], sources[:2]
 
     # 4. Attendance Policy (75% rule)
@@ -248,59 +283,64 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
     if is_attendance:
         docs = []
         sources = []
-        if "policy_02" in policies:
+        policy_att = find_policy("attendance") or policies.get("policy_02")
+        if policy_att:
             docs.append({
-                "id": "policy_02",
-                "document": policies["policy_02"]["document"],
-                "metadata": {"title": "Policy 2: Attendance and Leave Regulations"},
+                "id": policy_att.get("id", "policy_02"),
+                "document": policy_att["document"],
+                "metadata": {"title": policy_att.get("title", "Policy 2: Attendance and Leave Regulations")},
             })
-            sources.append("Policy 2: Attendance and Leave Regulations")
+            sources.append(sanitize_source_title(policy_att.get("title", "Policy 2: Attendance and Leave Regulations")))
         return docs, sources
 
     # 5. Lost & Found: Claiming an item
     is_claim = any(kw in clean_words for kw in [
         "claim", "claiming", "claimant"
-    ]) or "claim item" in clean or "claim this item" in clean or "claim found" in clean or "proof of ownership" in clean  or "verify claim" in clean
+    ]) or "claim item" in clean or "claim this item" in clean or "claim found" in clean or "proof of ownership" in clean or "verify claim" in clean
     if is_claim:
         docs = []
         sources = []
-        if "guide_03" in guides:
+        guide_cl = find_guide("claim") or guides.get("guide_03")
+        if guide_cl:
             docs.append({
-                "id": "guide_03",
-                "document": guides["guide_03"]["document"],
-                "metadata": {"title": "Guide 3: How to Claim a Found Item"},
+                "id": guide_cl.get("id", "guide_03"),
+                "document": guide_cl["document"],
+                "metadata": {"title": guide_cl.get("title", "Guide 3: How to Claim a Found Item")},
             })
-            sources.append("Guide 3: How to Claim a Found Item")
-        if "policy_07" in policies:
+            sources.append(sanitize_source_title(guide_cl.get("title", "Guide 3: How to Claim a Found Item")))
+        policy_lf = find_policy("lost and found") or policies.get("policy_07")
+        if policy_lf:
             docs.append({
-                "id": "policy_07",
-                "document": policies["policy_07"]["document"],
-                "metadata": {"title": "Policy 7: Lost and Found Property Policy"},
+                "id": policy_lf.get("id", "policy_07"),
+                "document": policy_lf["document"],
+                "metadata": {"title": policy_lf.get("title", "Policy 7: Lost and Found Property Policy")},
             })
-            sources.append("Policy 7: Lost and Found Property Policy")
+            sources.append(sanitize_source_title(policy_lf.get("title", "Policy 7: Lost and Found Property Policy")))
         return docs[:2], sources[:2]
 
     # 6. Lost & Found: Reporting a lost item (when NOT claiming)
     is_lost_report = any(kw in clean_words for kw in [
         "lost"
-    ]) or "lost item" in clean or "report lost" in clean  or "report item" in clean or "wallet" in clean_words or "keys" in clean_words
+    ]) or "lost item" in clean or "report lost" in clean or "report item" in clean or "wallet" in clean_words or "keys" in clean_words
     if is_lost_report:
         docs = []
         sources = []
-        if "guide_02" in guides:
+        guide_rep = find_guide("report lost") or guides.get("guide_02")
+        if guide_rep:
             docs.append({
-                "id": "guide_02",
-                "document": guides["guide_02"]["document"],
-                "metadata": {"title": "Guide 2: How to Report Lost or Found Items"},
+                "id": guide_rep.get("id", "guide_02"),
+                "document": guide_rep["document"],
+                "metadata": {"title": guide_rep.get("title", "Guide 2: How to Report Lost or Found Items")},
             })
-            sources.append("Guide 2: How to Report Lost or Found Items")
-        if "policy_07" in policies:
+            sources.append(sanitize_source_title(guide_rep.get("title", "Guide 2: How to Report Lost or Found Items")))
+        policy_lf = find_policy("lost and found") or policies.get("policy_07")
+        if policy_lf:
             docs.append({
-                "id": "policy_07",
-                "document": policies["policy_07"]["document"],
-                "metadata": {"title": "Policy 7: Lost and Found Property Policy"},
+                "id": policy_lf.get("id", "policy_07"),
+                "document": policy_lf["document"],
+                "metadata": {"title": policy_lf.get("title", "Policy 7: Lost and Found Property Policy")},
             })
-            sources.append("Policy 7: Lost and Found Property Policy")
+            sources.append(sanitize_source_title(policy_lf.get("title", "Policy 7: Lost and Found Property Policy")))
         return docs[:2], sources[:2]
 
     # 7. Wi-Fi & Campus Internet Support
@@ -310,20 +350,22 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
     if is_wifi:
         docs = []
         sources = []
-        if "guide_07" in guides:
+        guide_wf = find_guide("wi-fi") or guides.get("guide_07")
+        if guide_wf:
             docs.append({
-                "id": "guide_07",
-                "document": guides["guide_07"]["document"],
-                "metadata": {"title": "Guide 7: How to Connect to Campus Wi-Fi and Report Network Issues"},
+                "id": guide_wf.get("id", "guide_07"),
+                "document": guide_wf["document"],
+                "metadata": {"title": guide_wf.get("title", "Guide 7: How to Connect to Campus Wi-Fi and Report Network Issues")},
             })
-            sources.append("Guide 7: How to Connect to Campus Wi-Fi and Report Network Issues")
-        if "policy_04" in policies:
+            sources.append(sanitize_source_title(guide_wf.get("title", "Guide 7: How to Connect to Campus Wi-Fi and Report Network Issues")))
+        policy_wf = find_policy("wi-fi") or policies.get("policy_04")
+        if policy_wf:
             docs.append({
-                "id": "policy_04",
-                "document": policies["policy_04"]["document"],
-                "metadata": {"title": "Policy 4: IT, Wi-Fi and Computing Facilities Policy"},
+                "id": policy_wf.get("id", "policy_04"),
+                "document": policy_wf["document"],
+                "metadata": {"title": policy_wf.get("title", "Policy 4: IT, Wi-Fi and Computing Facilities Policy")},
             })
-            sources.append("Policy 4: IT, Wi-Fi and Computing Facilities Policy")
+            sources.append(sanitize_source_title(policy_wf.get("title", "Policy 4: IT, Wi-Fi and Computing Facilities Policy")))
         return docs[:2], sources[:2]
 
     # 8. Complaints & Grievance Redressal
@@ -333,36 +375,39 @@ def _resolve_topic_documents(clean_message: str) -> Optional[Tuple[List[Dict[str
     if is_complaint:
         docs = []
         sources = []
-        if "guide_01" in guides:
+        guide_cp = find_guide("complaint") or guides.get("guide_01")
+        if guide_cp:
             docs.append({
-                "id": "guide_01",
-                "document": guides["guide_01"]["document"],
-                "metadata": {"title": "Guide 1: How to Submit and Track Complaints on CampusConnect"},
+                "id": guide_cp.get("id", "guide_01"),
+                "document": guide_cp["document"],
+                "metadata": {"title": guide_cp.get("title", "Guide 1: How to Submit and Track Complaints on CampusConnect")},
             })
-            sources.append("Guide 1: How to Submit and Track Complaints on CampusConnect")
-        if "policy_08" in policies:
+            sources.append(sanitize_source_title(guide_cp.get("title", "Guide 1: How to Submit and Track Complaints on CampusConnect")))
+        policy_cp = find_policy("complaint") or policies.get("policy_08")
+        if policy_cp:
             docs.append({
-                "id": "policy_08",
-                "document": policies["policy_08"]["document"],
-                "metadata": {"title": "Policy 8: Student Grievance and Complaint Redressal"},
+                "id": policy_cp.get("id", "policy_08"),
+                "document": policy_cp["document"],
+                "metadata": {"title": policy_cp.get("title", "Policy 8: Student Grievance and Complaint Redressal")},
             })
-            sources.append("Policy 8: Student Grievance and Complaint Redressal")
+            sources.append(sanitize_source_title(policy_cp.get("title", "Policy 8: Student Grievance and Complaint Redressal")))
         return docs[:2], sources[:2]
 
     # 9. Fee Payment & Refund Policy
     is_fee = any(kw in clean_words for kw in [
         "fee", "fees", "tuition", "refund", "installment", "challan", "dues"
-    ]) or "refund policy" in clean or "late fee" in clean 
+    ]) or "refund policy" in clean or "late fee" in clean
     if is_fee:
         docs = []
         sources = []
-        if "policy_06" in policies:
+        policy_fee = find_policy("fee") or policies.get("policy_06")
+        if policy_fee:
             docs.append({
-                "id": "policy_06",
-                "document": policies["policy_06"]["document"],
-                "metadata": {"title": "Policy 6: Fee Payment and Refund Policy"},
+                "id": policy_fee.get("id", "policy_06"),
+                "document": policy_fee["document"],
+                "metadata": {"title": policy_fee.get("title", "Policy 6: Fee Payment and Refund Policy")},
             })
-            sources.append("Policy 6: Fee Payment and Refund Policy")
+            sources.append(sanitize_source_title(policy_fee.get("title", "Policy 6: Fee Payment and Refund Policy")))
         return docs, sources
 
     # 10. Library Use & Book Borrowing

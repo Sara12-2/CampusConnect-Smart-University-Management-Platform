@@ -4,7 +4,10 @@ from uuid import uuid4
 # pyrefly: ignore [missing-import]
 from fastapi import HTTPException
 
-from app.database import notices
+try:
+    from app.database import notices
+except Exception:
+    notices = []
 
 from app.schemas.notice import (
     NoticeCreate,

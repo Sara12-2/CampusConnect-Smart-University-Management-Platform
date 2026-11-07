@@ -6,6 +6,7 @@ email-validator
 python-jose[cryptography]
 bcrypt
 python-multipart
-google-genai
-chromadbSQLAlchemy 
-psycopg2-binary 
+groq
+chromadb
+SQLAlchemy
+psycopg2-binary
