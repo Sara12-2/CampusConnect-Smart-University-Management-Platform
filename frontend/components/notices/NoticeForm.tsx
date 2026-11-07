@@ -35,8 +35,6 @@ const empty: FormState = {
   pinned: false,
 };
 
-// Simple mock AI summary generator (client-side)
-// Real implementation: call AI API on publish
 const generateAISummary = (content: string): string => {
   if (!content || content.trim().length < 20) return "";
   const cleaned = content.replace(/\s+/g, " ").trim();
@@ -45,7 +43,6 @@ const generateAISummary = (content: string): string => {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  // Extract key info: dates, numbers, deadlines
   const keyPoints: string[] = [];
   const dateMatch = cleaned.match(
     /\b(\d{1,2}(st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*\d{0,4}|\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})/gi
@@ -61,23 +58,17 @@ const generateAISummary = (content: string): string => {
   if (/fee|payment|challan/i.test(cleaned))
     keyPoints.push("Fee/payment involved.");
 
-  // Take first 2 sentences as base
   const base = sentences.slice(0, 2).join(" ");
-  const summary =
-    base + (keyPoints.length ? " " + keyPoints.join(" ") : "");
+  const summary = base + (keyPoints.length ? " " + keyPoints.join(" ") : "");
 
   return summary.slice(0, 240) + (summary.length > 240 ? "..." : "");
 };
 
 export default function NoticeForm({
-  initial,
-  onSubmit,
-  onCancel,
-  submitLabel = "Publish Notice",
+  initial, onSubmit, onCancel, submitLabel = "Publish Notice",
 }: Props) {
   const [form, setForm] = useState<FormState>(
-    initial
-      ? {
+    initial ? {
           title: initial.title,
           content: initial.content,
           department: initial.department,
@@ -100,7 +91,7 @@ export default function NoticeForm({
 
   const handleGenerateSummary = () => {
     if (form.content.trim().length < 30) {
-      setErrors({ ...errors, content: "Summary ke liye kam se kam 30 characters." });
+      setErrors({ ...errors, content: "Minimum 30 characters required for summary." }); // ✅ English
       return;
     }
     setGenerating(true);
@@ -112,9 +103,9 @@ export default function NoticeForm({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (form.title.trim().length < 5) e.title = "Title kam se kam 5 characters.";
+    if (form.title.trim().length < 5) e.title = "Title must be at least 5 characters."; // ✅ English
     if (form.content.trim().length < 20)
-      e.content = "Content kam se kam 20 characters.";
+      e.content = "Content must be at least 20 characters."; // ✅ English
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -143,15 +134,14 @@ export default function NoticeForm({
             initial={{ opacity: 0, y: -8, height: 0 }}
             animate={{ opacity: 1, y: 0, height: "auto" }}
             exit={{ opacity: 0, y: -8, height: 0 }}
-            className="flex items-center gap-2 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-medium"
+            className="flex items-center gap-2 p-3 rounded-xl bg-[#eaf6ee] border border-[#c8e6d1] text-[#227736] text-sm font-medium"
           >
             <CheckCircle2 size={16} />
-            {initial ? "Notice update ho gayi!" : "Notice publish ho gayi!"}
+            {initial ? "Notice updated successfully!" : "Notice published successfully!"} {/* ✅ English */}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Title */}
       <Input
         label="Notice Title *"
         placeholder="e.g., Mid-Term Examination Schedule Fall 2025"
@@ -160,28 +150,26 @@ export default function NoticeForm({
         error={errors.title}
       />
 
-      {/* Content */}
       <Textarea
         label="Full Content *"
         rows={6}
-        placeholder="Poori notice yahan likhein — dates, deadlines, required documents..."
+        placeholder="Write the full notice here — dates, deadlines, required documents..." // ✅ English
         value={form.content}
         onChange={(e) => update("content", e.target.value)}
         error={errors.content}
       />
 
-      {/* AI Summary Generator */}
-      <div className="rounded-2xl border-2 border-orange-100 bg-gradient-to-r from-orange-50/50 to-green-50/50 p-4">
+      <div className="rounded-2xl border-2 border-[#E67E22]/30 bg-gradient-to-r from-[#fdf2e3]/50 to-[#eaf6ee]/50 p-4">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-bold text-orange-600 uppercase flex items-center gap-1.5">
+          <p className="text-xs font-bold text-[#B45A0B] uppercase flex items-center gap-1.5">
             <Sparkles size={12} /> AI Summary
           </p>
           <button
             type="button"
             onClick={handleGenerateSummary}
             disabled={generating}
-            className="text-xs font-semibold text-orange-600 hover:text-orange-700 
-              flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-orange-100 
+            className="text-xs font-semibold text-[#E67E22] hover:text-[#D35400] 
+              flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[#fdf2e3] 
               transition-all disabled:opacity-50"
           >
             <Wand2 size={12} className={generating ? "animate-pulse" : ""} />
@@ -192,18 +180,17 @@ export default function NoticeForm({
         <textarea
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
-          placeholder="Click 'Auto-generate' ya phir manually summary likhein..."
+          placeholder="Click 'Auto-generate' or write a manual summary..." // ✅ English
           rows={3}
-          className="w-full rounded-xl border-2 border-orange-200 bg-white px-3 py-2 text-sm 
-            focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none 
-            transition-all placeholder:text-slate-400 resize-none"
+          className="w-full rounded-xl border-2 border-[#E67E22]/20 bg-white px-3 py-2 text-sm 
+            focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/10 outline-none 
+            transition-all placeholder:text-[#5a6e63]/60 resize-none"
         />
-        <p className="text-[11px] text-slate-500 mt-1.5">
-          Ye summary students ko notice detail mein dikhegi.
+        <p className="text-[11px] text-[#5a6e63] mt-1.5">
+          This summary will be shown to students in the notice detail. {/* ✅ English */}
         </p>
       </div>
 
-      {/* Department + Semester */}
       <div className="grid md:grid-cols-2 gap-4">
         <Select
           label="Department"
@@ -231,7 +218,6 @@ export default function NoticeForm({
         />
       </div>
 
-      {/* Category + Deadline */}
       <div className="grid md:grid-cols-2 gap-4">
         <Select
           label="Category"
@@ -253,42 +239,33 @@ export default function NoticeForm({
         />
       </div>
 
-      {/* Pin toggle */}
-      <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-orange-300 cursor-pointer transition-all">
+      <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-[#e2ebe6] hover:border-[#E67E22]/50 cursor-pointer transition-all">
         <input
           type="checkbox"
           checked={form.pinned}
           onChange={(e) => update("pinned", e.target.checked)}
-          className="w-4 h-4 accent-orange-500 cursor-pointer"
+          className="w-4 h-4 accent-[#E67E22] cursor-pointer"
         />
         <div>
-          <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-            <Pin size={14} className="text-orange-500" /> Pin this notice
+          <p className="text-sm font-semibold text-[#0f1d17] flex items-center gap-1.5">
+            <Pin size={14} className="text-[#E67E22]" /> Pin this notice
           </p>
-          <p className="text-xs text-slate-500">
-            Pinned notices top par dikhte hain students ko.
+          <p className="text-xs text-[#5a6e63]">
+            Pinned notices appear at the top for students. {/* ✅ English */}
           </p>
         </div>
       </label>
 
-      {/* Info */}
-      <div className="flex items-start gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
-        <AlertCircle size={15} className="text-orange-500 mt-0.5 shrink-0" />
-        <p className="text-xs text-slate-600 leading-relaxed">
-          Notice publish hone ke baad students ko notification chali jayegi.
-          Deadline set karne par reminder bhi jayega.
+      <div className="flex items-start gap-2 p-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6]">
+        <AlertCircle size={15} className="text-[#E67E22] mt-0.5 shrink-0" />
+        <p className="text-xs text-[#5a6e63] leading-relaxed">
+          Once published, students will receive a notification. A reminder will also be sent if a deadline is set. {/* ✅ English */}
         </p>
       </div>
 
-      {/* Actions */}
       <div className="flex gap-3 pt-2">
         {onCancel && (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onCancel}
-            className="flex-1"
-          >
+          <Button type="button" variant="ghost" onClick={onCancel} className="flex-1">
             Cancel
           </Button>
         )}

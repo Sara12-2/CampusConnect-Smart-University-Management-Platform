@@ -24,27 +24,27 @@ export default function Table<T>({
   data,
   keyExtractor,
   onRowClick,
-  emptyMessage = "Koi data nahi mila.",
+  emptyMessage = "No data found.", // ✅ Fixed to English
   className,
 }: Props<T>) {
   if (data.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500 text-sm">
+      <div className="text-center py-12 text-[#5a6e63] text-sm">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className={cn("overflow-x-auto rounded-2xl border border-slate-200", className)}>
+    <div className={cn("overflow-x-auto rounded-2xl border border-[#e2ebe6]", className)}>
       <table className="w-full text-sm">
-        <thead className="bg-gradient-to-r from-orange-50 to-green-50 border-b border-slate-200">
+        <thead className="bg-gradient-to-r from-[#fdf2e3] to-[#eaf6ee] border-b border-[#e2ebe6]">
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={cn(
-                  "text-left px-4 py-3 font-bold text-slate-700 text-xs uppercase tracking-wider",
+                  "text-left px-4 py-3 font-bold text-[#0f1d17] text-xs uppercase tracking-wider",
                   col.className
                 )}
               >
@@ -53,7 +53,7 @@ export default function Table<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-slate-100">
+        <tbody className="bg-white divide-y divide-[#e2ebe6]">
           {data.map((row, i) => (
             <motion.tr
               key={keyExtractor(row)}
@@ -63,13 +63,13 @@ export default function Table<T>({
               onClick={() => onRowClick?.(row)}
               className={cn(
                 "transition-colors",
-                onRowClick && "cursor-pointer hover:bg-orange-50/40"
+                onRowClick && "cursor-pointer hover:bg-[#f8faf9]"
               )}
             >
               {columns.map((col) => (
                 <td
                   key={col.key}
-                  className={cn("px-4 py-3 text-slate-700", col.className)}
+                  className={cn("px-4 py-3 text-[#5a6e63]", col.className)}
                 >
                   {col.render
                     ? col.render(row, i)

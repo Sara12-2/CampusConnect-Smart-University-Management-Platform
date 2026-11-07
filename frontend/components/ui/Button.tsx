@@ -27,39 +27,27 @@ interface Props {
 }
 
 const variants: Record<Variant, string> = {
-  /* Green solid — main CTA */
   primary:
     "bg-[#227736] text-white hover:bg-[#1c6430] active:bg-[#165127] shadow-md shadow-[#227736]/25 hover:shadow-lg hover:shadow-[#227736]/30",
-
-  /* Soft green — secondary CTA */
   secondary:
     "bg-[#eaf6ee] text-[#227736] hover:bg-[#d5ecdc] border border-[#c8e6d1] hover:border-[#a3d5b3]",
-
-  /* Green outline */
   outline:
     "border-2 border-[#227736] text-[#227736] hover:bg-[#eaf6ee] hover:border-[#1c6430]",
-
-  /* Ghost — minimal */
   ghost:
     "text-[#5a6e63] hover:bg-[#eaf6ee] hover:text-[#227736]",
-
-  /* Danger */
   danger:
     "bg-[#dc3545] text-white hover:bg-[#c82333] shadow-md shadow-red-500/25",
-
-  /* Orange accent — special CTAs */
   accent:
     "bg-[#f4a228] text-white hover:bg-[#e08a10] shadow-md shadow-[#f4a228]/25",
-
-  /* White — for dark backgrounds */
   white:
     "bg-white text-[#227736] hover:bg-[#eaf6ee] shadow-md shadow-black/10 hover:shadow-lg",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "px-3.5 py-1.5 text-[13px] rounded-lg",
-  md: "px-5 py-2.5 text-sm rounded-xl",
-  lg: "px-7 py-3.5 text-base rounded-xl",
+  // ✅ Mobile pe chota, desktop pe bara
+  sm: "px-3 py-1.5 text-xs sm:text-[13px] rounded-lg",
+  md: "px-4 py-2 text-sm sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl",
+  lg: "px-5 py-2.5 text-sm sm:px-7 sm:py-3.5 sm:text-base rounded-xl",
 };
 
 export default function Button({
@@ -73,8 +61,9 @@ export default function Button({
   className,
   disabled,
 }: Props) {
+  // ✅ whitespace-nowrap lagaya taake text 2 lines mein na toote
   const classes = cn(
-    "relative inline-flex items-center justify-center gap-2 font-semibold overflow-hidden group",
+    "relative inline-flex items-center justify-center gap-2 font-semibold overflow-hidden group whitespace-nowrap",
     "transition-all duration-300 ease-out",
     "hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
     "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:active:scale-100",
@@ -85,14 +74,14 @@ export default function Button({
 
   const inner = (
     <>
-      {/* Shine sweep on hover */}
+      {/* Shine sweep effect */}
       <span
         className="absolute inset-0 -translate-x-full group-hover:translate-x-full 
           transition-transform duration-700 ease-out
           bg-gradient-to-r from-transparent via-white/25 to-transparent 
           pointer-events-none"
       />
-      <span className="relative z-10 inline-flex items-center gap-2">
+      <span className="relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2">
         {children}
       </span>
     </>
@@ -104,7 +93,7 @@ export default function Button({
         whileHover={{ y: -2 }}
         whileTap={{ scale: 0.97 }}
         transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        className="inline-block"
+        className={cn("inline-block", className?.includes("w-full") && "w-full")}
       >
         <Link href={href} className={classes}>
           {inner}
@@ -119,7 +108,7 @@ export default function Button({
       whileTap={{ scale: 0.97 }}
       transition={{ type: "spring", stiffness: 400, damping: 20 }}
       type={type}
-      form={form}
+      {...({ form } as any)} // ✅ TypeScript 'form' prop error fixed
       onClick={onClick}
       disabled={disabled}
       className={classes}
