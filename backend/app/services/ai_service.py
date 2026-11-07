@@ -304,118 +304,121 @@ Knowledge & Scope Rules:
 
 
 def _get_api_key() -> str:
-    key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY", "")
+    key = (
+        getattr(settings, "groq_api_key", "")
+        or os.getenv("GROQ_API_KEY", "")
+        or getattr(settings, "gemini_api_key", "")
+        or os.getenv("GEMINI_API_KEY", "")
+    )
     return key.strip()
 
 
-def test_gemini_connection() -> Dict[str, Any]:
-    """Tests real-time connectivity to Google Gemini API using configured key."""
+def test_groq_connection() -> Dict[str, Any]:
+    """Tests real-time connectivity to Groq API using configured key."""
     api_key = _get_api_key()
     if not api_key:
         return {
             "connected": False,
-            "error": "GEMINI_API_KEY is not configured.",
-            "model": settings.ai_model,
+            "error": "GROQ_API_KEY is not configured.",
+            "model": getattr(settings, "groq_model", "openai/gpt-oss-120b"),
         }
 
-    # 1. Test using direct Google Generative Language REST API
+    model_name = getattr(settings, "groq_model", "openai/gpt-oss-120b")
+
+    # 1. Try official groq SDK
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.ai_model}?key={api_key}"
+        # pyrefly: ignore[missing-import]
+        from groq import Groq
+
+        client = Groq(api_key=api_key)
+        models_resp = client.models.list()
+        if models_resp and hasattr(models_resp, "data") and len(models_resp.data) > 0:
+            return {
+                "connected": True,
+                "model": model_name,
+                "displayName": f"Groq LPU ({model_name})",
+                "message": f"Successfully connected to Groq API ({model_name}).",
+            }
+    except Exception as exc:
+        logger.debug(f"Groq SDK test failed: {exc}")
+
+    # 2. Try direct REST with User-Agent
+    try:
+        url = "https://api.groq.com/openai/v1/models"
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "CampusConnect/1.0", "Accept": "application/json"},
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) CampusConnect/1.0",
+                "Accept": "application/json",
+            },
         )
         with urllib.request.urlopen(req, timeout=7) as response:
             if response.status == 200:
-                data = json.loads(response.read().decode("utf-8"))
-                display_name = data.get("displayName", settings.ai_model)
                 return {
                     "connected": True,
-                    "model": settings.ai_model,
-                    "displayName": display_name,
-                    "message": f"Successfully connected to Google Gemini API ({display_name}).",
+                    "model": model_name,
+                    "displayName": f"Groq LPU ({model_name})",
+                    "message": f"Successfully connected to Groq API ({model_name}).",
                 }
-    except Exception as exc:
-        logger.debug(f"Direct REST model query failed: {exc}")
-
-    # 2. Test using google.genai SDK
-    try:
-        from google import genai  # type: ignore
-
-        client = genai.Client(api_key=api_key)
-        resp = client.models.generate_content(
-            model=settings.ai_model,
-            contents="Respond with 'OK' only.",
-        )
-        if resp and resp.text:
-            return {
-                "connected": True,
-                "model": settings.ai_model,
-                "message": f"Successfully connected to Gemini API via google-genai SDK ({settings.ai_model}).",
-            }
     except Exception as exc:
         return {
             "connected": False,
             "error": str(exc),
-            "model": settings.ai_model,
+            "model": model_name,
         }
 
     return {
         "connected": False,
-        "error": "Unable to verify Gemini connectivity.",
-        "model": settings.ai_model,
+        "error": "Unable to verify Groq connectivity.",
+        "model": model_name,
     }
 
 
-def _call_gemini_rest(prompt: str, system_instruction: str, api_key: str) -> Optional[str]:
-    """Direct REST call to Gemini generateContent endpoint."""
-    model_candidates = [
-        settings.ai_model,
-        "gemini-flash-lite-latest",
-        "gemini-3.5-flash-lite",
-        "gemini-3-flash-preview",
-        "gemini-3.6-flash",
-        "gemini-3.8-flash",
-        "gemini-flash-latest",
+# Backwards compatibility alias
+test_gemini_connection = test_groq_connection
+
+
+def _call_groq_rest(messages: List[Dict[str, str]], api_key: str) -> Optional[str]:
+    """Call Groq chat completions endpoint via REST."""
+    candidate_models = [
+        getattr(settings, "groq_model", "openai/gpt-oss-120b"),
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
+        "qwen/qwen3.8-27b",
     ]
 
-    for model_name in model_candidates:
+    for model_name in candidate_models:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+            url = "https://api.groq.com/openai/v1/chat/completions"
             payload = {
-                "system_instruction": {
-                    "parts": [{"text": system_instruction}]
-                },
-                "contents": [
-                    {
-                        "parts": [{"text": prompt}]
-                    }
-                ],
-                "generationConfig": {
-                    "temperature": 0.3,
-                    "maxOutputTokens": 1000,
-                },
+                "model": model_name,
+                "messages": messages,
+                "temperature": 0.2,
+                "max_tokens": 1024,
             }
             req_data = json.dumps(payload).encode("utf-8")
             req = urllib.request.Request(
                 url,
                 data=req_data,
                 headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) CampusConnect/1.0",
                     "Content-Type": "application/json",
-                    "User-Agent": "CampusConnect/1.0",
+                    "Accept": "application/json",
                 },
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=20) as response:
+            with urllib.request.urlopen(req, timeout=15) as response:
                 if response.status == 200:
                     resp_json = json.loads(response.read().decode("utf-8"))
-                    candidates = resp_json.get("candidates", [])
-                    if candidates:
-                        parts = candidates[0].get("content", {}).get("parts", [])
-                        if parts and "text" in parts[0]:
-                            return parts[0]["text"].strip()
+                    choices = resp_json.get("choices", [])
+                    if choices:
+                        content = choices[0].get("message", {}).get("content", "")
+                        if content:
+                            return content.strip()
         except Exception as exc:
-            logger.debug(f"Direct REST generateContent failed for {model_name}: {exc}")
+            logger.debug(f"Direct REST call failed for {model_name}: {exc}")
 
     return None
 
@@ -426,7 +429,7 @@ def generate_chat_response(
     history: Optional[List[Dict[str, Any]]] = None,
     system_instruction: str = SYSTEM_PROMPT,
 ) -> str:
-    """Generate a chat response strictly in English using Google Gemini API."""
+    """Generate a chat response strictly in English using Groq API."""
     user_query = (prompt or "").strip()
     if not user_query:
         return "Please enter a question or message."
@@ -453,61 +456,69 @@ def generate_chat_response(
 
     api_key = _get_api_key()
     if not api_key:
-        logger.error("GEMINI_API_KEY is not set.")
+        logger.error("GROQ_API_KEY is not set.")
         return _fallback_offline_response(user_query, context)
 
-    # Build full prompt
-    full_prompt = ""
-    if context:
-        full_prompt += f"--- UNIVERSITY KNOWLEDGE BASE CONTEXT ---\n{context}\n------------------------------------------\n\n"
-    if history:
-        history_str = "\n".join([f"{h.get('role', 'user')}: {h.get('content', '')}" for h in history[-4:]])
-        full_prompt += f"Recent Conversation:\n{history_str}\n\n"
-    full_prompt += f"User: {user_query}\nAssistant:"
+    # Build messages array for Groq OpenAI-compatible format
+    messages: List[Dict[str, str]] = [
+        {"role": "system", "content": system_instruction}
+    ]
 
-    # 1. Try google-genai SDK
+    if context:
+        messages.append({
+            "role": "system",
+            "content": (
+                f"--- OFFICIAL UNIVERSITY KNOWLEDGE BASE CONTEXT ---\n"
+                f"{context}\n"
+                f"------------------------------------------\n"
+                f"Base your answers accurately on this official context. Never contradict official policies or dates."
+            ),
+        })
+
+    if history:
+        for h in history[-4:]:
+            r = "assistant" if h.get("role") in ("bot", "assistant") else "user"
+            c = str(h.get("content", "")).strip()
+            if c:
+                messages.append({"role": r, "content": c})
+
+    messages.append({"role": "user", "content": user_query})
+
+    # 1. Try official groq SDK
     candidate_models = [
-        settings.ai_model,
-        "gemini-flash-lite-latest",
-        "gemini-3.5-flash-lite",
-        "gemini-3-flash-preview",
-        "gemini-3.6-flash",
-        "gemini-3.8-flash",
-        "gemini-flash-latest",
+        getattr(settings, "groq_model", "openai/gpt-oss-120b"),
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
+        "qwen/qwen3.8-27b",
     ]
 
     try:
-        from google import genai  # type: ignore
-        from google.genai import types  # type: ignore
+        # pyrefly: ignore[missing-import]
+        from groq import Groq
 
-        client = genai.Client(api_key=api_key)
-        config = types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            temperature=0.3,
-            max_output_tokens=1000,
-        )
-
+        client = Groq(api_key=api_key)
         for model_name in candidate_models:
             try:
-                response = client.models.generate_content(
+                chat_completion = client.chat.completions.create(
                     model=model_name,
-                    contents=full_prompt,
-                    config=config,
+                    messages=messages,  # type: ignore
+                    temperature=0.2,
+                    max_tokens=1024,
                 )
-                if response and response.text:
-                    reply = response.text.strip()
+                if chat_completion.choices and chat_completion.choices[0].message.content:
+                    reply = chat_completion.choices[0].message.content.strip()
                     if is_refusal_or_non_english(reply):
                         return NON_ENGLISH_REJECT_REPLY
                     if "don't have information" in reply.lower():
                         return OUT_OF_SCOPE_REPLY_EN
                     return reply
             except Exception as model_err:
-                logger.debug(f"google.genai call attempt with {model_name} failed: {model_err}")
+                logger.debug(f"Groq SDK with {model_name} failed: {model_err}")
     except Exception as exc:
-        logger.debug(f"google.genai SDK exception: {exc}")
+        logger.debug(f"Groq SDK exception: {exc}")
 
-    # 2. Try Direct Google Generative Language REST API
-    rest_reply = _call_gemini_rest(full_prompt, system_instruction, api_key)
+    # 2. Try Direct REST
+    rest_reply = _call_groq_rest(messages, api_key)
     if rest_reply:
         if is_refusal_or_non_english(rest_reply):
             return NON_ENGLISH_REJECT_REPLY
@@ -515,36 +526,12 @@ def generate_chat_response(
             return OUT_OF_SCOPE_REPLY_EN
         return rest_reply
 
-    # 3. Try legacy google.generativeai SDK
-    try:
-        import google.generativeai as legacy_genai  # type: ignore
-
-        legacy_genai.configure(api_key=api_key)
-        for legacy_model in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]:
-            try:
-                model = legacy_genai.GenerativeModel(
-                    model_name=legacy_model,
-                    system_instruction=system_instruction,
-                )
-                response = model.generate_content(full_prompt)
-                if response and response.text:
-                    reply = response.text.strip()
-                    if is_refusal_or_non_english(reply):
-                        return NON_ENGLISH_REJECT_REPLY
-                    if "don't have information" in reply.lower():
-                        return OUT_OF_SCOPE_REPLY_EN
-                    return reply
-            except Exception:
-                pass
-    except Exception as exc:
-        logger.error(f"Generative AI legacy SDK failed: {exc}")
-
-    # If all API calls fail, fallback to local knowledge
+    # 3. If API calls fail, fallback to local knowledge
     return _fallback_offline_response(user_query, context)
 
 
 def generate_summary(content: str) -> str:
-    """Summarize university notice text for digital notice board."""
+    """Summarize university notice text for digital notice board using Groq."""
     text = (content or "").strip()
     if not text:
         return ""
@@ -552,20 +539,24 @@ def generate_summary(content: str) -> str:
     api_key = _get_api_key()
     if api_key:
         try:
-            from google import genai  # type: ignore
+            # pyrefly: ignore[missing-import]
+            from groq import Groq
 
-            client = genai.Client(api_key=api_key)
-            prompt = f"Summarize this university notice into 1 or 2 concise, clear English sentences:\n\n{text}"
-            for m in [settings.ai_model, "gemini-2.5-flash", "gemini-flash-latest"]:
-                try:
-                    response = client.models.generate_content(
-                        model=m,
-                        contents=prompt,
-                    )
-                    if response and response.text:
-                        return response.text.strip()
-                except Exception:
-                    pass
+            client = Groq(api_key=api_key)
+            resp = client.chat.completions.create(
+                model=getattr(settings, "groq_model", "openai/gpt-oss-120b"),
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Summarize this university notice into 1 or 2 concise, clear English sentences. Output only the summary without preamble.",
+                    },
+                    {"role": "user", "content": text},
+                ],
+                max_tokens=150,
+                temperature=0.2,
+            )
+            if resp.choices and resp.choices[0].message.content:
+                return resp.choices[0].message.content.strip()
         except Exception:
             pass
 

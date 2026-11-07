@@ -37,6 +37,10 @@ app.add_middleware(
 )
 
 
+from pathlib import Path
+
+Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
+
 app.mount(
     "/uploads",
     StaticFiles(directory=settings.upload_dir),

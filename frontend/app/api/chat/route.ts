@@ -63,89 +63,78 @@ Capabilities & Guidelines:
 
 function getApiKey(): string {
   return (
+    process.env.GROQ_API_KEY ||
+    process.env.NEXT_PUBLIC_GROQ_API_KEY ||
     process.env.GEMINI_API_KEY ||
     process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
     ""
   ).trim();
 }
 
-async function callDirectGemini(message: string, history: any[] = []): Promise<string> {
+async function callDirectGroq(message: string, history: any[] = []): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured in environment variables.");
+    throw new Error("GROQ_API_KEY is not configured in environment variables.");
   }
 
-  // Active models verified on Google Gemini API
   const candidateModels = [
-    "gemini-flash-lite-latest",
-    "gemini-3.5-flash-lite",
-    "gemini-3-flash-preview",
-    "gemini-3.6-flash",
-    "gemini-3.8-flash",
-    "gemini-flash-latest",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b",
   ];
 
-  let historyContext = "";
+  const messages: any[] = [
+    {
+      role: "system",
+      content: `${SYSTEM_PROMPT}\n\n${UNIVERSITY_KNOWLEDGE_CONTEXT}`,
+    },
+  ];
+
   if (Array.isArray(history) && history.length > 0) {
     const recent = history.slice(-4);
-    historyContext = recent
-      .map((h) => `${h.role === "bot" ? "Assistant" : "User"}: ${h.content}`)
-      .join("\n");
+    for (const h of recent) {
+      messages.push({
+        role: h.role === "bot" || h.role === "assistant" ? "assistant" : "user",
+        content: String(h.content || ""),
+      });
+    }
   }
 
-  const prompt = `${UNIVERSITY_KNOWLEDGE_CONTEXT}
-
-${historyContext ? `Recent conversation:\n${historyContext}\n\n` : ""}User: ${message}
-Assistant:`;
+  messages.push({ role: "user", content: message });
 
   let lastErrorDetail = "";
 
   for (const model of candidateModels) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const payload = {
-        system_instruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 1000,
-        },
-      };
-
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-      const res = await fetch(url, {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) CampusConnect/1.0",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.2,
+          max_tokens: 1024,
+        }),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
 
       if (res.ok) {
         const data = await res.json();
-        const candidates = data?.candidates || [];
-        const parts = candidates[0]?.content?.parts || [];
-        // Extract text while excluding any thinking parts if model uses thinking
-        const textParts = parts.filter((p: any) => p.text && !p.thought);
-        const text = (textParts.length > 0 ? textParts : parts)
-          .map((p: any) => p.text || "")
-          .join("")
-          .trim();
-
-        if (text) {
-          return text;
+        const content = data?.choices?.[0]?.message?.content?.trim();
+        if (content) {
+          return content;
         }
       } else {
         const errText = await res.text();
-        lastErrorDetail = `Model ${model} (${res.status}): ${errText.slice(0, 200)}`;
+        lastErrorDetail = `Model ${model} (${res.status}): ${errText.slice(0, 150)}`;
         console.warn(lastErrorDetail);
       }
     } catch (err: any) {
@@ -154,7 +143,7 @@ Assistant:`;
     }
   }
 
-  throw new Error(`Google Gemini API error: ${lastErrorDetail || "All models failed to respond"}`);
+  throw new Error(`Groq API error: ${lastErrorDetail || "All models failed to respond"}`);
 }
 
 function resolveRelevantSources(message: string, reply: string): string[] {
@@ -349,10 +338,10 @@ export async function POST(req: NextRequest) {
       // Backend not running, proceed to direct Gemini call
     }
 
-    // 2. Direct Gemini AI Generation using GEMINI_API_KEY (No dummy mock data!)
-    const rawReply = await callDirectGemini(message, history);
+    // 2. Direct Groq AI Generation using GROQ_API_KEY
+    const rawReply = await callDirectGroq(message, history);
 
-    // If direct Gemini responded with refusal preamble while trying to answer
+    // If direct Groq responded with refusal preamble while trying to answer
     if (isRefusalOrNonEnglishAnswer(rawReply)) {
       return NextResponse.json({
         reply: REJECT_NON_ENGLISH_REPLY,
@@ -372,8 +361,8 @@ export async function POST(req: NextRequest) {
     console.error("Chat error:", error);
     return NextResponse.json(
       {
-        error: error.message || "Failed to generate answer from Gemini API.",
-        reply: `⚠️ Connection Error: Unable to reach Google Gemini API (${error.message || "Check API key & internet"}). Please verify your Gemini connection.`,
+        error: error.message || "Failed to generate answer from Groq API.",
+        reply: `⚠️ Connection Error: Unable to reach Groq API (${error.message || "Check API key & internet"}). Please verify your connection.`,
         mode: "error",
       },
       { status: 500 }

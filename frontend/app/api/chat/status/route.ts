@@ -24,32 +24,39 @@ export async function GET() {
     // Backend offline
   }
 
-  // Check direct Gemini connectivity
+  // Check direct Groq connectivity
   const apiKey = (
+    process.env.GROQ_API_KEY ||
+    process.env.NEXT_PUBLIC_GROQ_API_KEY ||
     process.env.GEMINI_API_KEY ||
     process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
     ""
   ).trim();
 
-  let geminiConnected = false;
-  let modelName = "gemini-flash-lite-latest";
+  let groqConnected = false;
+  const modelName = "openai/gpt-oss-120b";
 
   if (apiKey) {
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelName}?key=${apiKey}`,
-        { method: "GET" }
-      );
-      geminiConnected = res.ok;
+      const res = await fetch("https://api.groq.com/openai/v1/models", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "User-Agent": "CampusConnect/1.0",
+        },
+      });
+      groqConnected = res.ok;
     } catch {
-      geminiConnected = false;
+      groqConnected = false;
     }
   }
 
   return NextResponse.json({
     backendOnline: false,
+    groq_configured: Boolean(apiKey),
+    groq_connected: groqConnected,
     gemini_configured: Boolean(apiKey),
-    gemini_connected: geminiConnected,
+    gemini_connected: groqConnected,
     model: modelName,
     mode: "direct",
   });

@@ -360,6 +360,8 @@ export default function ChatBot() {
         return (
           !lower.includes("gemini") &&
           !lower.includes("google") &&
+          !lower.includes("groq") &&
+          !lower.includes("llama") &&
           !lower.includes("backend rag") &&
           !lower.includes("flash")
         );
@@ -422,10 +424,6 @@ export default function ChatBot() {
             aria-label="Open chat"
           >
             <MessageSquare size={24} />
-            <span className="absolute top-1 right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E67E22] opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-[#E67E22]" />
-            </span>
           </motion.button>
         )}
       </AnimatePresence>
