@@ -22,10 +22,13 @@ export default function ComplaintDetail() {
   if (!complaint) {
     return (
       <div>
-        <EmptyState title="Complaint nahi mili" />
-        <div className="text-center">
-          <Link href="/student/complaints" className="text-orange-600 font-semibold hover:underline">
-            ← Back
+        <EmptyState title="Complaint not found" /> {/* ✅ English */}
+        <div className="text-center mt-4">
+          <Link 
+            href="/student/complaints" 
+            className="text-[#E67E22] font-semibold hover:underline" // ✅ Theme color
+          >
+            ← Back to Complaints
           </Link>
         </div>
       </div>
@@ -40,37 +43,44 @@ export default function ComplaintDetail() {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-4xl mx-auto space-y-6"
     >
-      <Link href="/student/complaints" className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-orange-600 font-semibold">
+      <Link 
+        href="/student/complaints" 
+        className="inline-flex items-center gap-2 text-sm text-[#5a6e63] hover:text-[#E67E22] font-semibold transition-colors"
+      >
         <ArrowLeft size={16} /> Back to Complaints
       </Link>
 
-      <div className="bg-white rounded-3xl border border-slate-200 p-8">
+      <div className="bg-white rounded-3xl border border-[#e2ebe6] p-8 shadow-sm">
         <div className="flex items-center gap-2 mb-3">
           <Badge className={statusColors[complaint.status]}>{complaint.status}</Badge>
-          <Badge className="bg-slate-100 text-slate-700 border-slate-200">{complaint.category}</Badge>
+          <Badge className="bg-[#f8faf9] text-[#5a6e63] border-[#e2ebe6]">{complaint.category}</Badge>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-slate-800">{complaint.title}</h1>
+        <h1 className="text-2xl font-extrabold text-[#0f1d17]">{complaint.title}</h1>
 
-        <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-slate-500">
-          <span className="flex items-center gap-1"><Calendar size={14} /> {formatDate(complaint.createdAt)}</span>
+        <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-[#5a6e63]">
+          <span className="flex items-center gap-1">
+            <Calendar size={14} /> {formatDate(complaint.createdAt)}
+          </span>
           {complaint.assignedTo && (
-            <span className="flex items-center gap-1"><User size={14} /> Assigned: {complaint.assignedTo}</span>
+            <span className="flex items-center gap-1">
+              <User size={14} /> Assigned: {complaint.assignedTo}
+            </span>
           )}
         </div>
 
-        <p className="mt-5 text-slate-600 leading-relaxed">{complaint.description}</p>
+        <p className="mt-5 text-[#5a6e63] leading-relaxed">{complaint.description}</p>
 
         {/* Progress Timeline */}
         <div className="mt-8">
-          <h2 className="font-bold text-slate-800 mb-5">Progress Timeline</h2>
+          <h2 className="font-bold text-[#0f1d17] mb-5">Progress Timeline</h2>
           <div className="relative">
-            <div className="absolute top-5 left-5 right-5 h-1 bg-slate-200 rounded-full" />
+            <div className="absolute top-5 left-5 right-5 h-1 bg-[#e2ebe6] rounded-full" />
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${(currentIdx / (steps.length - 1)) * 100}%` }}
               transition={{ duration: 1, delay: 0.3 }}
-              className="absolute top-5 left-5 h-1 bg-gradient-to-r from-orange-500 to-green-500 rounded-full"
+              className="absolute top-5 left-5 h-1 bg-gradient-to-r from-[#E67E22] to-[#227736] rounded-full" // ✅ Theme colors
               style={{ maxWidth: "calc(100% - 2.5rem)" }}
             />
             <div className="relative flex justify-between">
@@ -85,13 +95,13 @@ export default function ComplaintDetail() {
                       transition={{ delay: 0.3 + i * 0.15 }}
                       className={`w-10 h-10 rounded-full flex items-center justify-center ring-4 ring-white ${
                         done
-                          ? "bg-gradient-to-br from-orange-500 to-green-500 text-white shadow-lg shadow-orange-500/30"
-                          : "bg-slate-200 text-slate-400"
+                          ? "bg-gradient-to-br from-[#E67E22] to-[#227736] text-white shadow-lg shadow-[#E67E22]/30" // ✅ Theme colors
+                          : "bg-[#f8faf9] text-[#5a6e63]/50 border border-[#e2ebe6]"
                       }`}
                     >
                       <Icon size={18} />
                     </motion.div>
-                    <span className={`text-xs font-semibold ${done ? "text-slate-800" : "text-slate-400"}`}>
+                    <span className={`text-xs font-semibold ${done ? "text-[#0f1d17]" : "text-[#5a6e63]/50"}`}>
                       {s.label}
                     </span>
                   </div>
