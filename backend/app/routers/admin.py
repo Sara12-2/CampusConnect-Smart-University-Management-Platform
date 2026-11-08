@@ -90,7 +90,7 @@ def update_user_status(
             detail="User not found",
         )
 
-    # Aakhri active admin ko deactivate nahi kar sakte.
+    # Cannot deactivate the last remaining active admin.
     if (
         user.get("role") == "admin"
         and user.get("is_active", True)

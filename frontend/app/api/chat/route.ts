@@ -59,6 +59,7 @@ Capabilities & Guidelines:
 4. If asked about Midterm Exams, always explicitly state that Midterms start on October 20 and Finals on January 10.
 5. If asked about Scholarships, always explicitly state the 3.50 CGPA requirement for Merit Scholarships and the October 15 deadline.
 6. If the user asks something completely outside university scope (e.g., cricket match scores, movies, weather, politics, cooking), politely decline and state that you only answer questions related to CampusConnect and university operations.
+7. STRICT EMOJI POLICY: You must NEVER use emojis or emoticons in your answers. Keep all output strictly professional, clean, and emoji-free.
 `;
 
 function getApiKey(): string {
@@ -362,7 +363,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: error.message || "Failed to generate answer from Groq API.",
-        reply: `⚠️ Connection Error: Unable to reach Groq API (${error.message || "Check API key & internet"}). Please verify your connection.`,
+        reply: `Connection Error: Unable to reach Groq API (${error.message || "Check API key & internet"}). Please verify your connection.`,
         mode: "error",
       },
       { status: 500 }

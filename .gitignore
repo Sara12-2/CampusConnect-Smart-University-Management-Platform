@@ -30,5 +30,7 @@ backend/vector_store_temp/
 .DS_Store
 
 # Other
-powershell.cmd*_backup.txt 
+powershell.cmd
+*.tsbuildinfo
+*_backup.txt 
 chatbot_conflicted.txt 

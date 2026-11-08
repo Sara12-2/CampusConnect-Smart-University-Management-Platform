@@ -21,30 +21,30 @@ logger = logging.getLogger(__name__)
 # ============================================================
 
 IDENTITY_REPLY_EN = (
-    "Hello! 👋 I am CampusConnect Assistant, the official AI guide for CampusConnect — "
+    "Hello! I am CampusConnect Assistant, the official AI guide for CampusConnect - "
     "Smart University Management Platform.\n\n"
     "I am here to assist university students, faculty, and administrative staff. "
     "Here is what I can help you with:\n\n"
-    "**Smart Notice Board**: Official announcements, examination schedules, deadlines, and AI summaries.\n\n"
-    "**Complaints & Grievance Redressal**: Submitting and tracking issues (Wi-Fi, electricity, lab equipment, maintenance).\n\n"
-    "**Lost & Found**: Reporting lost items, finding misplaced property, and filing verified ownership claims.\n\n"
-    "**Scholarships & Financial Aid**: Merit & need-based scholarship criteria, CGPA rules, and submission dates.\n\n"
-    "**University Guidelines**: Campus policies, office timings, departmental contacts, and administration.\n\n"
+    "- Smart Notice Board: Official announcements, examination schedules, deadlines, and AI summaries.\n\n"
+    "- Complaints & Grievance Redressal: Submitting and tracking issues (Wi-Fi, electricity, lab equipment, maintenance).\n\n"
+    "- Lost & Found: Reporting lost items, finding misplaced property, and filing verified ownership claims.\n\n"
+    "- Scholarships & Financial Aid: Merit & need-based scholarship criteria, CGPA rules, and submission dates.\n\n"
+    "- University Guidelines: Campus policies, office timings, departmental contacts, and administration.\n\n"
     "How can I help you today?"
 )
 
 GREETING_REPLY_EN = (
-    "Hello!  Welcome to CampusConnect. How can I assist you today with notices, "
+    "Hello! Welcome to CampusConnect. How can I assist you today with notices, "
     "complaints, lost & found items, scholarships, or campus policies?"
 )
 
 OUT_OF_SCOPE_REPLY_EN = (
     "I don't have information about that. I can only provide answers about CampusConnect and university operations:\n\n"
-    "**Smart Notice Board**: Announcements, exam schedules, deadlines, and official events.\n\n"
-    "**Complaints & Grievances**: Submitting, tracking, Wi-Fi, electricity, lab, and maintenance issues.\n\n"
-    "**Lost & Found**: Reporting lost belongings, claiming found items, and proof of ownership.\n\n"
-    "**Scholarships & Financial Aid**: Eligibility criteria, CGPA requirements, and application deadlines.\n\n"
-    "**University Information**: Campus policies, office timings, administration, and contact details.\n\n"
+    "- Smart Notice Board: Announcements, exam schedules, deadlines, and official events.\n\n"
+    "- Complaints & Grievances: Submitting, tracking, Wi-Fi, electricity, lab, and maintenance issues.\n\n"
+    "- Lost & Found: Reporting lost belongings, claiming found items, and proof of ownership.\n\n"
+    "- Scholarships & Financial Aid: Eligibility criteria, CGPA requirements, and application deadlines.\n\n"
+    "- University Information: Campus policies, office timings, administration, and contact details.\n\n"
     "Please feel free to ask questions related to these university topics, or contact the university office for further assistance."
 )
 
@@ -293,6 +293,7 @@ Capabilities & Personality:
    - Profile & Account Management: Students can update their profile by logging into their dashboard, navigating to the Profile or Settings section, updating personal/academic details, and clicking "Save Changes".
 
 Knowledge & Scope Rules:
+- STRICT EMOJI POLICY: You must NEVER use emojis, emoticons, or decorative icons in any part of your answers. Keep your responses clean, professional, and strictly emoji-free.
 - When asked about exams or exam schedule, always explicitly state that Midterm examinations start on October 20, and Final examinations begin on January 10.
 - When asked about scholarships, state the minimum 3.50 CGPA requirement for Merit Scholarships and the deadline of October 15.
 - Queries regarding campus policies, rules, regulations, contact numbers, phone numbers, helplines, profile settings, account updates, and office hours are VALID university/platform topics and MUST NEVER be classified as out-of-context. Answer them helpfully with clear instructions.
@@ -594,7 +595,7 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
             return f"{best_section}\n\n(Note: Generated from verified CampusConnect knowledge base)."
 
     if "thank" in m or "thanks" in m:
-        return "You're welcome! Feel free to ask if you need any more help with CampusConnect. "
+        return "You're welcome! Feel free to ask if you need any more help with CampusConnect."
 
     if any(k in m for k in ["complaint", "problem", "lodge", "issue"]):
         return (
@@ -614,7 +615,7 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
 
     if any(k in m for k in ["exam", "notice", "schedule", "dates", "announcement", "midterm", "final", "date sheet", "datesheet"]):
         return (
-            "📝 Midterm examinations commence on October 20 for the Fall semester.\n"
+            "Midterm examinations commence on October 20 for the Fall semester.\n"
             "Final examinations begin on January 10.\n\n"
             "Detailed date sheets and hall allotments are published in the Notice Board section. "
             "Students must bring their original university ID card and clear all fee dues prior to examinations."
@@ -622,7 +623,7 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
 
     if any(k in m for k in ["scholarship", "financial aid", "merit", "fee concession"]):
         return (
-            "🎓 Scholarship Details:\n\n"
+            "Scholarship Details:\n\n"
             "• Merit Scholarships: Minimum 3.50 CGPA required (up to 100% tuition concession).\n"
             "• Need-Based Scholarships: Minimum 2.50 CGPA required.\n"
             "• Application Deadline: October 15.\n\n"

@@ -86,8 +86,8 @@ def require_admin(
     response_model=UserResponse,
 )
 def register(payload: UserRegister):
-    # Public registration se sirf student account banega.
-    # User ke bheje huay role ko trust nahi karna.
+    # Public registration only creates student accounts.
+    # Do not trust user-supplied roles.
     user_data = payload.model_dump()
     user_data["role"] = "student"
 

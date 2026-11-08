@@ -109,28 +109,28 @@ export default function RegisterPage() {
               
               {/* Name & Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Full Name" icon={User} placeholder="Sara Manzoor" value={form.name} onChange={(v) => { setForm({ ...form, name: v }); setError(""); }} />
-                <Field label="Email" icon={Mail} type="email" placeholder="you@campusconnect.edu" value={form.email} onChange={(v) => { setForm({ ...form, email: v }); setError(""); }} />
+                <Field label="Full Name" icon={User} placeholder="Sara Manzoor" value={form.name} onChange={(v: string) => { setForm({ ...form, name: v }); setError(""); }} />
+                <Field label="Email" icon={Mail} type="email" placeholder="you@campusconnect.edu" value={form.email} onChange={(v: string) => { setForm({ ...form, email: v }); setError(""); }} />
               </div>
 
               {/* Department & Semester */}
               <div className="grid grid-cols-2 gap-3">
                 <CustomSelect 
                   label="Department" icon={BookOpen} value={form.department} 
-                  onChange={(v) => setForm({ ...form, department: v })} 
+                  onChange={(v: string) => setForm({ ...form, department: v })} 
                   options={[{ value: "Computer Science", label: "CS" }, { value: "Software Engineering", label: "SE" }, { value: "Business Admin", label: "BBA" }, { value: "Electrical Eng.", label: "EE" }]} 
                 />
                 <CustomSelect 
                   label="Semester" icon={MapPin} value={form.semester} 
-                  onChange={(v) => setForm({ ...form, semester: v })} 
+                  onChange={(v: string) => setForm({ ...form, semester: v })} 
                   options={[1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ value: String(n), label: `Sem ${n}` }))} 
                 />
               </div>
 
               {/* Passwords */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <PasswordField label="Password" placeholder="Min 6 chars" value={form.password} onChange={(v) => { setForm({ ...form, password: v }); setError(""); }} show={showPassword} toggle={() => setShowPassword(!showPassword)} />
-                <PasswordField label="Confirm Password" placeholder="Re-enter" value={form.confirm} onChange={(v) => { setForm({ ...form, confirm: v }); setError(""); }} show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />
+                <PasswordField label="Password" placeholder="Min 6 chars" value={form.password} onChange={(v: string) => { setForm({ ...form, password: v }); setError(""); }} show={showPassword} toggle={() => setShowPassword(!showPassword)} />
+                <PasswordField label="Confirm Password" placeholder="Re-enter" value={form.confirm} onChange={(v: string) => { setForm({ ...form, confirm: v }); setError(""); }} show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />
               </div>
 
               {/* Passwords Match Indicator */}
