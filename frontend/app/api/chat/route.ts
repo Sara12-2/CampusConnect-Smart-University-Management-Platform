@@ -54,20 +54,22 @@ CRITICAL LANGUAGE RULE:
 
 Capabilities & Guidelines:
 1. Always base your university-specific answers on the official knowledge context provided.
-2. Tone: Warm, welcoming, respectful, and helpful.
-3. Structure your answers cleanly using bullet points (•) or numbered lists (1, 2, 3).
-4. If asked about Midterm Exams, always explicitly state that Midterms start on October 20 and Finals on January 10.
-5. If asked about Scholarships, always explicitly state the 3.50 CGPA requirement for Merit Scholarships and the October 15 deadline.
+2. Tone: Professional, respectful, and helpful.
+3. FORMATTING RULES: 
+   - You MUST use **bold** text for all important keywords, dates, numbers, and key terms (e.g., **October 20**, **3.50 CGPA**, **75% attendance**).
+   - Structure your answers cleanly using bullet points (•) or numbered lists (1, 2, 3).
+   - STRICTLY DO NOT USE ANY EMOJIS in your responses.
+4. If asked about Midterm Exams, always explicitly state that Midterms start on **October 20** and Finals on **January 10**.
+5. If asked about Scholarships, always explicitly state the **3.50 CGPA** requirement for Merit Scholarships and the **October 15** deadline.
 6. If the user asks something completely outside university scope (e.g., cricket match scores, movies, weather, politics, cooking), politely decline and state that you only answer questions related to CampusConnect and university operations.
 7. STRICT EMOJI POLICY: You must NEVER use emojis or emoticons in your answers. Keep all output strictly professional, clean, and emoji-free.
 `;
 
+// Sirf Groq API Key
 function getApiKey(): string {
   return (
     process.env.GROQ_API_KEY ||
     process.env.NEXT_PUBLIC_GROQ_API_KEY ||
-    process.env.GEMINI_API_KEY ||
-    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
     ""
   ).trim();
 }
@@ -150,7 +152,6 @@ async function callDirectGroq(message: string, history: any[] = []): Promise<str
 function resolveRelevantSources(message: string, reply: string): string[] {
   const combined = `${message} ${reply}`.toLowerCase();
 
-  // If greeting, identity, or polite chatter without specific university inquiry, no sources needed
   if (
     /^(hi|hello|hey|good morning|good afternoon|good evening|thanks|thank you|who are you|introduce yourself)\b/i.test(message.trim()) &&
     !combined.includes("exam") &&
@@ -164,43 +165,36 @@ function resolveRelevantSources(message: string, reply: string): string[] {
 
   const sources: string[] = [];
 
-  // Exams & Date Sheets
   if (combined.match(/exam|midterm|final|date sheet|datesheet|admit card|hall allotment/)) {
     sources.push("Notice: Midterm Examination Schedule");
     sources.push("Academic Calendar & Regulations");
   }
 
-  // Scholarships & Financial Aid
   if (combined.match(/scholarship|financial aid|merit|need-based|cgpa|concession/)) {
     sources.push("Notice: Merit & Need-Based Scholarships");
     sources.push("Student Affairs Financial Aid Guidelines");
   }
 
-  // Complaints & Grievance
   if (combined.match(/complaint|grievance|wi-fi|wifi|electricity|maintenance|lab issue/)) {
     sources.push("Guide 1: How to Submit & Track Complaints");
     sources.push("Policy 8: Student Grievance Redressal");
   }
 
-  // Lost & Found
   if (combined.match(/lost|found|claim|misplaced|belonging|claimant/)) {
     sources.push("Guide 2: How to Report Lost or Found Items");
     sources.push("Policy 7: Lost & Found Property Policy");
   }
 
-  // Office Timings & Contacts
   if (combined.match(/timing|hours|office|admin block|helpline|phone|contact|emergency|clinic/)) {
     sources.push("Guide 8: University Office Timings & Administration");
     sources.push("Guide 10: Departmental Helplines & Emergency Contacts");
   }
 
-  // Campus Policies (Attendance, Library, Code of Conduct)
   if (combined.match(/attendance|75%|absent|leave|library|books|fine|conduct|discipline|id card|harassment/)) {
     sources.push("Policy 2: Attendance & Leave Regulations");
     sources.push("Policy 3: Student Code of Conduct & Campus Discipline");
   }
 
-  // Profile & Account Settings
   if (combined.match(/profile|password|account settings|update profile/)) {
     sources.push("Guide 5: How to Update Profile & Account Settings");
   }
@@ -216,7 +210,6 @@ function resolveRelevantSources(message: string, reply: string): string[] {
 
 function isNonEnglishQuery(text: string): boolean {
   if (!text) return false;
-  // Check for Arabic / Urdu script
   if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text)) {
     return true;
   }
@@ -224,7 +217,6 @@ function isNonEnglishQuery(text: string): boolean {
   const cleaned = text.toLowerCase().replace(/[^\w\s]/g, " ");
   const words = new Set(cleaned.split(/\s+/).filter(Boolean));
 
-  // Strong Roman Urdu indicators (a single match indicates non-English inquiry)
   const strongIndicators = [
     "kya", "kia", "kaise", "kese", "kaisay", "kesay",
     "kyun", "kyu", "kyn", "kahan", "kidhar", "kab",
@@ -240,7 +232,6 @@ function isNonEnglishQuery(text: string): boolean {
     if (words.has(ind)) return true;
   }
 
-  // Auxiliary & grammatical particles (strictly non-English tokens)
   const particles = [
     "hai", "hain", "hyn", "hy", "hoon", "hun", "tha", "thi", "thay",
     "hoga", "hogi", "honge", "hongay", "mera", "meri", "mere", "meray",
@@ -320,7 +311,6 @@ export async function POST(req: NextRequest) {
         const data = await backendRes.json();
         const replyText = data.reply || "";
 
-        // If backend or Gemini detected Roman Urdu and added a refusal preamble while answering
         if (isRefusalOrNonEnglishAnswer(replyText)) {
           return NextResponse.json({
             reply: REJECT_NON_ENGLISH_REPLY,
@@ -336,13 +326,12 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch {
-      // Backend not running, proceed to direct Gemini call
+      // Backend not running, proceed to direct Groq call
     }
 
     // 2. Direct Groq AI Generation using GROQ_API_KEY
     const rawReply = await callDirectGroq(message, history);
 
-    // If direct Groq responded with refusal preamble while trying to answer
     if (isRefusalOrNonEnglishAnswer(rawReply)) {
       return NextResponse.json({
         reply: REJECT_NON_ENGLISH_REPLY,
@@ -363,7 +352,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: error.message || "Failed to generate answer from Groq API.",
+<<<<<<< Updated upstream
         reply: `Connection Error: Unable to reach Groq API (${error.message || "Check API key & internet"}). Please verify your connection.`,
+=======
+        reply: `Connection Error: Unable to reach Groq API (${error.message || "Check API key & internet"}). Please verify your connection.`, // Emoji hata diya
+>>>>>>> Stashed changes
         mode: "error",
       },
       { status: 500 }

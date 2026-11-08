@@ -43,17 +43,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-<<<<<<< Updated upstream
-from pathlib import Path
-
 Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
 
-=======
 # ============================================================
 # STATIC FILES
 # ============================================================
->>>>>>> Stashed changes
+
 app.mount(
     "/uploads",
     StaticFiles(directory=settings.upload_dir),
@@ -92,6 +87,16 @@ def health_check():
     return {
         "status": "ok",
         "service": "CampusConnect API",
+    }
+
+
+# ✅ NEW: Chatbot Status Endpoint (To fix the Orange Dot issue)
+@app.api_route("/api/chat/status", methods=["GET", "HEAD"])
+def chat_status():
+    return {
+        "status": "ok",
+        "backendOnline": True,
+        "service": "CampusConnect Chat API"
     }
 
 

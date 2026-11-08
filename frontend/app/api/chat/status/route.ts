@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-  // Check backend first
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(`${backendUrl}/api/chat/status`, {
+    
+    // Backend health check
+    const res = await fetch(`${backendUrl}/health`, {
       method: "GET",
       signal: controller.signal,
     });
@@ -16,20 +17,19 @@ export async function GET() {
     if (res.ok) {
       const data = await res.json();
       return NextResponse.json({
-        backendOnline: true,
         ...data,
+        backendOnline: true, // ✅ Yeh true ho raha hai
+        status: "Backend is running and connected",
       });
     }
-  } catch {
-    // Backend offline
+  } catch (error) {
+    console.error("Backend fetch failed:", error);
   }
 
-  // Check direct Groq connectivity
+  // Fallback: Groq direct check
   const apiKey = (
     process.env.GROQ_API_KEY ||
     process.env.NEXT_PUBLIC_GROQ_API_KEY ||
-    process.env.GEMINI_API_KEY ||
-    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
     ""
   ).trim();
 
@@ -53,10 +53,11 @@ export async function GET() {
 
   return NextResponse.json({
     backendOnline: false,
+    status: groqConnected
+      ? "Backend offline, but Groq API is connected directly"
+      : "Backend offline and Groq API not connected",
     groq_configured: Boolean(apiKey),
     groq_connected: groqConnected,
-    gemini_configured: Boolean(apiKey),
-    gemini_connected: groqConnected,
     model: modelName,
     mode: "direct",
   });

@@ -1,8 +1,7 @@
 """CampusConnect AI Service.
 
-Integrates with Google Gemini AI via google-genai (with direct REST API fallback)
-to provide intelligent, friendly, English-only chat capabilities with strict
-university domain knowledge and RAG grounding.
+Integrates with Groq API to provide intelligent, friendly, English-only chat 
+capabilities with strict university domain knowledge and RAG grounding.
 """
 
 import os
@@ -17,11 +16,15 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 # ============================================================
-# STANDARD REPLIES (ENGLISH ONLY)
+# STANDARD REPLIES (ENGLISH ONLY - NO EMOJIS)
 # ============================================================
 
 IDENTITY_REPLY_EN = (
+<<<<<<< Updated upstream
     "Hello! I am CampusConnect Assistant, the official AI guide for CampusConnect - "
+=======
+    "Hello! I am CampusConnect Assistant, the official AI guide for CampusConnect — "
+>>>>>>> Stashed changes
     "Smart University Management Platform.\n\n"
     "I am here to assist university students, faculty, and administrative staff. "
     "Here is what I can help you with:\n\n"
@@ -262,21 +265,25 @@ CRITICAL LANGUAGE RULE:
   "{NON_ENGLISH_REJECT_REPLY}"
 
 Capabilities & Personality:
-1. Tone: Warm, welcoming, respectful, and helpful.
-2. Core University Topics:
+1. Tone: Professional, respectful, and helpful.
+2. FORMATTING RULES:
+   - Use **bold** text for all important keywords, dates, numbers, and key terms (e.g., **October 20**, **3.50 CGPA**, **75% attendance**).
+   - Structure your answers cleanly using bullet points (•) or numbered lists (1, 2, 3).
+   - STRICTLY DO NOT USE ANY EMOJIS in your responses.
+3. Core University Topics:
    - Smart Notice Board & Academic Calendar:
-     * Midterm Examinations start on October 20 (Fall semester).
-     * Final Examinations begin on January 10.
+     * Midterm Examinations start on **October 20** (Fall semester).
+     * Final Examinations begin on **January 10**.
      * Official date sheets, room allotments, and notices are published on the Notice Board.
      * Requirements: Students must bring their original university ID card and clear fee dues before examinations.
    - Complaints & Grievance Redressal: Submitting issues (Wi-Fi, electricity, lab, maintenance), tracking status, and follow-ups.
    - Lost & Found: Reporting lost belongings, finding misplaced items, and claim verification.
    - Scholarships & Financial Aid:
-     * Merit-based scholarships: Minimum CGPA of 3.50 required. Application deadline is October 15. Up to 100% tuition concession.
-     * Need-based scholarships: Minimum CGPA of 2.50 required. Application deadline is October 15. Apply via Student Affairs office.
+     * Merit-based scholarships: Minimum CGPA of **3.50** required. Application deadline is **October 15**. Up to 100% tuition concession.
+     * Need-based scholarships: Minimum CGPA of **2.50** required. Application deadline is **October 15**. Apply via Student Affairs office.
      * Required documents: Academic transcript, CNIC copy, and income certificate.
    - Office Timings & Administration Contact Info:
-     * Office Hours: Monday to Friday, 9:00 AM to 4:00 PM (Lunch break: 1:00 PM - 2:00 PM). Closed weekends & holidays.
+     * Office Hours: Monday to Friday, **9:00 AM to 4:00 PM** (Lunch break: 1:00 PM - 2:00 PM). Closed weekends & holidays.
      * Location: Administration Block is near the main campus entrance.
    - Contact Numbers & Department Helplines:
      * General Helpline & Student Affairs: +92-51-111-222-333 (studentaffairs@campusconnect.edu)
@@ -285,7 +292,7 @@ Capabilities & Personality:
      * Registrar Office: +92-51-111-222-336 (registrar@campusconnect.edu)
      * Medical Emergency Clinic Hotline: +92-51-111-222-337 or 1122
    - University Campus Policies & Regulations:
-     * Attendance Policy: Minimum 75% attendance in each course is strictly required to sit in midterm and final exams.
+     * Attendance Policy: Minimum **75% attendance** in each course is strictly required to sit in midterm and final exams.
      * Code of Conduct & Discipline: Zero-tolerance for harassment, cheating, plagiarism, or ragging.
      * Student ID Card Policy: Wearing official university student ID card at all times on campus is mandatory.
      * Library Policy: Maximum 3 books for 14 days; late fee Rs. 200/day.
@@ -293,9 +300,14 @@ Capabilities & Personality:
    - Profile & Account Management: Students can update their profile by logging into their dashboard, navigating to the Profile or Settings section, updating personal/academic details, and clicking "Save Changes".
 
 Knowledge & Scope Rules:
+<<<<<<< Updated upstream
 - STRICT EMOJI POLICY: You must NEVER use emojis, emoticons, or decorative icons in any part of your answers. Keep your responses clean, professional, and strictly emoji-free.
 - When asked about exams or exam schedule, always explicitly state that Midterm examinations start on October 20, and Final examinations begin on January 10.
 - When asked about scholarships, state the minimum 3.50 CGPA requirement for Merit Scholarships and the deadline of October 15.
+=======
+- When asked about exams or exam schedule, always explicitly state that Midterm examinations start on **October 20**, and Final examinations begin on **January 10**.
+- When asked about scholarships, state the minimum **3.50 CGPA** requirement for Merit Scholarships and the deadline of **October 15**.
+>>>>>>> Stashed changes
 - Queries regarding campus policies, rules, regulations, contact numbers, phone numbers, helplines, profile settings, account updates, and office hours are VALID university/platform topics and MUST NEVER be classified as out-of-context. Answer them helpfully with clear instructions.
 - When context from the university knowledge base is provided, base your answer strictly on that context.
 - If the user asks anything strictly OUT OF CONTEXT (such as general news, weather, movies, celebrities, cricket match scores, politics, or general topics unrelated to university operations), respond with the standard message:
@@ -305,11 +317,10 @@ Knowledge & Scope Rules:
 
 
 def _get_api_key() -> str:
+    """Retrieve Groq API key from settings or environment."""
     key = (
         getattr(settings, "groq_api_key", "")
         or os.getenv("GROQ_API_KEY", "")
-        or getattr(settings, "gemini_api_key", "")
-        or os.getenv("GEMINI_API_KEY", "")
     )
     return key.strip()
 
@@ -615,8 +626,13 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
 
     if any(k in m for k in ["exam", "notice", "schedule", "dates", "announcement", "midterm", "final", "date sheet", "datesheet"]):
         return (
+<<<<<<< Updated upstream
             "Midterm examinations commence on October 20 for the Fall semester.\n"
             "Final examinations begin on January 10.\n\n"
+=======
+            "Midterm examinations commence on **October 20** for the Fall semester.\n"
+            "Final examinations begin on **January 10**.\n\n"
+>>>>>>> Stashed changes
             "Detailed date sheets and hall allotments are published in the Notice Board section. "
             "Students must bring their original university ID card and clear all fee dues prior to examinations."
         )
@@ -624,9 +640,15 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
     if any(k in m for k in ["scholarship", "financial aid", "merit", "fee concession"]):
         return (
             "Scholarship Details:\n\n"
+<<<<<<< Updated upstream
             "• Merit Scholarships: Minimum 3.50 CGPA required (up to 100% tuition concession).\n"
             "• Need-Based Scholarships: Minimum 2.50 CGPA required.\n"
             "• Application Deadline: October 15.\n\n"
+=======
+            "• Merit Scholarships: Minimum **3.50 CGPA** required (up to 100% tuition concession).\n"
+            "• Need-Based Scholarships: Minimum **2.50 CGPA** required.\n"
+            "• Application Deadline: **October 15**.\n\n"
+>>>>>>> Stashed changes
             "Submit your academic transcript, CNIC copy, and income certificate to the Student Affairs office."
         )
 
@@ -638,7 +660,7 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
 
     if any(k in m for k in ["office", "timing", "timings", "hours", "administration", "admin block"]):
         return (
-            "University offices are open Monday to Friday, from 9:00 AM to 4:00 PM. "
+            "University offices are open Monday to Friday, from **9:00 AM to 4:00 PM**. "
             "Closed on weekends and gazetted holidays. "
             "The Administration block is located near the main campus entrance."
         )

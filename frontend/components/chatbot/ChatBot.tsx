@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+<<<<<<< Updated upstream
   MessageSquare,
   MessageCircle,
   X,
@@ -30,10 +31,114 @@ import {
   History,
   Pencil,
   Trash2,
+=======
+  Send, User as UserIcon, Minimize2,
+  RotateCcw, Sparkles, Bell, FileText, Search, GraduationCap,
+  AlertCircle, CheckCircle2, X, MessageSquare
+>>>>>>> Stashed changes
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFallbackReply } from "./mockReplies";
 
+<<<<<<< Updated upstream
+=======
+/* ============================================================
+   CUSTOM 3D ROBOT MASCOT
+   ============================================================ */
+const BotMascot = ({ size = 160 }: { size?: number }) => {
+  return (
+    <motion.svg
+      width={size}
+      height={size}
+      viewBox="0 0 200 200"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      animate={{ y: [0, -8, 0] }}
+      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+      className="drop-shadow-2xl"
+    >
+      <defs>
+        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#3ca35d" />
+          <stop offset="100%" stopColor="#1c6430" />
+        </linearGradient>
+        <linearGradient id="visorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#2c3e34" />
+          <stop offset="100%" stopColor="#1a2620" />
+        </linearGradient>
+        <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#d1d5db" />
+          <stop offset="100%" stopColor="#9ca3af" />
+        </linearGradient>
+        <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#d97706" />
+        </linearGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+
+      <circle cx="100" cy="110" r="75" fill="#eaf6ee" opacity="0.6" />
+
+      <line x1="40" y1="80" x2="25" y2="60" stroke="url(#metalGrad)" strokeWidth="4" strokeLinecap="round" />
+      <circle cx="25" cy="60" r="5" fill="#E67E22" filter="url(#glow)" />
+      
+      <line x1="160" y1="80" x2="175" y2="60" stroke="url(#metalGrad)" strokeWidth="4" strokeLinecap="round" />
+      <circle cx="175" cy="60" r="5" fill="#E67E22" filter="url(#glow)" />
+
+      <line x1="100" y1="50" x2="100" y2="35" stroke="url(#metalGrad)" strokeWidth="5" strokeLinecap="round" />
+      <motion.circle 
+        cx="100" cy="28" r="7" 
+        fill="#E67E22" 
+        filter="url(#glow)"
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+
+      <rect x="35" y="85" width="20" height="40" rx="8" fill="url(#metalGrad)" />
+      <rect x="145" y="85" width="20" height="40" rx="8" fill="url(#metalGrad)" />
+
+      <rect x="50" y="55" width="100" height="90" rx="30" fill="url(#bodyGrad)" />
+      <path d="M65 60 Q100 55 135 60" stroke="#6ee7b7" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+
+      <rect x="65" y="75" width="70" height="50" rx="15" fill="url(#visorGrad)" stroke="#111827" strokeWidth="2" />
+      
+      <motion.g
+        animate={{ opacity: [1, 0.4, 1] }}
+        transition={{ duration: 4, repeat: Infinity, times: [0, 0.05, 0.1] }}
+      >
+        <rect x="80" y="90" width="12" height="20" rx="6" fill="#4ade80" filter="url(#glow)" />
+        <rect x="108" y="90" width="12" height="20" rx="6" fill="#4ade80" filter="url(#glow)" />
+      </motion.g>
+
+      <rect x="90" y="115" width="20" height="4" rx="2" fill="#4ade80" opacity="0.8" />
+
+      <path d="M50 60L100 35L150 60L100 85L50 60Z" fill="url(#capGrad)" />
+      <path d="M100 85V100" stroke="#b45309" strokeWidth="4" strokeLinecap="round" />
+      <circle cx="100" cy="103" r="5" fill="#f59e0b" filter="url(#glow)" />
+      <path d="M70 47.5L100 62L130 47.5" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+    </motion.svg>
+  );
+};
+
+/* ============================================================
+   UNIVERSITY LOGO (For Header and Messages)
+   ============================================================ */
+const UniLogo = ({ size = 30, className = "" }: { size?: number; className?: string }) => {
+  return (
+    <img
+      src="/logo.png"
+      alt="University Logo"
+      width={size}
+      height={size}
+      className={cn("object-contain", className)}
+    />
+  );
+};
+
+>>>>>>> Stashed changes
 interface Message {
   id: string;
   role: "user" | "bot";
@@ -86,9 +191,6 @@ const SUGGESTION_CARDS = [
   },
 ];
 
-/* ============================================================
-   INLINE MARKDOWN PARSER
-   ============================================================ */
 function renderInline(text: string): React.ReactNode {
   if (!text) return "";
   const parts = text.split(/(\*\*.*?\*\*)/g);
@@ -167,9 +269,6 @@ function FormattedMessage({ content }: { content: string }) {
   );
 }
 
-/* ============================================================
-   STRICT ENGLISH QUERY CHECK
-   ============================================================ */
 function isRomanUrduOrNonEnglish(text: string): boolean {
   if (!text) return false;
   if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text)) return true;
@@ -207,9 +306,6 @@ function isRomanUrduOrNonEnglish(text: string): boolean {
   return false;
 }
 
-/* ============================================================
-   MAIN CHATBOT COMPONENT
-   ============================================================ */
 export default function ChatBot() {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -217,7 +313,7 @@ export default function ChatBot() {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [welcomeQuoteIdx, setWelcomeQuoteIdx] = useState(0);
-  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+  const [backendOnline, setBackendOnline] = useState<boolean>(false);
 
   // New interactive utilities (Voice Talk, Speech Output, Feedback, Menu)
   const [feedback, setFeedback] = useState<Record<string, "helpful" | "not_helpful">>({});
@@ -255,14 +351,16 @@ export default function ChatBot() {
   const voiceTranscriptRef = useRef<string>("");
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+<<<<<<< Updated upstream
   // ============================================================
   // SINGLE-PASS HEALTH CHECK — NO REPEATED POLLING LOOP
   // ============================================================
+=======
+  // Frontend API call karein status check ke liye (jo backend aur Groq dono manage karti hai)
+>>>>>>> Stashed changes
   const checkBackendOnce = useCallback(async () => {
-    if (hasCheckedRef.current) return;
-    hasCheckedRef.current = true;
-
     try {
+<<<<<<< Updated upstream
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(`${API_BASE}/health`, {
@@ -272,6 +370,15 @@ export default function ChatBot() {
       });
       clearTimeout(timeoutId);
       setBackendOnline(res.ok);
+=======
+      const res = await fetch("/api/chat/status", { method: "GET", cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setBackendOnline(data.backendOnline === true || data.groq_connected === true);
+      } else {
+        setBackendOnline(false);
+      }
+>>>>>>> Stashed changes
     } catch {
       setBackendOnline(false);
     }
@@ -320,7 +427,8 @@ export default function ChatBot() {
   }, [messages, currentSessionId]);
 
   useEffect(() => {
-    if (open) {
+    if (open && !hasCheckedRef.current) {
+      hasCheckedRef.current = true;
       checkBackendOnce();
       setWelcomeQuoteIdx(Math.floor(Math.random() * WELCOME_QUOTES.length));
     } else {
@@ -790,7 +898,7 @@ export default function ChatBot() {
           sources = Array.isArray(data.sources) ? data.sources : [];
           mode = data.mode || "rag";
           backendSuccess = true;
-          setBackendOnline(true);
+          // Note: Yahan se setBackendOnline(true) hata diya hai taake state stable rahe
         }
       } catch {
         // Backend offline, proceed to Next.js route fallback
@@ -798,7 +906,7 @@ export default function ChatBot() {
 
       // 2️⃣ IF BACKEND IS OFFLINE, TRY NEXT.JS ROUTE (Direct Groq AI)
       if (!backendSuccess) {
-        setBackendOnline(false);
+        // Note: Yahan se setBackendOnline(false) hata diya hai taake fail hone par Orange na ho
         try {
           const nextRes = await fetch("/api/chat", {
             method: "POST",
@@ -833,6 +941,7 @@ export default function ChatBot() {
       // Clean sources: filter out internal model technical names
       const cleanSources = sources.filter((s: string) => {
         const lower = (s || "").toLowerCase();
+<<<<<<< Updated upstream
         return (
           !lower.includes("gemini") &&
           !lower.includes("google") &&
@@ -841,6 +950,9 @@ export default function ChatBot() {
           !lower.includes("backend rag") &&
           !lower.includes("flash")
         );
+=======
+        return !lower.includes("gemini") && !lower.includes("google") && !lower.includes("backend rag") && !lower.includes("flash");
+>>>>>>> Stashed changes
       });
 
       const botMsg: Message = {
@@ -890,6 +1002,7 @@ export default function ChatBot() {
 
   return (
     <>
+<<<<<<< Updated upstream
       {/* ==================== FLOATING OPEN BUTTON ==================== */}
       {!open && (
         <button
@@ -903,8 +1016,30 @@ export default function ChatBot() {
           <MessageCircle size={28} className="text-white" />
         </button>
       )}
+=======
+      {/* FLOATING BUTTON (ROBOT MASCOT) */}
+      <AnimatePresence>
+        {!open && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 22 }}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setOpen(true)}
+            className="fixed bottom-6 right-6 z-50 w-16 h-16 md:w-20 md:h-20 rounded-full
+              bg-white shadow-[0_10px_30px_-5px_rgba(34,119,54,0.4)]
+              flex items-center justify-center hover:bg-[#f8faf9]
+              transition-colors duration-300 border border-[#e2ebe6]"
+            aria-label="Open chat"
+          >
+            <BotMascot size={60} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+>>>>>>> Stashed changes
 
-      {/* ==================== CHAT WINDOW ==================== */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -922,6 +1057,7 @@ export default function ChatBot() {
             }}
             className="w-[94vw] sm:w-[410px] rounded-3xl bg-white shadow-2xl border border-[#e2ebe6] flex flex-col overflow-hidden pointer-events-auto"
           >
+<<<<<<< Updated upstream
             {/* ============ TOAST NOTIFICATION ============ */}
             <AnimatePresence>
               {toast && (
@@ -1227,9 +1363,10 @@ export default function ChatBot() {
             </AnimatePresence>
 
             {/* ============ HEADER ============ */}
+=======
+>>>>>>> Stashed changes
             <div className="bg-gradient-to-r from-[#227736] to-[#1c6430] text-white p-3.5
               flex items-center justify-between shrink-0">
-
               <div className="flex items-center gap-2.5">
                 <div className="relative">
                   <div className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-md
@@ -1239,17 +1376,21 @@ export default function ChatBot() {
                   <span
                     className={cn(
                       "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[#1c6430]",
+<<<<<<< Updated upstream
                       backendOnline === true
                         ? "bg-[#58b277]"
                         : backendOnline === false
                           ? "bg-[#E67E22]"
                           : "bg-white/40"
+=======
+                      backendOnline ? "bg-[#58b277]" : "bg-[#E67E22]"
+>>>>>>> Stashed changes
                     )}
                   />
                 </div>
-
                 <div>
                   <div className="flex items-center gap-2">
+<<<<<<< Updated upstream
                     <p className="font-bold text-sm tracking-tight text-white">
                       CampusConnect AI
                     </p>
@@ -1269,6 +1410,18 @@ export default function ChatBot() {
                         rounded-full bg-white/10 tracking-wider opacity-70">
                         Connecting
                       </span>
+=======
+                    <p className="font-bold text-sm tracking-tight text-white">CampusConnect AI</p>
+                    {backendOnline ? (
+                      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-emerald-400/25 text-emerald-200 border border-emerald-400/35 tracking-wider flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                        Live
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-white/15 border border-white/20 tracking-wider">
+                        Ready
+                      </span>
+>>>>>>> Stashed changes
                     )}
                   </div>
                   <p className="text-[10px] text-white/80">
@@ -1276,7 +1429,6 @@ export default function ChatBot() {
                   </p>
                 </div>
               </div>
-
               <div className="flex items-center gap-0.5">
                 <button
                   type="button"
@@ -1319,11 +1471,11 @@ export default function ChatBot() {
               </div>
             </div>
 
-            {/* ============ BODY ============ */}
             {!minimized && (
               <>
                 <div className="flex-1 overflow-y-auto p-3.5 space-y-3 bg-[#f8faf9] relative">
                   {messages.length === 0 ? (
+<<<<<<< Updated upstream
                     <div className="flex flex-col h-full justify-between">
                       <div className="text-center pt-3 pb-4">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[#227736] text-xs font-semibold mb-3 shadow-xs">
@@ -1333,13 +1485,26 @@ export default function ChatBot() {
 
                         <h3 className="text-lg font-extrabold text-[#0f1d17] tracking-tight">
                           {greeting}, <span className="text-[#227736]">Scholar</span>
+=======
+                    <div className="flex flex-col h-full justify-center items-center text-center space-y-6 py-4">
+                      <div className="relative w-36 h-36 flex items-center justify-center mx-auto">
+                         <BotMascot size={140} />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-extrabold text-[#0f1d17] tracking-tight">
+                          Hello, <span className="text-[#227736]">Scholar!</span> 👋
+>>>>>>> Stashed changes
                         </h3>
                         <p className="text-xs text-[#5a6e63] mt-1.5 px-4 leading-relaxed font-medium">
                           {WELCOME_QUOTES[welcomeQuoteIdx]}
                         </p>
                       </div>
+<<<<<<< Updated upstream
 
                       <div className="grid grid-cols-2 gap-2 my-2">
+=======
+                      <div className="w-full grid grid-cols-4 gap-1.5 px-1 mt-2">
+>>>>>>> Stashed changes
                         {SUGGESTION_CARDS.map((card) => {
                           const Icon = card.icon;
                           return (
@@ -1370,8 +1535,11 @@ export default function ChatBot() {
                           );
                         })}
                       </div>
+<<<<<<< Updated upstream
 
                       <div className="py-2" />
+=======
+>>>>>>> Stashed changes
                     </div>
                   ) : (
                     messages.map((msg, idx) => (
@@ -1391,7 +1559,6 @@ export default function ChatBot() {
                             <Bot size={13} />
                           </div>
                         )}
-
                         <div
                           className={cn(
                             "max-w-[85%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed",
@@ -1402,12 +1569,16 @@ export default function ChatBot() {
                                 : "bg-white text-[#0f1d17] border border-[#e2ebe6] rounded-bl-md shadow-xs"
                           )}
                         >
+<<<<<<< Updated upstream
                           {msg.role === "user" ? (
                             msg.content
                           ) : (
                             <FormattedMessage content={msg.content} />
                           )}
 
+=======
+                          {msg.role === "user" ? msg.content : <FormattedMessage content={msg.content} />}
+>>>>>>> Stashed changes
                           {msg.sources && msg.sources.length > 0 && (
                             <div className="mt-2 pt-2 border-t border-emerald-100 flex flex-wrap items-center gap-1">
                               <span className="text-[10px] font-semibold text-[#1c6430] flex items-center gap-1">
@@ -1424,6 +1595,7 @@ export default function ChatBot() {
                               ))}
                             </div>
                           )}
+<<<<<<< Updated upstream
 
                           {/* Time & Mode Badge */}
                           <div
@@ -1432,6 +1604,9 @@ export default function ChatBot() {
                               msg.role === "user" ? "justify-end opacity-70" : "justify-between"
                             )}
                           >
+=======
+                          <div className={cn("text-[9px] mt-1.5 flex items-center gap-2", msg.role === "user" ? "justify-end opacity-70" : "justify-between")}>
+>>>>>>> Stashed changes
                             {msg.role === "bot" && (
                               <span
                                 className={cn(
@@ -1520,7 +1695,6 @@ export default function ChatBot() {
                             </div>
                           )}
                         </div>
-
                         {msg.role === "user" && (
                           <div className="w-7 h-7 rounded-full bg-[#eaf6ee] text-[#227736]
                             flex items-center justify-center shrink-0 border border-[#c8e6d1]">
@@ -1552,10 +1726,10 @@ export default function ChatBot() {
                       </div>
                     </div>
                   )}
-
                   <div ref={messagesEndRef} />
                 </div>
 
+<<<<<<< Updated upstream
                 {/* ============ FOOTER ============ */}
                 <div className="border-t border-[#e2ebe6] p-3 bg-white shrink-0 relative">
                   {/* Floating Action Menu (Pill stack above the Orange 3-Dots button) */}
@@ -1656,6 +1830,10 @@ export default function ChatBot() {
                   {/* Action Bar Row: [Text Input (Left)] [Mic] [Send] [Orange 3-Dots] (Right) */}
                   <div className="flex items-center gap-1.5 sm:gap-2">
                     {/* 1. Text Input Box (Left, flex-1) */}
+=======
+                <div className="border-t border-[#e2ebe6] p-3 bg-white shrink-0">
+                  <div className="flex items-end gap-2">
+>>>>>>> Stashed changes
                     <textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
@@ -1665,6 +1843,7 @@ export default function ChatBot() {
                       className="flex-1 resize-none rounded-2xl border border-[#e2ebe6] bg-[#f8faf9] px-3.5 py-2.5 text-xs sm:text-sm outline-none text-[#0f1d17] focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/15 transition-all placeholder:text-[#5a6e63] max-h-20"
                       style={{ minHeight: 40 }}
                     />
+<<<<<<< Updated upstream
 
                     {/* All Action Buttons grouped on the Right side */}
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -1708,6 +1887,21 @@ export default function ChatBot() {
                         <MoreVertical size={18} />
                       </button>
                     </div>
+=======
+                    <button
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || typing}
+                      className="w-10 h-10 rounded-xl bg-[#227736] hover:bg-[#1c6430] text-white flex items-center justify-center shadow-sm transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                      aria-label="Send"
+                    >
+                      <Send size={16} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-end mt-1 px-1">
+                    <span className="text-[9px] text-[#5a6e63] font-medium flex items-center gap-1 opacity-80">
+                      <Sparkles size={9} className="text-[#E67E22]" /> CampusConnect AI
+                    </span>
+>>>>>>> Stashed changes
                   </div>
                 </div>
               </>
