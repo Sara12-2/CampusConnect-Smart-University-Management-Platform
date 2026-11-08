@@ -352,11 +352,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: error.message || "Failed to generate answer from Groq API.",
-<<<<<<< Updated upstream
+
         reply: `Connection Error: Unable to reach Groq API (${error.message || "Check API key & internet"}). Please verify your connection.`,
-=======
+
         reply: `Connection Error: Unable to reach Groq API (${error.message || "Check API key & internet"}). Please verify your connection.`, // Emoji hata diya
->>>>>>> Stashed changes
+
         mode: "error",
       },
       { status: 500 }
