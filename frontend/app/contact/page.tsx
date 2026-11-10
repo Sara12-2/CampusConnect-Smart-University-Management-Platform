@@ -3,9 +3,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail, Phone, MapPin, Clock, Send, CheckCircle2,
-  ArrowRight, MessageSquare, Users, HelpCircle, ChevronDown, Rocket, ShieldCheck
+  ArrowRight, MessageSquare, Users, HelpCircle, ChevronDown, Rocket, ShieldCheck,
+  Loader2, AlertCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
@@ -35,19 +36,86 @@ const subjects = [
 ];
 
 /* ============================================================
+   TYPES
+   ============================================================ */
+
+type FormStatus = "idle" | "submitting" | "success" | "error";
+
+/* ============================================================
    PAGE
    ============================================================ */
 
 export default function ContactPage() {
-  const [sent, setSent] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [status, setStatus] = useState<FormStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState("Select a subject");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /* ============================================================
+     SUBMIT HANDLER — Backend Ready
+     ============================================================ */
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSent(true);
-    setTimeout(() => setSent(false), 3000);
+    setStatus("submitting");
+    setErrorMsg("");
+
+    const formData = new FormData(e.currentTarget);
+    const payload = {
+      name: String(formData.get("name") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      subject: selectedSubject === "Select a subject" ? "" : selectedSubject,
+      message: String(formData.get("message") || "").trim(),
+    };
+
+    // Client-side validation
+    if (!payload.name || !payload.email || !payload.message) {
+      setErrorMsg("Please fill in all required fields.");
+      setStatus("error");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      setErrorMsg("Please enter a valid email address.");
+      setStatus("error");
+      return;
+    }
+
+    try {
+      // ============================================================
+      // TODO: Uncomment when FastAPI backend is ready
+      // ============================================================
+      //
+      // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contact`, {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(payload),
+      // });
+      //
+      // if (!res.ok) {
+      //   throw new Error("Failed to send message. Please try again.");
+      // }
+      //
+      // ============================================================
+
+      // Temporary: simulate API call (remove when backend ready)
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      console.log("📨 Contact form payload (backend not connected yet):", payload);
+
+      setStatus("success");
+      formRef.current?.reset();
+      setSelectedSubject("Select a subject");
+
+      setTimeout(() => setStatus("idle"), 4000);
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Something went wrong. Please try again."
+      );
+      setStatus("error");
+    }
   };
+
+  const isSubmitting = status === "submitting";
 
   return (
     <>
@@ -130,7 +198,6 @@ export default function ContactPage() {
             
             {/* LEFT: Contact Form */}
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white p-8 md:p-10 rounded-[2rem] border border-[#e2ebe6] shadow-sm relative overflow-hidden">
-              {/* Badge color changed to green */}
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#eaf6ee] border border-[#c8e6d1] mb-4">
                 <Send size={12} className="text-[#227736]" />
                 <span className="text-[10px] font-bold tracking-widest uppercase text-[#227736]">Send a Message</span>
@@ -138,27 +205,41 @@ export default function ContactPage() {
               <h2 className="text-3xl font-extrabold text-[#0f1d17] mb-2">{`Let's talk.`}</h2>
               <p className="text-sm text-[#5a6e63] mb-8">{`Fill in the form and we'll get back to you as soon as possible.`}</p>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Your Name *</label>
-                    {/* Focus color changed to green */}
-                    <input type="text" placeholder="Enter your name" required className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all" />
+                    <input 
+                      name="name"
+                      type="text" 
+                      placeholder="Enter your name" 
+                      required 
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all disabled:opacity-60" 
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Email Address *</label>
-                    <input type="email" placeholder="you@example.com" required className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all" />
+                    <input 
+                      name="email"
+                      type="email" 
+                      placeholder="you@example.com" 
+                      required 
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all disabled:opacity-60" 
+                    />
                   </div>
                 </div>
                 
-                {/* ✅ CUSTOM DROPDOWN (Green Theme) */}
+                {/* CUSTOM DROPDOWN (Green Theme) */}
                 <div>
                   <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Subject</label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setIsOpen(!isOpen)}
-                      className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all text-left flex items-center justify-between"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all text-left flex items-center justify-between disabled:opacity-60"
                     >
                       <span className={selectedSubject === "Select a subject" ? "text-[#5a6e63]" : "text-[#0f1d17] font-medium"}>
                         {selectedSubject}
@@ -195,13 +276,53 @@ export default function ContactPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Your Message *</label>
-                  <textarea rows={4} placeholder="Write your message here..." required className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all resize-none" />
+                  <textarea 
+                    name="message"
+                    rows={4} 
+                    placeholder="Write your message here..." 
+                    required 
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-3 rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] focus:ring-2 focus:ring-[#227736]/20 outline-none text-sm transition-all resize-none disabled:opacity-60" 
+                  />
                 </div>
 
-                {/* ✅ Send Button Color Changed to Green */}
-                <button type="submit" className="w-full py-4 rounded-xl bg-gradient-to-r from-[#227736] to-[#1c6430] hover:from-[#1c6430] hover:to-[#144d25] text-white font-bold text-sm shadow-lg shadow-[#227736]/20 hover:shadow-xl transition-all flex items-center justify-center gap-2">
-                  {sent ? <CheckCircle2 size={18} /> : <Send size={18} />}
-                  {sent ? "Message Sent!" : "Send Message"}
+                {/* Error message */}
+                <AnimatePresence>
+                  {status === "error" && errorMsg && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold"
+                    >
+                      <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                      <span>{errorMsg}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Send Button */}
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting || status === "success"}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-[#227736] to-[#1c6430] hover:from-[#1c6430] hover:to-[#144d25] text-white font-bold text-sm shadow-lg shadow-[#227736]/20 hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Sending...
+                    </>
+                  ) : status === "success" ? (
+                    <>
+                      <CheckCircle2 size={18} />
+                      Message Sent!
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      Send Message
+                    </>
+                  )}
                 </button>
                 
                 <p className="text-center text-[10px] text-[#5a6e63] font-semibold flex items-center justify-center gap-1 mt-2">
