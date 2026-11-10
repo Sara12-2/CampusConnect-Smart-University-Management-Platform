@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 # ============================================================
 
 IDENTITY_REPLY_EN = (
-<<<<<<< Updated upstream
+
     "Hello! I am CampusConnect Assistant, the official AI guide for CampusConnect - "
-=======
+
     "Hello! I am CampusConnect Assistant, the official AI guide for CampusConnect — "
->>>>>>> Stashed changes
+
     "Smart University Management Platform.\n\n"
     "I am here to assist university students, faculty, and administrative staff. "
     "Here is what I can help you with:\n\n"
@@ -626,13 +626,13 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
 
     if any(k in m for k in ["exam", "notice", "schedule", "dates", "announcement", "midterm", "final", "date sheet", "datesheet"]):
         return (
-<<<<<<< Updated upstream
+
             "Midterm examinations commence on October 20 for the Fall semester.\n"
             "Final examinations begin on January 10.\n\n"
-=======
+
             "Midterm examinations commence on **October 20** for the Fall semester.\n"
             "Final examinations begin on **January 10**.\n\n"
->>>>>>> Stashed changes
+
             "Detailed date sheets and hall allotments are published in the Notice Board section. "
             "Students must bring their original university ID card and clear all fee dues prior to examinations."
         )
@@ -640,15 +640,14 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
     if any(k in m for k in ["scholarship", "financial aid", "merit", "fee concession"]):
         return (
             "Scholarship Details:\n\n"
-<<<<<<< Updated upstream
             "• Merit Scholarships: Minimum 3.50 CGPA required (up to 100% tuition concession).\n"
             "• Need-Based Scholarships: Minimum 2.50 CGPA required.\n"
             "• Application Deadline: October 15.\n\n"
-=======
+
             "• Merit Scholarships: Minimum **3.50 CGPA** required (up to 100% tuition concession).\n"
             "• Need-Based Scholarships: Minimum **2.50 CGPA** required.\n"
             "• Application Deadline: **October 15**.\n\n"
->>>>>>> Stashed changes
+
             "Submit your academic transcript, CNIC copy, and income certificate to the Student Affairs office."
         )
 
