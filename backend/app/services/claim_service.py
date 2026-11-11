@@ -1,23 +1,22 @@
-from datetime import datetime
-
-from app.database import (
-    claims,
-    next_claim_id,
-)
-from app.services.lost_found_service import get_item
-
-
 def list_claims(
-    claimant_id: int | None = None,
+    claimant_id: str | None = None,
+    item_id: str | None = None,
     status: str | None = None,
 ):
-    result = claims.copy()
+    result = list(globals().get("claims", []))
 
     if claimant_id is not None:
         result = [
             claim
             for claim in result
-            if claim["claimantId"] == claimant_id
+            if str(claim["claimantId"]) == str(claimant_id)
+        ]
+
+    if item_id is not None:
+        result = [
+            claim
+            for claim in result
+            if str(claim["itemId"]) == str(item_id)
         ]
 
     if status:
@@ -33,56 +32,3 @@ def list_claims(
     )
 
     return result
-
-
-def get_claim(claim_id: str):
-    for claim in claims:
-        if claim["id"] == claim_id:
-            return claim
-
-    return None
-
-
-def create_claim(
-    data: dict,
-    claimant_id: int,
-    claimant_name: str,
-):
-    item = get_item(data["itemId"])
-
-    if not item:
-        return None
-
-    claim = {
-        "id": next_claim_id(),
-        "itemId": data["itemId"],
-        "claimantId": claimant_id,
-        "claimantName": claimant_name,
-        "proof": data["proof"],
-        "status": "pending",
-        "createdAt": datetime.utcnow(),
-    }
-
-    claims.append(claim)
-
-    return claim
-
-
-def update_claim(
-    claim_id: str,
-    status: str,
-):
-    claim = get_claim(claim_id)
-
-    if not claim:
-        return None
-
-    claim["status"] = status
-
-    if status == "approved":
-        item = get_item(claim["itemId"])
-
-        if item:
-            item["status"] = "claimed"
-
-    return claim

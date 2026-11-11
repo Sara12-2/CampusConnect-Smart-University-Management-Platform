@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from sqlalchemy.orm import Session
+from typing import Any
 
 from app.models.complaint import Complaint
 
@@ -55,7 +55,7 @@ def _serialize(complaint: Complaint) -> dict:
 # ============================================================
 
 def list_complaints(
-    db: Session,
+    db: Any,
     student_id: int | None = None,
     status: str | None = None,
     category: str | None = None,
@@ -88,7 +88,7 @@ def list_complaints(
 # Get single complaint
 # ============================================================
 
-def get_complaint(db: Session, complaint_id: int):
+def get_complaint(db: Any, complaint_id: int):
     complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     return _serialize(complaint) if complaint else None
 
@@ -97,7 +97,7 @@ def get_complaint(db: Session, complaint_id: int):
 # Create
 # ============================================================
 
-def create_complaint(db: Session, data, user: dict):
+def create_complaint(db: Any, data, user: dict):
     """
     Create a complaint.
     
@@ -131,7 +131,7 @@ def create_complaint(db: Session, data, user: dict):
 # Update
 # ============================================================
 
-def update_complaint(db: Session, complaint_id: int, data):
+def update_complaint(db: Any, complaint_id: int, data):
     complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     if not complaint:
         return None
@@ -163,7 +163,7 @@ def update_complaint(db: Session, complaint_id: int, data):
 # Delete
 # ============================================================
 
-def delete_complaint(db: Session, complaint_id: int):
+def delete_complaint(db: Any, complaint_id: int):
     complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     if not complaint:
         return False
