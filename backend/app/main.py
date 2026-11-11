@@ -42,8 +42,7 @@ async def lifespan(app: FastAPI):
         print("   Check DATABASE_URL in .env and ensure the database exists.")
         raise
 
-    # Print config warnings
-    print_startup_checks()
+
 
     # Ensure upload dir exists
     Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)

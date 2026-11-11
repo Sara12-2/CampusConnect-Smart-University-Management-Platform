@@ -1,31 +1,24 @@
 from typing import Literal
 from datetime import datetime
-
 from pydantic import BaseModel, Field
 
 
 class ClaimCreate(BaseModel):
-    itemId: str
-    proof: str = Field(..., min_length=5)
+    itemId: int  # <-- int banaya
+    message: str = Field(..., min_length=5)  # <-- proof ki jagah message
 
 
 class ClaimUpdate(BaseModel):
-    status: Literal[
-        "pending",
-        "approved",
-        "rejected",
-    ]
+    status: Literal["pending", "approved", "rejected"]
 
 
 class ClaimResponse(BaseModel):
-    id: str
-    itemId: str
+    id: int  # <-- int
+    itemId: int  # <-- int
     claimantId: int
-    claimantName: str
-    proof: str
-    status: Literal[
-        "pending",
-        "approved",
-        "rejected",
-    ]
+    message: str  # <-- proof ki jagah message
+    status: Literal["pending", "approved", "rejected"]
     createdAt: datetime
+
+    class Config:
+        from_attributes = True

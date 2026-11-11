@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -6,9 +7,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   GraduationCap, Mail, Lock, User, UserPlus, ArrowRight,
   ShieldCheck, Sparkles, Bell, MessageSquare, Search,
-  CheckCircle2, Eye, EyeOff, AlertCircle, Loader2, BookOpen, MapPin, Rocket, KeyRound, ChevronDown
+  CheckCircle2, Eye, EyeOff, AlertCircle, Loader2, BookOpen,
+  Calendar, KeyRound, ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+const DEPARTMENTS = [
+  { value: "Computer Science", label: "Computer Science" },
+  { value: "Software Engineering", label: "Software Engineering" },
+  { value: "Information Technology", label: "Information Technology" },
+  { value: "Electrical Engineering", label: "Electrical Engineering" },
+  { value: "Business Administration", label: "Business Administration" },
+  { value: "Mathematics", label: "Mathematics" },
+  { value: "Physics", label: "Physics" },
+  { value: "Chemistry", label: "Chemistry" },
+  { value: "English", label: "English" },
+];
+
+const SEMESTERS = Array.from({ length: 8 }, (_, i) => ({
+  value: String(i + 1),
+  label: `Semester ${i + 1}`,
+}));
 
 const features = [
   { icon: Bell, label: "Real-time Notices" },
@@ -21,7 +46,12 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const [form, setForm] = useState({
-    name: "", email: "", department: "Computer Science", semester: "1", password: "", confirm: "",
+    name: "",
+    email: "",
+    department: "Computer Science",
+    semester: "1",
+    password: "",
+    confirm: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -29,10 +59,16 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const update = (field: string, value: string) => {
+    setForm((f) => ({ ...f, [field]: value }));
+    if (error) setError("");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    // Validation
     if (form.name.trim().length < 3) return setError("Please enter your full name (min 3 characters).");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return setError("Please enter a valid email address.");
     if (form.password.length < 6) return setError("Password must be at least 6 characters.");
@@ -40,16 +76,52 @@ export default function RegisterPage() {
     if (!agreed) return setError("Please agree to the Terms & Privacy Policy.");
 
     setLoading(true);
-    setTimeout(() => router.push("/student"), 800);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim().toLowerCase(),
+          department: form.department,
+          semester: Number(form.semester),
+          password: form.password,
+          role: "student",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        let msg = "Registration failed.";
+        if (typeof data.detail === "string") msg = data.detail;
+        else if (Array.isArray(data.detail)) msg = data.detail[0]?.msg || msg;
+        throw new Error(msg);
+      }
+
+      // Save token
+      if (data.access_token || data.token) {
+        localStorage.setItem("token", data.access_token || data.token);
+      }
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("role", data.user.role);
+      }
+
+      router.push("/student");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main className="relative min-h-screen w-full flex items-center justify-center bg-[#f8faf9] py-4 px-4 sm:px-6">
-      
-      {/* Background ambient gradients */}
       <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-[#227736]/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-[#E67E22]/10 blur-[120px] pointer-events-none" />
-      
+
       <div className="relative w-full max-w-4xl z-10">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
@@ -57,11 +129,10 @@ export default function RegisterPage() {
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="w-full bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-[#e2ebe6] overflow-hidden flex flex-col lg:flex-row"
         >
-          
-          {/* ==================== LEFT SIDE (Smaller) ==================== */}
+          {/* LEFT SIDE */}
           <div className="lg:w-[42%] relative bg-gradient-to-br from-[#165127] via-[#1c6430] to-[#227736] p-6 lg:p-8 text-white flex flex-col justify-between overflow-hidden">
             <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
-            
+
             <div className="relative z-10">
               <Link href="/" className="inline-flex items-center gap-2 group mb-6">
                 <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
@@ -79,7 +150,7 @@ export default function RegisterPage() {
               </p>
 
               <div className="grid grid-cols-2 gap-2">
-                {features.map((f, i) => {
+                {features.map((f) => {
                   const Icon = f.icon;
                   return (
                     <div key={f.label} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10">
@@ -97,43 +168,29 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* ==================== RIGHT SIDE (Compact Form) ==================== */}
+          {/* RIGHT SIDE */}
           <div className="lg:w-[58%] p-5 lg:p-7 relative flex flex-col justify-center bg-white">
-            
             <div className="mb-4">
               <h1 className="text-xl md:text-2xl font-extrabold text-[#0f1d17] tracking-tight">Create your account</h1>
               <p className="text-xs text-[#5a6e63] mt-0.5">Join thousands of students using CampusConnect.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              
-              {/* Name & Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Full Name" icon={User} placeholder="Sara Manzoor" value={form.name} onChange={(v: string) => { setForm({ ...form, name: v }); setError(""); }} />
-                <Field label="Email" icon={Mail} type="email" placeholder="you@campusconnect.edu" value={form.email} onChange={(v: string) => { setForm({ ...form, email: v }); setError(""); }} />
+                <Field label="Full Name" name="name" icon={User} placeholder="Sara Manzoor" value={form.name} onChange={(v) => update("name", v)} disabled={loading} />
+                <Field label="Email" name="email" type="email" icon={Mail} placeholder="you@campusconnect.edu" value={form.email} onChange={(v) => update("email", v)} disabled={loading} />
               </div>
 
-              {/* Department & Semester */}
               <div className="grid grid-cols-2 gap-3">
-                <CustomSelect 
-                  label="Department" icon={BookOpen} value={form.department} 
-                  onChange={(v: string) => setForm({ ...form, department: v })} 
-                  options={[{ value: "Computer Science", label: "CS" }, { value: "Software Engineering", label: "SE" }, { value: "Business Admin", label: "BBA" }, { value: "Electrical Eng.", label: "EE" }]} 
-                />
-                <CustomSelect 
-                  label="Semester" icon={MapPin} value={form.semester} 
-                  onChange={(v: string) => setForm({ ...form, semester: v })} 
-                  options={[1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ value: String(n), label: `Sem ${n}` }))} 
-                />
+                <CustomSelect label="Department" icon={BookOpen} value={form.department} onChange={(v) => update("department", v)} options={DEPARTMENTS} disabled={loading} />
+                <CustomSelect label="Semester" icon={Calendar} value={form.semester} onChange={(v) => update("semester", v)} options={SEMESTERS} disabled={loading} />
               </div>
 
-              {/* Passwords */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <PasswordField label="Password" placeholder="Min 6 chars" value={form.password} onChange={(v: string) => { setForm({ ...form, password: v }); setError(""); }} show={showPassword} toggle={() => setShowPassword(!showPassword)} />
-                <PasswordField label="Confirm Password" placeholder="Re-enter" value={form.confirm} onChange={(v: string) => { setForm({ ...form, confirm: v }); setError(""); }} show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />
+                <PasswordField label="Password" name="password" placeholder="Min 6 chars" value={form.password} onChange={(v) => update("password", v)} show={showPassword} toggle={() => setShowPassword(!showPassword)} disabled={loading} />
+                <PasswordField label="Confirm Password" name="confirm" placeholder="Re-enter" value={form.confirm} onChange={(v) => update("confirm", v)} show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} disabled={loading} />
               </div>
 
-              {/* Passwords Match Indicator */}
               <AnimatePresence>
                 {form.confirm && form.password && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
@@ -144,15 +201,13 @@ export default function RegisterPage() {
                 )}
               </AnimatePresence>
 
-              {/* Terms */}
               <label className="flex items-start gap-2 cursor-pointer select-none py-0.5 group">
-                <input type="checkbox" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); setError(""); }} className="mt-0.5 w-3.5 h-3.5 rounded border-[#c8e6d1] text-[#227736] focus:ring-[#227736]/20 accent-[#227736] cursor-pointer" />
+                <input type="checkbox" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); if (error) setError(""); }} disabled={loading} className="mt-0.5 w-3.5 h-3.5 rounded border-[#c8e6d1] text-[#227736] focus:ring-[#227736]/20 accent-[#227736] cursor-pointer" />
                 <span className="text-[10px] text-[#5a6e63] leading-relaxed group-hover:text-[#0f1d17] transition-colors">
-                  I agree to the <a href="#" className="text-[#227736] font-semibold hover:underline">Terms</a> and <a href="#" className="text-[#227736] font-semibold hover:underline">Privacy Policy</a>
+                  I agree to the <Link href="/terms" className="text-[#227736] font-semibold hover:underline">Terms</Link> and <Link href="/privacy" className="text-[#227736] font-semibold hover:underline">Privacy Policy</Link>
                 </span>
               </label>
 
-              {/* Error Message */}
               <AnimatePresence>
                 {error && (
                   <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex items-start gap-1.5 p-2 rounded-lg bg-[#fdeaea] border border-[#f5c2c7]">
@@ -162,19 +217,16 @@ export default function RegisterPage() {
                 )}
               </AnimatePresence>
 
-              {/* Submit Button */}
               <motion.button type="submit" disabled={loading} whileHover={{ y: -1 }} whileTap={{ scale: 0.99 }} className="group relative w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#227736] text-white text-xs font-bold shadow-md hover:bg-[#1c6430] disabled:opacity-60 transition-all duration-200">
                 {loading ? <><Loader2 size={14} className="animate-spin" /> Creating...</> : <><UserPlus size={14} /> Create Account <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" /></>}
               </motion.button>
             </form>
 
-            {/* Divider */}
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#e2ebe6]" /></div>
               <div className="relative flex justify-center"><span className="bg-white px-2 text-[10px] text-[#5a6e63] font-medium">Already have an account?</span></div>
             </div>
 
-            {/* Login Link */}
             <Link href="/login" className="group w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-white text-[#227736] text-xs font-bold border border-[#e2ebe6] hover:border-[#227736]/30 hover:bg-[#f8faf9] transition-all duration-200">
               <KeyRound size={14} /> Sign in instead <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
@@ -186,28 +238,50 @@ export default function RegisterPage() {
 }
 
 /* ============================================================
-   SMALLER FIELD COMPONENTS
+   FIELD COMPONENTS
    ============================================================ */
 
-function Field({ label, icon: Icon, value, onChange, placeholder, type = "text" }: any) {
+interface FieldProps {
+  label: string;
+  name: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  disabled?: boolean;
+}
+
+function Field({ label, name, icon: Icon, value, onChange, placeholder, type = "text", disabled }: FieldProps) {
   return (
     <div>
       <label className="block text-[10px] font-bold text-[#0f1d17] mb-1 uppercase tracking-wide">{label}</label>
       <div className="relative group">
-        <Icon size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6e63] group-focus-within:text-[#227736] transition-colors" />
-        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required className="w-full pl-8 pr-3 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200" />
+        <Icon size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6e63] group-focus-within:text-[#227736] transition-colors pointer-events-none" />
+        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled} required className="w-full pl-8 pr-3 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 disabled:opacity-60" />
       </div>
     </div>
   );
 }
 
-function PasswordField({ label, value, onChange, placeholder, show, toggle }: any) {
+interface PasswordFieldProps {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  show: boolean;
+  toggle: () => void;
+  disabled?: boolean;
+}
+
+function PasswordField({ label, name, value, onChange, placeholder, show, toggle, disabled }: PasswordFieldProps) {
   return (
     <div>
       <label className="block text-[10px] font-bold text-[#0f1d17] mb-1 uppercase tracking-wide">{label}</label>
       <div className="relative group">
-        <Lock size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6e63] group-focus-within:text-[#227736] transition-colors" />
-        <input type={show ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required className="w-full pl-8 pr-8 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200" />
+        <Lock size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6e63] group-focus-within:text-[#227736] transition-colors pointer-events-none" />
+        <input type={show ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled} required className="w-full pl-8 pr-8 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 disabled:opacity-60" />
         <button type="button" onClick={toggle} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#5a6e63] hover:text-[#227736] transition-colors">
           {show ? <EyeOff size={12} /> : <Eye size={12} />}
         </button>
@@ -216,8 +290,21 @@ function PasswordField({ label, value, onChange, placeholder, show, toggle }: an
   );
 }
 
-// ✅ FULLY CUSTOM DROPDOWN (No blue, fixed height, doesn't break card)
-function CustomSelect({ label, icon: Icon, value, onChange, options }: any) {
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface CustomSelectProps {
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  value: string;
+  onChange: (v: string) => void;
+  options: SelectOption[];
+  disabled?: boolean;
+}
+
+function CustomSelect({ label, icon: Icon, value, onChange, options, disabled }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -231,18 +318,19 @@ function CustomSelect({ label, icon: Icon, value, onChange, options }: any) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selected = options.find((o: any) => o.value === value);
+  const selected = options.find((o) => o.value === value);
 
   return (
     <div className="relative" ref={dropdownRef}>
       <label className="block text-[10px] font-bold text-[#0f1d17] mb-1 uppercase tracking-wide">{label}</label>
       <div className="relative group">
         <Icon size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6e63] group-focus-within:text-[#227736] transition-colors pointer-events-none z-10" />
-        
+
         <button
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full h-[34px] pl-8 pr-7 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-left text-[#0f1d17] focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 flex items-center justify-between"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className="w-full h-[34px] pl-8 pr-7 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-left text-[#0f1d17] focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 flex items-center justify-between disabled:opacity-60"
         >
           <span className="truncate">{selected?.label || "Select"}</span>
           <ChevronDown size={12} className={cn("text-[#5a6e63] transition-transform", isOpen && "rotate-180")} />
@@ -255,17 +343,20 @@ function CustomSelect({ label, icon: Icon, value, onChange, options }: any) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.1 }}
-              className="absolute z-50 w-full mt-1 bg-white border border-[#e2ebe6] rounded-lg shadow-lg overflow-hidden max-h-[160px] overflow-y-auto custom-scrollbar"
+              className="absolute z-50 w-full mt-1 bg-white border border-[#e2ebe6] rounded-lg shadow-lg overflow-hidden max-h-[160px] overflow-y-auto"
             >
-              {options.map((o: any) => (
+              {options.map((o) => (
                 <button
                   key={o.value}
                   type="button"
-                  onClick={() => { onChange(o.value); setIsOpen(false); }}
+                  onClick={() => {
+                    onChange(o.value);
+                    setIsOpen(false);
+                  }}
                   className={cn(
                     "w-full text-left px-3 py-1.5 text-xs transition-colors",
-                    value === o.value 
-                      ? "bg-[#eaf6ee] text-[#227736] font-bold" 
+                    value === o.value
+                      ? "bg-[#eaf6ee] text-[#227736] font-bold"
                       : "text-[#0f1d17] hover:bg-[#f8faf9] hover:text-[#227736]"
                   )}
                 >

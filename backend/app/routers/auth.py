@@ -59,6 +59,7 @@ def get_current_user(
             detail="Invalid user ID",
         )
 
+    # ✅ get_user_by_id ab direct User object return karta hai
     user = get_user_by_id(db, user_id)
 
     if not user:
@@ -67,13 +68,15 @@ def get_current_user(
             detail="User not found",
         )
 
-    if not user.get("is_active", True):
+    # ✅ FIX: .get() ki jagah direct attribute use karo
+    if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive",
         )
 
-    return user
+    # ✅ FIX: Baaki routes ko dictionary chahiye hoti hai, isliye public_user call karo
+    return public_user(user)
 
 
 def require_admin(

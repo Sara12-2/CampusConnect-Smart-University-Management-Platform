@@ -20,8 +20,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)  # ← renamed
-    name = Column(String(255), nullable=False)  # ← renamed from full_name
+    password_hash = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False)
 
     role = Column(
         Enum(UserRole, name="user_role"),
@@ -32,9 +32,9 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
 
     department = Column(String(100), nullable=True)
-    semester = Column(Integer, nullable=True)  # ← int (was string)
+    semester = Column(Integer, nullable=True)
     phone = Column(String(20), nullable=True)
-    avatar = Column(String(500), nullable=True)  # ← renamed from avatar_url
+    avatar = Column(String(500), nullable=True)
 
     created_at = Column(
         DateTime(timezone=True),
@@ -67,8 +67,11 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    
+    # ✅ Yahan fix kiya gaya hai:
     claims = relationship(
         "Claim",
         back_populates="claimant",
         cascade="all, delete-orphan",
+        foreign_keys="Claim.claimant_id",  # <-- Ye line add ki gayi hai
     )

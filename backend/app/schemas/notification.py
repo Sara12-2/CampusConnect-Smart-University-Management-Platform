@@ -1,33 +1,22 @@
-from typing import Literal
+from typing import Optional
 from datetime import datetime
-
 from pydantic import BaseModel
 
 
 class NotificationCreate(BaseModel):
-    userId: int
     title: str
     message: str
-
-    type: Literal[
-        "notice",
-        "deadline",
-        "complaint",
-        "claim",
-    ]
+    link: Optional[str] = None
 
 
 class NotificationResponse(BaseModel):
-    id: str
+    id: int
     title: str
     message: str
-
-    type: Literal[
-        "notice",
-        "deadline",
-        "complaint",
-        "claim",
-    ]
-
-    read: bool
+    isRead: bool
+    link: Optional[str] = None
+    userId: int
     createdAt: datetime
+
+    class Config:
+        from_attributes = True

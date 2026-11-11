@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   Users, Mail, BookOpen, Shield, Ban, Search, Grid3x3, List,
   UserCog, Eye, Edit, GraduationCap, Calendar, X, Inbox,
-  UserPlus, Activity, CheckCircle2, MoreVertical,
+  UserPlus, Activity, CheckCircle2, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,46 +16,26 @@ import { cn } from "@/lib/utils";
 type Role = "student" | "admin";
 type RoleFilter = "all" | Role;
 type ViewType = "grid" | "list";
-type ActivityLevel = "High" | "Medium" | "Low";
 
 interface UserRow {
-  id: string;
+  id: number;
   name: string;
   email: string;
   role: Role;
-  dept: string;
-  sem: number;
-  joined: string;
-  activity: ActivityLevel;
+  department: string | null;
+  semester: number | null;
+  is_active: boolean;
 }
-
-/* ============================================================
-   DATA
-   ============================================================ */
-
-const usersData: UserRow[] = [
-  { id: "s1", name: "Sara Manzoor", email: "sara@campusconnect.edu", role: "student", dept: "Computer Science", sem: 5, joined: "2024-08-15", activity: "High" },
-  { id: "s2", name: "Abdullah", email: "abdullah@campusconnect.edu", role: "student", dept: "Computer Science", sem: 5, joined: "2024-08-20", activity: "Medium" },
-  { id: "s3", name: "Abubakar Nadeem", email: "abubakar@campusconnect.edu", role: "student", dept: "Software Engineering", sem: 3, joined: "2024-09-01", activity: "High" },
-  { id: "s4", name: "Umair Akram", email: "umair@campusconnect.edu", role: "student", dept: "Computer Science", sem: 5, joined: "2024-08-25", activity: "Low" },
-  { id: "a1", name: "Sir Safi Ullah", email: "admin@campusconnect.edu", role: "admin", dept: "Administration", sem: 0, joined: "2024-01-10", activity: "High" },
-];
 
 /* ============================================================
    CONFIG
    ============================================================ */
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 const roleConfig: Record<
   Role,
-  {
-    icon: typeof Shield;
-    label: string;
-    bg: string;
-    text: string;
-    border: string;
-    gradient: string;
-    accentDot: string;
-  }
+  { icon: typeof Shield; label: string; bg: string; text: string; border: string; gradient: string; accentDot: string; }
 > = {
   admin: {
     icon: Shield,
@@ -77,30 +57,6 @@ const roleConfig: Record<
   },
 };
 
-const activityConfig: Record<
-  ActivityLevel,
-  { color: string; bg: string; dot: string; ring: string }
-> = {
-  High: {
-    color: "text-[#227736]",
-    bg: "bg-[#eaf6ee]",
-    dot: "bg-[#227736]",
-    ring: "ring-[#227736]/20",
-  },
-  Medium: {
-    color: "text-[#B45A0B]",
-    bg: "bg-[#fdf2e3]",
-    dot: "bg-[#E67E22]",
-    ring: "ring-[#E67E22]/20",
-  },
-  Low: {
-    color: "text-[#5a6e63]",
-    bg: "bg-[#f8faf9]",
-    dot: "bg-[#5a6e63]",
-    ring: "ring-[#5a6e63]/15",
-  },
-};
-
 const roleTabs: { id: RoleFilter; label: string; icon: typeof Users }[] = [
   { id: "all", label: "All", icon: Users },
   { id: "student", label: "Students", icon: GraduationCap },
@@ -112,88 +68,20 @@ const viewTabs: { id: ViewType; icon: typeof Grid3x3; label: string }[] = [
   { id: "list", icon: List, label: "List view" },
 ];
 
-/* ============================================================
-   AVATAR
-   ============================================================ */
-
-function Avatar({
-  name,
-  role,
-  size = "md",
-}: {
-  name: string;
-  role: Role;
-  size?: "sm" | "md";
-}) {
+function Avatar({ name, role, size = "md" }: { name: string; role: Role; size?: "sm" | "md" }) {
   const shouldReduceMotion = useReducedMotion();
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-  const cfg = roleConfig[role];
-  const sizes =
-    size === "sm"
-      ? "w-11 h-11 text-sm rounded-xl"
-      : "w-14 h-14 text-lg rounded-[1.25rem]";
+  const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  const cfg = roleConfig[role] || roleConfig.student;
+  const sizes = size === "sm" ? "w-11 h-11 text-sm rounded-xl" : "w-14 h-14 text-lg rounded-[1.25rem]";
 
   return (
-    <div
-      className={cn(
-        "relative flex items-center justify-center shadow-md bg-gradient-to-br shrink-0 text-white font-bold tracking-wider",
-        cfg.gradient,
-        sizes
-      )}
-      aria-hidden="true"
-    >
+    <div className={cn("relative flex items-center justify-center shadow-md bg-gradient-to-br shrink-0 text-white font-bold tracking-wider", cfg.gradient, sizes)} aria-hidden="true">
       {initials}
-      <span
-        className={cn(
-          "absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-white bg-[#28a745]",
-          size === "sm" ? "w-3 h-3" : "w-4 h-4"
-        )}
-      >
+      <span className={cn("absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-white bg-[#28a745]", size === "sm" ? "w-3 h-3" : "w-4 h-4")}>
         {!shouldReduceMotion && (
-          <motion.span
-            animate={{ scale: [1, 1.4, 1], opacity: [1, 0.4, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 rounded-full bg-[#28a745]"
-          />
+          <motion.span animate={{ scale: [1, 1.4, 1], opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 rounded-full bg-[#28a745]" />
         )}
       </span>
-    </div>
-  );
-}
-
-/* ============================================================
-   ACTION BUTTONS
-   ============================================================ */
-
-function ActionButtons({ name }: { name: string }) {
-  return (
-    <div className="flex items-center gap-1">
-      <button
-        className="p-2 rounded-lg text-[#5a6e63] hover:bg-[#f8faf9] hover:text-[#227736] transition-colors"
-        aria-label={`View ${name}`}
-        title="View"
-      >
-        <Eye size={15} />
-      </button>
-      <button
-        className="p-2 rounded-lg text-[#227736] hover:bg-[#eaf6ee] transition-colors"
-        aria-label={`Edit ${name}`}
-        title="Edit"
-      >
-        <Edit size={15} />
-      </button>
-      <button
-        className="p-2 rounded-lg text-[#dc3545] hover:bg-[#fdeaea] transition-colors"
-        aria-label={`Block ${name}`}
-        title="Block"
-      >
-        <Ban size={15} />
-      </button>
     </div>
   );
 }
@@ -204,50 +92,123 @@ function ActionButtons({ name }: { name: string }) {
 
 export default function AdminUsers() {
   const shouldReduceMotion = useReducedMotion();
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [view, setView] = useState<ViewType>("grid");
+  const [toast, setToast] = useState("");
 
+  // Add User Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "student", department: "Computer Science", semester: "1" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalError, setModalError] = useState("");
+
+  // Fetch Users from Backend
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const res = await fetch(`${API_URL}/api/admin/users`, {
+          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        });
+        if (!res.ok) throw new Error("Failed to fetch users");
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Filter logic
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return usersData.filter((u) => {
-      const matchQ =
-        !q ||
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.dept.toLowerCase().includes(q);
+    return users.filter((u) => {
+      const matchQ = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.department && u.department.toLowerCase().includes(q));
       const matchRole = roleFilter === "all" || u.role === roleFilter;
       return matchQ && matchRole;
     });
-  }, [search, roleFilter]);
-
-  const stats = [
-    { label: "Total Users", value: usersData.length, icon: Users, accent: false },
-    { label: "Students", value: usersData.filter((u) => u.role === "student").length, icon: GraduationCap, accent: true },
-    { label: "Admins", value: usersData.filter((u) => u.role === "admin").length, icon: Shield, accent: false },
-    { label: "Active Now", value: usersData.filter((u) => u.activity === "High").length, icon: Activity, accent: true },
-  ];
+  }, [users, search, roleFilter]);
 
   const roleCounts: Record<RoleFilter, number> = {
-    all: usersData.length,
-    student: usersData.filter((u) => u.role === "student").length,
-    admin: usersData.filter((u) => u.role === "admin").length,
+    all: users.length,
+    student: users.filter((u) => u.role === "student").length,
+    admin: users.filter((u) => u.role === "admin").length,
+  };
+
+  // Add User Submit
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setModalError("");
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      // Note: We use /api/auth/register for adding users (or admin specific if you have one)
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          name: newUser.name,
+          email: newUser.email,
+          password: newUser.password,
+          department: newUser.department,
+          semester: Number(newUser.semester),
+          // role is forced to student on backend, so we can't create admins this way without a specific admin endpoint
+        }),
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.detail || "Failed to create user");
+      }
+
+      const created = await res.json();
+      // Since backend only returns student info on register, we fetch the whole list again to be safe
+      const updatedRes = await fetch(`${API_URL}/api/admin/users`, {
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      const updatedUsers = await updatedRes.json();
+      setUsers(updatedUsers);
+      
+      setIsModalOpen(false);
+      setNewUser({ name: "", email: "", password: "", role: "student", department: "Computer Science", semester: "1" });
+      setToast("User added successfully!");
+      setTimeout(() => setToast(""), 3000);
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : "Failed to create user");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      {/* ==================== HEADER ==================== */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-wrap items-start justify-between gap-4"
-      >
+      {/* TOAST */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="fixed top-4 right-4 z-50 bg-[#eaf6ee] border border-[#c8e6d1] text-[#227736] px-4 py-3 rounded-xl shadow-lg font-bold text-sm flex items-center gap-2">
+            <CheckCircle2 size={16} /> {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* HEADER */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#eaf6ee] border border-[#c8e6d1] mb-3">
             <UserCog size={14} className="text-[#227736]" />
-            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#227736]">
-              User Directory
-            </span>
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#227736]">User Directory</span>
           </div>
           <h1 className="text-3xl font-extrabold text-[#0f1d17] tracking-tight flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#227736] to-[#28a745] flex items-center justify-center shadow-lg shadow-[#227736]/20">
@@ -255,282 +216,100 @@ export default function AdminUsers() {
             </div>
             Manage Users
           </h1>
-          <p className="text-sm text-[#5a6e63] mt-2">
-            Manage student and administrator accounts across the platform.
-          </p>
+          <p className="text-sm text-[#5a6e63] mt-2">Manage student and administrator accounts across the platform.</p>
         </div>
 
         <motion.button
+          onClick={() => setIsModalOpen(true)}
           whileHover={shouldReduceMotion ? {} : { y: -2 }}
           whileTap={{ scale: 0.97 }}
-          className="relative inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#227736] text-white text-sm font-bold shadow-lg shadow-[#227736]/20 hover:bg-[#1c6430] hover:shadow-xl transition-all duration-300 overflow-hidden group"
+          className="relative inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#227736] text-white text-sm font-bold shadow-lg shadow-[#227736]/20 hover:bg-[#1c6430] transition-all"
         >
-          <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <UserPlus size={16} className="relative" />
-          <span className="relative">Add User</span>
+          <UserPlus size={16} /> Add User
         </motion.button>
       </motion.div>
 
-      {/* ==================== STATS ==================== */}
+      {/* STATS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((s, i) => {
+        {[
+          { label: "Total Users", value: users.length, icon: Users, accent: false },
+          { label: "Students", value: users.filter((u) => u.role === "student").length, icon: GraduationCap, accent: true },
+          { label: "Admins", value: users.filter((u) => u.role === "admin").length, icon: Shield, accent: false },
+        ].map((s, i) => {
           const Icon = s.icon;
           return (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              whileHover={shouldReduceMotion ? {} : { y: -4 }}
-              className="group relative bg-white rounded-2xl border border-[#e2ebe6] p-5 shadow-sm hover:shadow-xl hover:shadow-[#227736]/5 hover:border-[#227736]/30 transition-all duration-300 overflow-hidden"
-            >
-              <div
-                className={cn(
-                  "absolute top-0 right-0 w-20 h-20 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-                  s.accent ? "bg-[#E67E22]/10" : "bg-[#227736]/10"
-                )}
-              />
-              <div
-                className={cn(
-                  "relative w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-sm",
-                  s.accent
-                    ? "bg-gradient-to-br from-[#E67E22] to-[#D35400] text-white shadow-[#E67E22]/25"
-                    : "bg-gradient-to-br from-[#227736] to-[#28a745] text-white shadow-[#227736]/25"
-                )}
-              >
-                <Icon size={18} strokeWidth={2.2} />
+            <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="bg-white rounded-2xl border border-[#e2ebe6] p-5 shadow-sm">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-sm", s.accent ? "bg-[#fdf2e3] text-[#E67E22]" : "bg-[#eaf6ee] text-[#227736]")}>
+                <Icon size={18} />
               </div>
-              <p className="relative text-3xl font-extrabold text-[#0f1d17] tracking-tight tabular-nums">
-                {s.value}
-              </p>
-              <p className="relative text-[10px] text-[#5a6e63] mt-1 font-bold uppercase tracking-wider">
-                {s.label}
-              </p>
-              <span
-                className={cn(
-                  "absolute bottom-0 left-5 right-5 h-0.5 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 rounded-full",
-                  s.accent ? "bg-[#E67E22]" : "bg-[#227736]"
-                )}
-              />
+              <p className="text-3xl font-extrabold text-[#0f1d17]">{s.value}</p>
+              <p className="text-[10px] text-[#5a6e63] mt-1 font-bold uppercase">{s.label}</p>
             </motion.div>
           );
         })}
       </div>
 
-      {/* ==================== FILTERS ==================== */}
+      {/* FILTERS */}
       <div className="rounded-2xl border border-[#e2ebe6] bg-white p-3 md:p-4 shadow-sm flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
-        {/* Search */}
         <div className="relative flex-1">
-          <Search
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a6e63] peer-focus:text-[#227736] transition-colors"
-          />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, email, or department..."
-            aria-label="Search users"
-            className="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:bg-white focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10 outline-none transition-all"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-[#5a6e63] hover:text-[#227736] hover:bg-[#eaf6ee] transition-colors"
-              aria-label="Clear search"
-            >
-              <X size={14} />
-            </button>
-          )}
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a6e63]" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or department..." className="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl bg-[#f8faf9] border border-[#e2ebe6] focus:border-[#227736] outline-none" />
+          {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#5a6e63]"><X size={14} /></button>}
         </div>
 
-        {/* Role tabs */}
         <div className="flex items-center gap-1 p-1 bg-[#f8faf9] border border-[#e2ebe6] rounded-xl shrink-0">
           {roleTabs.map((tab) => {
             const Icon = tab.icon;
             const active = roleFilter === tab.id;
             return (
-              <button
-                key={tab.id}
-                onClick={() => setRoleFilter(tab.id)}
-                aria-pressed={active}
-                className={cn(
-                  "relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors",
-                  active
-                    ? "text-white"
-                    : "text-[#5a6e63] hover:text-[#227736] hover:bg-white"
-                )}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="roleTabBg"
-                    className="absolute inset-0 rounded-lg bg-[#227736] shadow-sm shadow-[#227736]/25"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <span className="relative flex items-center gap-1.5">
-                  <Icon size={13} /> {tab.label}
-                  <span
-                    className={cn(
-                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center tabular-nums",
-                      active ? "bg-white/20 text-white" : "bg-white text-[#5a6e63]"
-                    )}
-                  >
-                    {roleCounts[tab.id]}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* View tabs */}
-        <div className="flex items-center gap-1 p-1 bg-[#f8faf9] border border-[#e2ebe6] rounded-xl shrink-0">
-          {viewTabs.map((v) => {
-            const Icon = v.icon;
-            const active = view === v.id;
-            return (
-              <button
-                key={v.id}
-                onClick={() => setView(v.id)}
-                aria-pressed={active}
-                aria-label={v.label}
-                className={cn(
-                  "relative p-2 rounded-lg transition-colors",
-                  active
-                    ? "text-white"
-                    : "text-[#5a6e63] hover:text-[#227736] hover:bg-white"
-                )}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="viewTabBg"
-                    className="absolute inset-0 rounded-lg bg-[#227736] shadow-sm shadow-[#227736]/25"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <Icon size={14} className="relative" />
+              <button key={tab.id} onClick={() => setRoleFilter(tab.id)} className={cn("relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors", active ? "text-white" : "text-[#5a6e63] hover:text-[#227736] hover:bg-white")}>
+                {active && <motion.span layoutId="roleTabBg" className="absolute inset-0 rounded-lg bg-[#227736]" />}
+                <span className="relative flex items-center gap-1.5"><Icon size={13} /> {tab.label} <span className="text-[9px] bg-white/20 px-1.5 rounded-full">{roleCounts[tab.id]}</span></span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ==================== USERS ==================== */}
-      {filtered.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-20 bg-white rounded-2xl border border-[#e2ebe6] shadow-sm"
-        >
-          <motion.div
-            animate={shouldReduceMotion ? {} : { scale: [1, 1.04, 1] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-16 h-16 mx-auto rounded-2xl bg-[#eaf6ee] border border-[#c8e6d1] flex items-center justify-center mb-4"
-          >
-            <Inbox size={28} className="text-[#227736]" />
-          </motion.div>
-          <h3 className="font-bold text-[#0f1d17] text-lg">No users found</h3>
-          <p className="text-sm text-[#5a6e63] mt-1">
-            Try changing filters or search query.
-          </p>
-        </motion.div>
+      {/* LOADING / ERROR / USERS */}
+      {loading ? (
+        <div className="text-center py-20"><Loader2 size={32} className="animate-spin mx-auto text-[#227736]" /></div>
+      ) : error ? (
+        <div className="text-center py-20 text-red-500 font-bold">{error}</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-2xl border border-[#e2ebe6]">
+          <Inbox size={40} className="mx-auto text-[#5a6e63]/30 mb-4" />
+          <h3 className="font-bold text-[#0f1d17]">No users found</h3>
+        </div>
       ) : view === "grid" ? (
-        /* ============ GRID VIEW ============ */
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {filtered.map((u, i) => {
-              const rcfg = roleConfig[u.role];
+              const rcfg = roleConfig[u.role] || roleConfig.student;
               const RoleIcon = rcfg.icon;
-              const actCfg = activityConfig[u.activity];
-
               return (
-                <motion.div
-                  key={u.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: i * 0.05, duration: 0.5 }}
-                  whileHover={shouldReduceMotion ? {} : { y: -4 }}
-                  className="group relative bg-white rounded-[2rem] border border-[#e2ebe6] hover:border-[#227736]/30 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-[#227736]/5 transition-all duration-300"
-                >
+                <motion.div key={u.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="group bg-white rounded-[2rem] border border-[#e2ebe6] hover:border-[#227736]/30 overflow-hidden shadow-sm hover:shadow-xl transition-all">
                   <div className={`h-1.5 bg-gradient-to-r ${rcfg.gradient}`} />
-                  <div
-                    className={cn(
-                      "absolute top-0 right-0 w-24 h-24 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-                      u.role === "admin" ? "bg-[#227736]/5" : "bg-[#E67E22]/5"
-                    )}
-                  />
-
-                  <div className="relative p-6">
-                    <div className="flex items-start justify-between gap-3 mb-5">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-5">
                       <Avatar name={u.name} role={u.role} />
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-md border uppercase tracking-wider",
-                          rcfg.bg,
-                          rcfg.text,
-                          rcfg.border
-                        )}
-                      >
+                      <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-md border uppercase tracking-wider", rcfg.bg, rcfg.text, rcfg.border)}>
                         <RoleIcon size={12} /> {rcfg.label}
                       </span>
                     </div>
-
-                    <h3 className="font-extrabold text-[#0f1d17] text-lg group-hover:text-[#227736] transition-colors line-clamp-1">
-                      {u.name}
-                    </h3>
-                    <p className="text-xs text-[#5a6e63] mt-0.5 truncate flex items-center gap-1.5">
-                      <Mail size={11} /> {u.email}
-                    </p>
-
+                    <h3 className="font-extrabold text-[#0f1d17] text-lg truncate">{u.name}</h3>
+                    <p className="text-xs text-[#5a6e63] mt-0.5 truncate flex items-center gap-1.5"><Mail size={11} /> {u.email}</p>
                     <div className="mt-4 space-y-2 text-xs text-[#5a6e63]">
                       {u.role === "student" && (
                         <>
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-md bg-[#f8faf9] flex items-center justify-center shrink-0">
-                              <BookOpen size={11} className="text-[#227736]" />
-                            </div>
-                            <span className="truncate">{u.dept}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-md bg-[#fdf2e3] flex items-center justify-center shrink-0">
-                              <GraduationCap size={11} className="text-[#E67E22]" />
-                            </div>
-                            <span>Semester {u.sem}</span>
-                          </div>
+                          <div className="flex items-center gap-2"><BookOpen size={11} className="text-[#227736]" /> <span>{u.department}</span></div>
+                          <div className="flex items-center gap-2"><GraduationCap size={11} className="text-[#E67E22]" /> <span>Semester {u.semester}</span></div>
                         </>
                       )}
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-[#f8faf9] flex items-center justify-center shrink-0">
-                          <Calendar size={11} className="text-[#227736]" />
-                        </div>
-                        <span>
-                          Joined{" "}
-                          {new Date(u.joined).toLocaleDateString("en-GB", {
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
                     </div>
-
-                    <div className="mt-5 pt-4 border-t border-[#e2ebe6] flex items-center justify-between">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full ring-1",
-                          actCfg.bg,
-                          actCfg.color,
-                          actCfg.ring
-                        )}
-                      >
-                        <span className={cn("w-1.5 h-1.5 rounded-full", actCfg.dot)} />
-                        {u.activity} Activity
-                      </span>
-                      <div className="opacity-60 group-hover:opacity-100 transition-opacity duration-300">
-                        <ActionButtons name={u.name} />
-                      </div>
+                    <div className="mt-5 pt-4 border-t border-[#e2ebe6] flex justify-between">
+                      <span className="text-[10px] font-bold text-[#227736] bg-[#eaf6ee] px-2 py-1 rounded-full">Active</span>
+                      <button className="text-[#dc3545] text-xs font-bold hover:underline">Block</button>
                     </div>
                   </div>
                 </motion.div>
@@ -539,117 +318,63 @@ export default function AdminUsers() {
           </AnimatePresence>
         </div>
       ) : (
-        /* ============ LIST VIEW ============ */
         <div className="bg-white rounded-2xl border border-[#e2ebe6] shadow-sm overflow-hidden">
-          {/* Table header (desktop only) */}
-          <div className="hidden md:grid grid-cols-12 gap-3 px-5 py-3 bg-[#f8faf9] border-b border-[#e2ebe6] text-[10px] font-bold uppercase tracking-wider text-[#5a6e63]">
-            <div className="col-span-5">User</div>
-            <div className="col-span-3">Department</div>
-            <div className="col-span-2">Activity</div>
-            <div className="col-span-2 text-right">Actions</div>
-          </div>
-
-          <AnimatePresence mode="popLayout">
-            {filtered.map((u, i) => {
-              const rcfg = roleConfig[u.role];
-              const RoleIcon = rcfg.icon;
-              const actCfg = activityConfig[u.activity];
-
-              return (
-                <motion.div
-                  key={u.id}
-                  layout
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="group relative grid md:grid-cols-12 gap-3 px-5 py-4 items-center border-b border-[#e2ebe6] last:border-0 hover:bg-[#f8faf9]/60 transition-colors"
-                >
-                  {/* Left accent bar */}
-                  <span
-                    className={cn(
-                      "absolute left-0 top-0 bottom-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity",
-                      rcfg.accentDot
-                    )}
-                  />
-
-                  {/* User cell */}
-                  <div className="md:col-span-5 flex items-center gap-3 min-w-0">
-                    <Avatar name={u.name} role={u.role} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-[#0f1d17] text-sm group-hover:text-[#227736] transition-colors truncate">
-                          {u.name}
-                        </h3>
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border",
-                            rcfg.bg,
-                            rcfg.text,
-                            rcfg.border
-                          )}
-                        >
-                          <RoleIcon size={9} /> {rcfg.label}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#5a6e63] truncate flex items-center gap-1 mt-0.5">
-                        <Mail size={10} /> {u.email}
-                      </p>
-                    </div>
+          {filtered.map((u, i) => {
+            const rcfg = roleConfig[u.role] || roleConfig.student;
+            const RoleIcon = rcfg.icon;
+            return (
+              <div key={u.id} className="grid md:grid-cols-12 gap-3 px-5 py-4 items-center border-b last:border-0 hover:bg-[#f8faf9]/60">
+                <div className="md:col-span-5 flex items-center gap-3">
+                  <Avatar name={u.name} role={u.role} size="sm" />
+                  <div>
+                    <h3 className="font-bold text-sm text-[#0f1d17]">{u.name}</h3>
+                    <p className="text-[11px] text-[#5a6e63]">{u.email}</p>
                   </div>
-
-                  {/* Department cell */}
-                  <div className="md:col-span-3 text-xs text-[#5a6e63] flex items-center gap-1.5">
-                    {u.role === "student" ? (
-                      <>
-                        <BookOpen size={11} className="text-[#227736] shrink-0" />
-                        <span className="truncate">
-                          {u.dept} · Sem {u.sem}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <Shield size={11} className="text-[#227736] shrink-0" />
-                        <span>{u.dept}</span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Activity cell */}
-                  <div className="md:col-span-2">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1",
-                        actCfg.bg,
-                        actCfg.color,
-                        actCfg.ring
-                      )}
-                    >
-                      <span className={cn("w-1.5 h-1.5 rounded-full", actCfg.dot)} />
-                      {u.activity}
-                    </span>
-                  </div>
-
-                  {/* Actions cell */}
-                  <div className="md:col-span-2 flex md:justify-end">
-                    <ActionButtons name={u.name} />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+                </div>
+                <div className="md:col-span-3 text-xs text-[#5a6e63]">{u.department || "Admin"}</div>
+                <div className="md:col-span-2 text-xs text-[#5a6e63]">{u.role === "student" ? `Sem ${u.semester}` : "—"}</div>
+                <div className="md:col-span-2 flex justify-end">
+                   <button className="text-[#dc3545] text-xs font-bold hover:underline">Block</button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Footer */}
-      {filtered.length > 0 && (
-        <div className="text-center text-xs text-[#5a6e63] py-2">
-          Showing{" "}
-          <span className="font-bold text-[#0f1d17]">{filtered.length}</span> of{" "}
-          <span className="font-bold text-[#0f1d17]">{usersData.length}</span>{" "}
-          users
-        </div>
-      )}
+      {/* ADD USER MODAL */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setIsModalOpen(false)}>
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+              <div className="p-6 border-b border-[#e2ebe6]">
+                <h2 className="text-xl font-extrabold text-[#0f1d17]">Add New User</h2>
+              </div>
+              <form onSubmit={handleAddUser} className="p-6 space-y-4">
+                {modalError && <div className="bg-red-50 text-red-600 p-2 rounded text-xs">{modalError}</div>}
+                <div>
+                  <label className="text-xs font-bold text-[#0f1d17]">Name</label>
+                  <input type="text" required value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})} className="w-full mt-1 p-2 border rounded-xl text-sm bg-[#f8faf9]" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#0f1d17]">Email</label>
+                  <input type="email" required value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} className="w-full mt-1 p-2 border rounded-xl text-sm bg-[#f8faf9]" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#0f1d17]">Password</label>
+                  <input type="password" required value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} className="w-full mt-1 p-2 border rounded-xl text-sm bg-[#f8faf9]" />
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2 rounded-xl border font-bold text-[#5a6e63] hover:bg-[#f8faf9]">Cancel</button>
+                  <button type="submit" disabled={isSubmitting} className="flex-1 py-2 rounded-xl bg-[#227736] text-white font-bold disabled:opacity-50 flex justify-center items-center gap-2">
+                    {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : "Add User"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

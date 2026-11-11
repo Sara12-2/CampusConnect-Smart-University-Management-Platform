@@ -17,16 +17,31 @@ import { cn } from "@/lib/utils";
    ============================================================ */
 
 const contactCards = [
-  { icon: Mail, title: "Email Us", value: "info@campusconnect.edu", color: "green" },
-  { icon: Phone, title: "Call Us", value: "+92 300 1234567", color: "orange" },
-  { icon: MapPin, title: "Visit Us", value: "University Campus, Layyah", color: "green" },
-  { icon: Clock, title: "Office Hours", value: "Mon – Fri : 9 AM – 5 PM", color: "orange" },
+  { icon: Mail, title: "Email Us", value: "info@campusconnect.edu", color: "green", href: "mailto:info@campusconnect.edu" },
+  { icon: Phone, title: "Call Us", value: "+92 300 1234567", color: "orange", href: "tel:+923001234567" },
+  { icon: MapPin, title: "Visit Us", value: "University Campus, Layyah", color: "green", href: "https://maps.app.goo.gl/g8rt4DKhSVJDCXw66?g_st=ac" },
+  { icon: Clock, title: "Office Hours", value: "Mon – Fri : 9 AM – 5 PM", color: "orange", href: "#" },
 ];
 
 const otherWays = [
-  { icon: Users, title: "Join Our Community", desc: "Be a part of our growing community." },
-  { icon: MessageSquare, title: "Follow Us on Linkedin", desc: "Stay updated with the latest news." },
-  { icon: HelpCircle, title: "Support Center", desc: "Find answers to common questions." },
+  {
+    icon: Users,
+    title: "Join Our Community",
+    desc: "Be a part of our growing community.",
+    href: "#",
+  },
+  {
+    icon: MessageSquare,
+    title: "Follow Us on Linkedin",
+    desc: "Stay updated with the latest news.",
+    href: "https://www.linkedin.com/company/university-of-layyah/", // 👈 Yahan apna LinkedIn link lagayein
+  },
+  {
+    icon: HelpCircle,
+    title: "Support Center",
+    desc: "Find answers to common questions.",
+    href: "#",
+  },
 ];
 
 const subjects = [
@@ -148,13 +163,24 @@ export default function ContactPage() {
                 style={{ transform: "rotateY(-5deg) rotateX(5deg)", transformStyle: "preserve-3d" }}
               >
                 <div className="relative w-full h-[280px] md:h-[320px] rounded-[1.5rem] overflow-hidden bg-[#e2ebe6]">
-                  <img 
-                    src="https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                    alt="University Map" 
-                    className="w-full h-full object-cover opacity-90 mix-blend-multiply"
-                  />
-                  <div className="absolute inset-0 bg-[#227736]/10 mix-blend-overlay" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                  
+                  {/* 👇 Map image par click → Google Maps link */}
+                  <a
+                    href="https://maps.app.goo.gl/g8rt4DKhSVJDCXw66?g_st=ac" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full h-full relative group"
+                  >
+                    <img 
+                      src="https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                      alt="University Map" 
+                      className="w-full h-full object-cover opacity-90 mix-blend-multiply group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                    />
+                    <div className="absolute inset-0 bg-[#227736]/10 mix-blend-overlay pointer-events-none" />
+                  </a>
+
+                  {/* 👇 Floating Location Tag (Ab hover par kharab nahi hoga) */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none z-10">
                      <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 2, repeat: Infinity }} className="bg-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-[#e2ebe6]">
                        <MapPin size={16} className="text-[#E67E22]" />
                        <span className="text-xs font-bold text-[#0f1d17]">University of Layyah</span>
@@ -162,14 +188,21 @@ export default function ContactPage() {
                      <div className="w-8 h-2 bg-black/20 rounded-full blur-sm mt-2" />
                   </div>
                 </div>
+
                 <div className="px-4 py-4 flex items-center justify-between">
                   <div>
                     <h3 className="font-extrabold text-[#0f1d17]">Our Location</h3>
                     <p className="text-xs text-[#5a6e63] mt-0.5">Layyah, Punjab, Pakistan</p>
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-[#eaf6ee] flex items-center justify-center text-[#227736] shadow-sm">
+                  {/* 👇 Bottom arrow icon par bhi map link */}
+                  <a
+                    href="https://maps.app.goo.gl/g8rt4DKhSVJDCXw66?g_st=ac" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full bg-[#eaf6ee] flex items-center justify-center text-[#227736] shadow-sm hover:bg-[#227736] hover:text-white transition-colors"
+                  >
                     <MapPin size={18} />
-                  </div>
+                  </a>
                 </div>
               </motion.div>
             </div>
@@ -180,7 +213,19 @@ export default function ContactPage() {
             {contactCards.map((c, i) => {
               const isGreen = c.color === "green";
               return (
-                <motion.div key={c.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className={cn("p-5 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-all flex items-center gap-4", isGreen ? "border-[#e2ebe6] hover:border-[#227736]/40" : "border-[#e2ebe6] hover:border-[#E67E22]/40")}>
+                <motion.a
+                  key={c.title}
+                  href={c.href}
+                  target={c.href.startsWith("http") ? "_blank" : undefined}
+                  rel={c.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className={cn(
+                    "p-5 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-all flex items-center gap-4",
+                    isGreen ? "border-[#e2ebe6] hover:border-[#227736]/40" : "border-[#e2ebe6] hover:border-[#E67E22]/40"
+                  )}
+                >
                   <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm", isGreen ? "bg-[#227736] text-white shadow-[#227736]/20" : "bg-[#E67E22] text-white shadow-[#E67E22]/20")}>
                     <c.icon size={22} />
                   </div>
@@ -188,7 +233,7 @@ export default function ContactPage() {
                     <p className="text-xs font-bold text-[#5a6e63] mb-1">{c.title}</p>
                     <p className="text-sm font-extrabold text-[#0f1d17]">{c.value}</p>
                   </div>
-                </motion.div>
+                </motion.a>
               );
             })}
           </section>
@@ -340,7 +385,13 @@ export default function ContactPage() {
                 </h3>
                 <div className="space-y-4">
                   {otherWays.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-[#f8faf9] border border-transparent hover:border-[#e2ebe6] transition-all cursor-pointer group">
+                    <a
+                      key={i}
+                      href={item.href}
+                      target={item.href.startsWith("http") ? "_blank" : undefined}
+                      rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-[#f8faf9] border border-transparent hover:border-[#e2ebe6] transition-all cursor-pointer group"
+                    >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-[#eaf6ee] flex items-center justify-center text-[#227736] group-hover:scale-110 transition-transform">
                           <item.icon size={20} />
@@ -351,7 +402,7 @@ export default function ContactPage() {
                         </div>
                       </div>
                       <ArrowRight size={18} className="text-[#5a6e63] group-hover:text-[#227736] group-hover:translate-x-1 transition-all" />
-                    </div>
+                    </a>
                   ))}
                 </div>
               </div>

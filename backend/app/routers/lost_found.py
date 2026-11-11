@@ -1,16 +1,13 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
 
-from app.routers.auth import (
-    get_current_user,
-    require_admin,
-)
-
+from app.database import get_db
+from app.routers.auth import get_current_user, require_admin
 from app.schemas.lost_found import (
     LostFoundCreate,
     LostFoundResponse,
     LostFoundUpdate,
 )
-
 from app.services.lost_found_service import (
     create_item,
     delete_item,
@@ -19,82 +16,62 @@ from app.services.lost_found_service import (
     update_item,
 )
 
-
 router = APIRouter(
     prefix="/api/lost-found",
     tags=["Lost & Found"],
 )
 
 
-@router.get(
-    "",
-    response_model=list[LostFoundResponse],
-)
+@router.get("", response_model=list[LostFoundResponse])
 def get_items(
     item_type: str | None = Query(default=None),
     status: str | None = Query(default=None),
     search: str | None = Query(default=None),
+    db: Session = Depends(get_db),
 ):
-
-    return list_items(
-        item_type,
-        status,
-        search,
-    )
+    return list_items(db, item_type, status, search)
 
 
-@router.get(
-    "/{item_id}",
-    response_model=LostFoundResponse,
-)
+@router.get("/{item_id}", response_model=LostFoundResponse)
 def get_single_item(
-    item_id: str,
+    item_id: int,
+    db: Session = Depends(get_db),
 ):
+    item = get_item(db, item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
 
-    return get_item(item_id)
 
-
-@router.post(
-    "",
-    response_model=LostFoundResponse,
-)
+@router.post("", response_model=LostFoundResponse)
 def create_new_item(
     data: LostFoundCreate,
     user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-
-    return create_item(
-        data,
-        user,
-    )
+    return create_item(db, data, int(user["id"]))
 
 
-@router.put(
-    "/{item_id}",
-    response_model=LostFoundResponse,
-)
+@router.put("/{item_id}", response_model=LostFoundResponse)
 def edit_item(
-    item_id: str,
+    item_id: int,
     data: LostFoundUpdate,
     _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
+    item = update_item(db, item_id, data)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
 
-    return update_item(
-        item_id,
-        data,
-    )
 
-
-@router.delete(
-    "/{item_id}",
-)
+@router.delete("/{item_id}")
 def remove_item(
-    item_id: str,
+    item_id: int,
     _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
-
-    delete_item(item_id)
-
-    return {
-        "message": "Lost & Found item deleted successfully"
-    }
+    deleted = delete_item(db, item_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Lost & Found item deleted successfully"}

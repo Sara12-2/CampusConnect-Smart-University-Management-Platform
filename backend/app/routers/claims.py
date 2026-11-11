@@ -1,24 +1,10 @@
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query,
-)
-
-from app.routers.auth import (
-    get_current_user,
-    require_admin,
-)
-
-from app.schemas.claim import (
-    ClaimCreate,
-    ClaimResponse,
-    ClaimUpdate,
-)
-
+from app.database import get_db
+from app.routers.auth import get_current_user, require_admin
+from app.schemas.claim import ClaimCreate, ClaimResponse, ClaimUpdate
 from app.services import claim_service
-
 
 router = APIRouter(
     prefix="/api/claims",
@@ -26,93 +12,67 @@ router = APIRouter(
 )
 
 
-@router.get(
-    "",
-    response_model=list[ClaimResponse],
-)
+@router.get("", response_model=list[ClaimResponse])
 def get_claims(
-    item_id: str | None = Query(default=None),
+    item_id: int | None = Query(default=None),
     status: str | None = Query(default=None),
     user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-
     claimant_id = None
-
     if user["role"] != "admin":
-        claimant_id = str(user["id"])
+        claimant_id = int(user["id"])
 
     return claim_service.list_claims(
+        db=db,
         claimant_id=claimant_id,
-        item_id=item_id,
         status=status,
+        item_id=item_id,
     )
 
 
-@router.get(
-    "/{claim_id}",
-    response_model=ClaimResponse,
-)
+@router.get("/{claim_id}", response_model=ClaimResponse)
 def get_single_claim(
-    claim_id: str,
+    claim_id: int,
     user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-
-    get_claim_handler = getattr(claim_service, "get_claim")
-    claim = get_claim_handler(claim_id)
-
+    claim = claim_service.get_claim(db, claim_id)
     if not claim:
-        raise HTTPException(
-            status_code=404,
-            detail="Claim not found",
-        )
+        raise HTTPException(status_code=404, detail="Claim not found")
 
-    if (
-        user["role"] != "admin"
-        and claim["claimantId"] != str(user["id"])
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="Access denied",
-        )
+    if user["role"] != "admin" and claim["claimantId"] != int(user["id"]):
+        raise HTTPException(status_code=403, detail="Access denied")
 
     return claim
 
 
-@router.post(
-    "",
-    response_model=ClaimResponse,
-)
+@router.post("", response_model=ClaimResponse)
 def create_new_claim(
     data: ClaimCreate,
     user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-
-    create_handler = getattr(claim_service, "create_claim")
-
-    return create_handler(
-        data,
-        str(user["id"]),
-        user["name"],
+    claim = claim_service.create_claim(
+        db=db,
+        data=data,
+        claimant_id=int(user["id"]),
+        claimant_name=user["name"],
     )
+    if not claim:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return claim
 
 
-@router.put(
-    "/{claim_id}",
-    response_model=ClaimResponse,
-)
+@router.put("/{claim_id}", response_model=ClaimResponse)
 def edit_claim(
-    claim_id: str,
+    claim_id: int,
     data: ClaimUpdate,
     _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
-
-    update_handler = getattr(
-        claim_service,
-        "update_claim_status",
-        getattr(claim_service, "update_claim"),
-    )
-
-    return update_handler(
-        claim_id,
-        data.status,
-    )
+    # ✅ Yahan fix kiya gaya hai: 'data.status' pass karo, sirf 'data' nahi
+    claim = claim_service.update_claim(db, claim_id, data.status)
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    return claim

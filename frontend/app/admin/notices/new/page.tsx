@@ -99,7 +99,7 @@ export default function NewNoticePage() {
   };
 
   /* ============================================================
-     SUBMIT
+     SUBMIT — REAL BACKEND API
      ============================================================ */
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,37 +118,39 @@ export default function NewNoticePage() {
     setLoading(true);
 
     try {
-      // ============================================================
-      // TODO: Uncomment when FastAPI endpoint is ready
-      // ============================================================
-      //
-      // const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      // const res = await fetch(`${API_URL}/api/admin/notices`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      //   },
-      //   body: JSON.stringify({
-      //     title: form.title.trim(),
-      //     content: form.content.trim(),
-      //     summary: summary || undefined,
-      //     category: form.category,
-      //     priority: form.priority,
-      //     department: form.department,
-      //     semester: form.semester === "all" ? null : Number(form.semester),
-      //     deadline: form.deadline || null,
-      //     pinned: form.pinned,
-      //   }),
-      // });
-      // if (!res.ok) {
-      //   const data = await res.json().catch(() => ({}));
-      //   throw new Error(data.detail || "Failed to publish notice.");
-      // }
-      //
-      // ============================================================
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) {
+        throw new Error("Authentication token missing. Please login again.");
+      }
 
-      await new Promise((r) => setTimeout(r, 800));
+      const payload = {
+        title: form.title.trim(),
+        content: form.content.trim(),
+        summary: summary.trim() || undefined,
+        category: form.category,
+        priority: form.priority,
+        department: form.department,
+        semester: form.semester === "all" ? null : Number(form.semester),
+        deadline: form.deadline ? `${form.deadline}T00:00:00` : null,
+        pinned: form.pinned,
+      };
+
+      const res = await fetch(`${API_URL}/api/notices`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        let msg = "Failed to publish notice.";
+        if (typeof data.detail === "string") msg = data.detail;
+        else if (Array.isArray(data.detail)) msg = data.detail[0]?.msg || msg;
+        throw new Error(msg);
+      }
 
       setSuccess(true);
       setTimeout(() => router.push("/admin/notices"), 1000);
@@ -189,7 +191,6 @@ export default function NewNoticePage() {
             Fill in the details below and publish to notify students.
           </p>
 
-          {/* Success banner */}
           {success && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -200,7 +201,6 @@ export default function NewNoticePage() {
             </motion.div>
           )}
 
-          {/* Form error banner */}
           {errors.form && (
             <div
               className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-[#fdeaea] border border-[#f5c2c7] text-[#dc3545] text-sm font-bold"
@@ -211,7 +211,6 @@ export default function NewNoticePage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Title */}
             <div>
               <label
                 htmlFor="notice-title"
@@ -242,7 +241,6 @@ export default function NewNoticePage() {
               )}
             </div>
 
-            {/* Content */}
             <div>
               <label
                 htmlFor="notice-content"
@@ -273,7 +271,6 @@ export default function NewNoticePage() {
               )}
             </div>
 
-            {/* AI Summary */}
             <div className="rounded-xl border-2 border-[#E67E22]/30 bg-[#fdf2e3]/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-bold text-[#B45A0B] uppercase tracking-wider flex items-center gap-1.5">
@@ -299,7 +296,6 @@ export default function NewNoticePage() {
               />
             </div>
 
-            {/* Category + Priority */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label
@@ -344,7 +340,6 @@ export default function NewNoticePage() {
               </div>
             </div>
 
-            {/* Department + Semester */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label
@@ -392,7 +387,6 @@ export default function NewNoticePage() {
               </div>
             </div>
 
-            {/* Deadline */}
             <div>
               <label
                 htmlFor="notice-deadline"
@@ -411,7 +405,6 @@ export default function NewNoticePage() {
               />
             </div>
 
-            {/* Pin toggle */}
             <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-[#e2ebe6] hover:border-[#E67E22]/40 cursor-pointer transition-all">
               <input
                 type="checkbox"
@@ -431,7 +424,6 @@ export default function NewNoticePage() {
               </div>
             </label>
 
-            {/* Actions */}
             <div className="flex items-center gap-3 pt-4 border-t border-[#e2ebe6]">
               <button
                 type="submit"
