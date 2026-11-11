@@ -6,7 +6,6 @@ from sqlalchemy.sql import func
 
 from app.database import Base
 
-
 class Notice(Base):
     __tablename__ = "notices"
 
@@ -25,6 +24,13 @@ class Notice(Base):
     deadline = Column(DateTime(timezone=True), nullable=True)
 
     is_published = Column(Boolean, default=True, nullable=False)
+
+    # --- Added missing columns (Leader Issue Fix) ---
+    summary = Column(Text, nullable=True)
+    department = Column(String(100), nullable=True, default="All")
+    semester = Column(Integer, nullable=True)
+    pinned = Column(Boolean, default=False, nullable=False)
+    deadline = Column(DateTime(timezone=True), nullable=True)
 
     author_id = Column(
         Integer,
