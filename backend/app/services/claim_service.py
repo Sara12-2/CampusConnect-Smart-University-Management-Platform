@@ -24,12 +24,16 @@ def _serialize(claim: Claim) -> dict:
 def list_claims(
     db: Session,
     claimant_id: int | None = None,
+    item_id: int | None = None,
     status: str | None = None,
 ):
     query = db.query(Claim)
 
     if claimant_id is not None:
         query = query.filter(Claim.claimant_id == claimant_id)
+
+    if item_id is not None:
+        query = query.filter(Claim.item_id == item_id)
 
     if status:
         query = query.filter(Claim.status == status)
@@ -56,11 +60,9 @@ def create_claim(
     claimant_id: int,
     claimant_name: str,
 ):
-    # Handle Pydantic or dict
     if hasattr(data, "model_dump"):
         data = data.model_dump()
 
-    # Check item exists
     item = db.query(LostFound).filter(LostFound.id == data["itemId"]).first()
     if not item:
         return None
@@ -93,7 +95,6 @@ def update_claim(
 
     claim.status = status
 
-    # If approved, mark the item as claimed
     if status == "approved":
         item = db.query(LostFound).filter(LostFound.id == claim.item_id).first()
         if item:

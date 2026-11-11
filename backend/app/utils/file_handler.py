@@ -1,5 +1,7 @@
+
 import os
 import uuid
+from pathlib import Path
 
 from fastapi import UploadFile, HTTPException
 
@@ -19,15 +21,14 @@ async def save_upload(
     file: UploadFile,
     subfolder: str = "",
 ) -> str:
+
     if not file.filename:
         raise HTTPException(
             status_code=400,
             detail="File name is missing",
         )
 
-    extension = os.path.splitext(
-        file.filename
-    )[1].lower()
+    extension = Path(file.filename).suffix.lower()
 
     if extension not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -35,44 +36,48 @@ async def save_upload(
             detail="File type is not allowed",
         )
 
-    upload_directory = os.path.join(
-        settings.upload_dir,
-        subfolder,
-    )
-
-    os.makedirs(
-        upload_directory,
-        exist_ok=True,
-    )
-
-    filename = f"{uuid.uuid4()}{extension}"
-
-    file_path = os.path.join(
-        upload_directory,
-        filename,
-    )
+    max_size = settings.max_upload_size_mb * 1024 * 1024
 
     content = await file.read()
 
-    max_size = (
-        settings.max_upload_size_mb
-        * 1024
-        * 1024
-    )
+    if not content:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded file is empty",
+        )
 
     if len(content) > max_size:
         raise HTTPException(
-            status_code=400,
-            detail=(
-                f"File size must be less than "
-                f"{settings.max_upload_size_mb} MB"
-            ),
+            status_code=413,
+            detail=f"File size must not exceed {settings.max_upload_size_mb} MB",
         )
 
-    with open(file_path, "wb") as output_file:
-        output_file.write(content)
+    base_directory = Path(settings.upload_dir).resolve()
+    upload_directory = (base_directory / subfolder).resolve()
 
-    return f"/uploads/{subfolder}/{filename}".replace(
-        "//",
-        "/",
+    if not upload_directory.is_relative_to(base_directory):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid upload folder",
+        )
+
+    upload_directory.mkdir(
+        parents=True,
+        exist_ok=True,
     )
+
+    filename = f"{uuid.uuid4().hex}{extension}"
+    file_path = upload_directory / filename
+
+    try:
+        file_path.write_bytes(content)
+    except OSError:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to save uploaded file",
+        )
+    finally:
+        await file.close()
+
+    relative_folder = Path(subfolder).as_posix().strip("/")
+    return f"/uploads/{relative_folder}/{filename}".replace("//", "/")

@@ -1,3 +1,4 @@
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -16,12 +17,7 @@ from app.schemas.claim import (
     ClaimUpdate,
 )
 
-from app.services.claim_service import (
-    create_claim,
-    get_claim,
-    list_claims,
-    update_claim,
-)
+from app.services import claim_service
 
 
 router = APIRouter(
@@ -36,6 +32,7 @@ router = APIRouter(
 )
 def get_claims(
     item_id: str | None = Query(default=None),
+    status: str | None = Query(default=None),
     user: dict = Depends(get_current_user),
 ):
 
@@ -44,9 +41,10 @@ def get_claims(
     if user["role"] != "admin":
         claimant_id = str(user["id"])
 
-    return list_claims(
-        claimant_id,
-        item_id,
+    return claim_service.list_claims(
+        claimant_id=claimant_id,
+        item_id=item_id,
+        status=status,
     )
 
 
@@ -59,9 +57,14 @@ def get_single_claim(
     user: dict = Depends(get_current_user),
 ):
 
-    claim = get_claim(
-        claim_id
-    )
+    get_claim_handler = getattr(claim_service, "get_claim")
+    claim = get_claim_handler(claim_id)
+
+    if not claim:
+        raise HTTPException(
+            status_code=404,
+            detail="Claim not found",
+        )
 
     if (
         user["role"] != "admin"
@@ -84,9 +87,12 @@ def create_new_claim(
     user: dict = Depends(get_current_user),
 ):
 
-    return create_claim(
+    create_handler = getattr(claim_service, "create_claim")
+
+    return create_handler(
         data,
-        user,
+        str(user["id"]),
+        user["name"],
     )
 
 
@@ -100,7 +106,13 @@ def edit_claim(
     _: dict = Depends(require_admin),
 ):
 
-    return update_claim(
+    update_handler = getattr(
+        claim_service,
+        "update_claim_status",
+        getattr(claim_service, "update_claim"),
+    )
+
+    return update_handler(
         claim_id,
-        data,
+        data.status,
     )
