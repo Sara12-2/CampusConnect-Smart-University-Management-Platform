@@ -4,21 +4,29 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import settings
 
 
+# ============================================================
+# SQLAlchemy engine
+# ============================================================
 engine = create_engine(
     settings.database_url,
     pool_pre_ping=True,
     echo=settings.debug,
+    future=True,
 )
 
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
+    future=True,
 )
 
 Base = declarative_base()
 
 
+# ============================================================
+# Database dependency (FastAPI)
+# ============================================================
 def get_db():
     """Provide one database session per request."""
     db = SessionLocal()
@@ -28,28 +36,62 @@ def get_db():
         db.close()
 
 
-def init_db():
-    """Create database tables for local development."""
-    from app import models  # Register all models
+# ============================================================
+# Table creation
+# ============================================================
+_initialized = False
+
+
+def init_db() -> None:
+    """
+    Create database tables for local development.
+    Idempotent — safe to call multiple times.
+    """
+    global _initialized
+    if _initialized:
+        return
+
+    # Import models so SQLAlchemy is aware of every table
+    from app import models  # noqa: F401  (registers all models)
 
     Base.metadata.create_all(bind=engine)
+    _initialized = True
+    print("✅ Database tables initialized")
 
 
 # ============================================================
-# IN-MEMORY STORES (temporary)
-# TODO: Migrate these services to SQLAlchemy models + real DB queries.
-# These lists back the current mock service layer
-# (notice_service, auth_service, complaint_service, lost_found_service,
-#  claim_service, notification_service, admin router).
+# IN-MEMORY STORES (TEMPORARY)
+# ============================================================
+# ⚠️ These lists back the current mock service layer.
+#
+# ❗ TODO: Migrate each service to use SQLAlchemy models + a real DB session.
+#
+# Affected services:
+#   - auth_service        → User
+#   - notice_service      → Notice
+#   - complaint_service   → Complaint
+#   - lost_found_service  → LostFound
+#   - claim_service       → Claim
+#   - notification_service → Notification
+#   - admin router        → Staff
+#
+# Priority order for migration:
+#   1. auth_service       (login/register must be real)
+#   2. notice_service     (student-facing)
+#   3. complaint_service  (student-facing)
+#   4. claim_service      (admin workflow)
+#   5. lost_found_service (student-facing)
+#   6. notification_service
+#   7. admin router
 # ============================================================
 
-notices = []
-complaints = []
-users = []
-staff = []
-lost_found_items = []
-claims = []
-notifications = []
+notices: list[dict] = []
+complaints: list[dict] = []
+users: list[dict] = []
+staff: list[dict] = []
+lost_found_items: list[dict] = []
+claims: list[dict] = []
+notifications: list[dict] = []
 
 # Aliases — different services may import under different names
 lost_found = lost_found_items
@@ -69,49 +111,68 @@ _staff_id_counter = 0
 
 
 def next_user_id() -> int:
-    """Return the next sequential user id (in-memory only)."""
     global _user_id_counter
     _user_id_counter += 1
     return _user_id_counter
 
 
 def next_notice_id() -> int:
-    """Return the next sequential notice id (in-memory only)."""
     global _notice_id_counter
     _notice_id_counter += 1
     return _notice_id_counter
 
 
 def next_complaint_id() -> int:
-    """Return the next sequential complaint id (in-memory only)."""
     global _complaint_id_counter
     _complaint_id_counter += 1
     return _complaint_id_counter
 
 
 def next_lost_found_id() -> int:
-    """Return the next sequential lost_found id (in-memory only)."""
     global _lost_found_id_counter
     _lost_found_id_counter += 1
     return _lost_found_id_counter
 
 
 def next_claim_id() -> int:
-    """Return the next sequential claim id (in-memory only)."""
     global _claim_id_counter
     _claim_id_counter += 1
     return _claim_id_counter
 
 
 def next_notification_id() -> int:
-    """Return the next sequential notification id (in-memory only)."""
     global _notification_id_counter
     _notification_id_counter += 1
     return _notification_id_counter
 
 
 def next_staff_id() -> int:
-    """Return the next sequential staff id (in-memory only)."""
     global _staff_id_counter
     _staff_id_counter += 1
     return _staff_id_counter
+
+
+# ------------------------------------------------------------------
+# Test helpers
+# ------------------------------------------------------------------
+def reset_stores() -> None:
+    """Clear all in-memory stores. Use only in tests."""
+    global _user_id_counter, _notice_id_counter, _complaint_id_counter
+    global _lost_found_id_counter, _claim_id_counter
+    global _notification_id_counter, _staff_id_counter
+
+    notices.clear()
+    complaints.clear()
+    users.clear()
+    staff.clear()
+    lost_found_items.clear()
+    claims.clear()
+    notifications.clear()
+
+    _user_id_counter = 0
+    _notice_id_counter = 0
+    _complaint_id_counter = 0
+    _lost_found_id_counter = 0
+    _claim_id_counter = 0
+    _notification_id_counter = 0
+    _staff_id_counter = 0

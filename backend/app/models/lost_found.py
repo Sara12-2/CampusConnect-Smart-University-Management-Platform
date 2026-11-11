@@ -8,10 +8,10 @@ from app.database import Base
 
 
 class LostFound(Base):
-    __tablename__ = "lost_found"
+    __tablename__ = "lost_found"  # keep as-is, matches Claim FK
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(255), nullable=False)
+    title = Column(String(255), nullable=False, index=True)  # ← added index
     description = Column(Text, nullable=False)
     type = Column(String(10), nullable=False, index=True)  # lost / found
     location = Column(String(255), nullable=True)

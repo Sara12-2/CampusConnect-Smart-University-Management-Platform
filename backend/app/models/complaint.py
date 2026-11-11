@@ -14,8 +14,14 @@ class Complaint(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     category = Column(String(50), nullable=True, index=True)
-    status = Column(String(20), default="pending", nullable=False, index=True)
+    status = Column(String(20), default="submitted", nullable=False, index=True)
     priority = Column(String(20), default="normal", nullable=False)
+
+    # ← ADDED: staff assignment
+    assigned_to = Column(String(100), nullable=True)
+
+    # ← ADDED: images as JSON string (simple for now)
+    images = Column(Text, nullable=True)
 
     user_id = Column(
         Integer,

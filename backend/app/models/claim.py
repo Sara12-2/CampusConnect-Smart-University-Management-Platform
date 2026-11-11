@@ -28,11 +28,20 @@ class Claim(Base):
     message = Column(Text, nullable=True)
     status = Column(String(20), default="pending", nullable=False, index=True)
 
+    # ← ADDED: track who verified
+    verified_by = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())  # ← ADDED
 
     item = relationship("LostFound", back_populates="claims")
-    claimant = relationship("User", back_populates="claims")
+    claimant = relationship("User", back_populates="claims", foreign_keys=[claimant_id])
+    verifier = relationship("User", foreign_keys=[verified_by])  # ← ADDED

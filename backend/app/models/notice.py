@@ -13,8 +13,17 @@ class Notice(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False, index=True)
     content = Column(Text, nullable=False)
+    summary = Column(Text, nullable=True)  # ← ADDED
+
     category = Column(String(50), nullable=True, index=True)
     priority = Column(String(20), default="normal", nullable=False)
+
+    # ← ADDED these fields to match schema
+    department = Column(String(100), default="All", nullable=True)
+    semester = Column(Integer, nullable=True)
+    is_pinned = Column(Boolean, default=False, nullable=False)
+    deadline = Column(DateTime(timezone=True), nullable=True)
+
     is_published = Column(Boolean, default=True, nullable=False)
 
     author_id = Column(
@@ -23,6 +32,7 @@ class Notice(Base):
         nullable=False,
         index=True,
     )
+    author_name = Column(String(255), nullable=True)  # denormalized for response
 
     created_at = Column(
         DateTime(timezone=True),

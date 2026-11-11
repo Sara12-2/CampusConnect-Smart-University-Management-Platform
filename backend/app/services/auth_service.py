@@ -1,84 +1,107 @@
-from app.database import users, next_user_id
+from sqlalchemy.orm import Session
+from app.models.user import User
 from app.utils.security import hash_password, verify_password
 
 
-def public_user(user: dict) -> dict:
+# ============================================================
+# Response helpers
+# ============================================================
+
+def public_user(user: User) -> dict:
+    """Convert User model → safe dict (no password)."""
     return {
-        "id": user["id"],
-        "name": user["name"],
-        "email": user["email"],
-        "role": user["role"],
-        "department": user.get("department"),
-        "semester": user.get("semester"),
-        "avatar": user.get("avatar"),
-        "is_active": user.get("is_active", True),
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role.value if hasattr(user.role, "value") else user.role,
+        "department": getattr(user, "department", None),
+        "semester": getattr(user, "semester", None),
+        "avatar": getattr(user, "avatar", None),
+        "is_active": getattr(user, "is_active", True),
     }
 
 
-def get_user_by_email(email: str):
-    for user in users:
-        if user["email"].lower() == email.lower():
-            return user
-    return None
+# ============================================================
+# Lookups
+# ============================================================
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(User).filter(User.email == email.lower()).first()
 
 
-def get_user_by_id(user_id: int):
-    for user in users:
-        if user["id"] == user_id:
-            return user
-    return None
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(User).filter(User.id == user_id).first()
 
 
-def register_user(data: dict):
-    existing_user = get_user_by_email(data["email"])
+def list_users(db: Session):
+    return [public_user(u) for u in db.query(User).all()]
 
-    if existing_user:
+
+# ============================================================
+# Register
+# ============================================================
+
+def register_user(db: Session, data: dict):
+    """Create a new user in the database. Returns None if email exists."""
+    existing = get_user_by_email(db, data["email"])
+    if existing:
         return None
 
-    user = {
-        "id": next_user_id(),
-        "name": data["name"],
-        "email": data["email"],
-        "password": hash_password(data["password"]),
-        "role": data.get("role", "student"),
-        "department": data.get("department"),
-        "semester": data.get("semester"),
-        "avatar": None,
-        "is_active": True,
-    }
+    user = User(
+        name=data["name"],
+        email=data["email"].lower(),
+        password_hash=hash_password(data["password"]),
+        role=data.get("role", "student"),
+        department=data.get("department"),
+        semester=data.get("semester"),
+        is_active=True,
+    )
 
-    users.append(user)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
     return public_user(user)
 
 
-def authenticate_user(email: str, password: str):
-    user = get_user_by_email(email)
+# ============================================================
+# Authenticate
+# ============================================================
+
+def authenticate_user(db: Session, email: str, password: str):
+    user = get_user_by_email(db, email)
 
     if not user:
         return None
 
-    if not user.get("is_active", True):
+    if not user.is_active:
         return None
 
-    if not verify_password(password, user["password"]):
+    if not verify_password(password, user.password_hash):
         return None
 
-    return user
+    return public_user(user)
 
 
-def update_user(user_id: int, data: dict):
-    user = get_user_by_id(user_id)
+# ============================================================
+# Update
+# ============================================================
+
+def update_user(db: Session, user_id: int, data: dict):
+    user = get_user_by_id(db, user_id)
 
     if not user:
         return None
 
     for key, value in data.items():
-        if value is not None:
-            user[key] = value
+        if key == "password" and value:
+            user.password_hash = hash_password(value)
+        elif key == "password":
+            continue
+        elif value is not None and hasattr(user, key):
+            setattr(user, key, value)
+
+    db.commit()
+    db.refresh(user)
 
     return public_user(user)
-
-
-def list_users():
-    return [public_user(user) for user in users]

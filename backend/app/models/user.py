@@ -20,8 +20,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
-    full_name = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)  # ← renamed
+    name = Column(String(255), nullable=False)  # ← renamed from full_name
 
     role = Column(
         Enum(UserRole, name="user_role"),
@@ -32,9 +32,9 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
 
     department = Column(String(100), nullable=True)
-    semester = Column(String(20), nullable=True)
+    semester = Column(Integer, nullable=True)  # ← int (was string)
     phone = Column(String(20), nullable=True)
-    avatar_url = Column(String(500), nullable=True)
+    avatar = Column(String(500), nullable=True)  # ← renamed from avatar_url
 
     created_at = Column(
         DateTime(timezone=True),
@@ -46,6 +46,7 @@ class User(Base):
         onupdate=func.now(),
     )
 
+    # Relationships
     notices = relationship(
         "Notice",
         back_populates="author",

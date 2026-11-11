@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
 
-from app.routers.auth import (
-    require_admin,
-)
+from app.database import get_db
+from app.routers.auth import require_admin
 
 from app.schemas.notice import (
     NoticeCreate,
@@ -25,77 +25,72 @@ router = APIRouter(
 )
 
 
-@router.get(
-    "",
-    response_model=list[NoticeResponse],
-)
+@router.get("", response_model=list[NoticeResponse])
 def get_notices(
     department: str | None = Query(default=None),
     semester: int | None = Query(default=None),
     category: str | None = Query(default=None),
     search: str | None = Query(default=None),
+    db: Session = Depends(get_db),
 ):
-
     return list_notices(
-        department,
-        semester,
-        category,
-        search,
+        db,
+        department=department,
+        semester=semester,
+        category=category,
+        search=search,
     )
 
 
-@router.get(
-    "/{notice_id}",
-    response_model=NoticeResponse,
-)
+@router.get("/{notice_id}", response_model=NoticeResponse)
 def get_single_notice(
-    notice_id: str,
+    notice_id: int,
+    db: Session = Depends(get_db),
 ):
+    notice = get_notice(db, notice_id)
+    if not notice:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notice not found",
+        )
+    return notice
 
-    return get_notice(notice_id)
 
-
-@router.post(
-    "",
-    response_model=NoticeResponse,
-)
+@router.post("", response_model=NoticeResponse)
 def create_new_notice(
     data: NoticeCreate,
     admin: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
-
-    return create_notice(
-        data,
-        admin["name"],
-    )
+    return create_notice(db, data, author=admin["name"])
 
 
-@router.put(
-    "/{notice_id}",
-    response_model=NoticeResponse,
-)
+@router.put("/{notice_id}", response_model=NoticeResponse)
 def edit_notice(
-    notice_id: str,
+    notice_id: int,
     data: NoticeUpdate,
     _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
+    notice = update_notice(db, notice_id, data)
+    if not notice:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notice not found",
+        )
+    return notice
 
-    return update_notice(
-        notice_id,
-        data,
-    )
 
-
-@router.delete(
-    "/{notice_id}",
-)
+@router.delete("/{notice_id}")
 def remove_notice(
-    notice_id: str,
+    notice_id: int,
     _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
-
-    delete_notice(notice_id)
-
-    return {
-        "message": "Notice deleted successfully"
-    }
+    deleted = delete_notice(db, notice_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notice not found",
+        )
+    return {"message": "Notice deleted successfully"}

@@ -1,113 +1,173 @@
-from datetime import datetime
+import json
+from datetime import datetime, timezone
+from sqlalchemy.orm import Session
 
-from app.database import complaints, next_complaint_id
+from app.models.complaint import Complaint
 
+
+# ============================================================
+# Helpers
+# ============================================================
+
+def _to_dict(data):
+    """Convert dict or Pydantic model to plain dict."""
+    if isinstance(data, dict):
+        return data
+    if hasattr(data, "model_dump"):
+        return data.model_dump()
+    if hasattr(data, "dict"):
+        return data.dict()
+    raise TypeError("Complaint data must be a dict or Pydantic model")
+
+
+def _serialize(complaint: Complaint) -> dict:
+    """Convert Complaint model → API response dict (camelCase)."""
+    # Decode images JSON
+    images = []
+    if complaint.images:
+        try:
+            images = json.loads(complaint.images)
+        except (json.JSONDecodeError, TypeError):
+            images = []
+
+    # Student name from User relation
+    student_name = "Unknown"
+    if complaint.user:
+        student_name = complaint.user.name
+
+    return {
+        "id": complaint.id,
+        "title": complaint.title,
+        "description": complaint.description,
+        "category": complaint.category,
+        "images": images,
+        "status": complaint.status,
+        "studentId": complaint.user_id,
+        "studentName": student_name,
+        "assignedTo": complaint.assigned_to,
+        "createdAt": complaint.created_at,
+        "updatedAt": complaint.updated_at or complaint.created_at,
+    }
+
+
+# ============================================================
+# List complaints (with filters)
+# ============================================================
 
 def list_complaints(
+    db: Session,
     student_id: int | None = None,
     status: str | None = None,
     category: str | None = None,
     search: str | None = None,
 ):
-    result = complaints.copy()
+    query = db.query(Complaint)
 
     if student_id is not None:
-        result = [
-            complaint
-            for complaint in result
-            if complaint["studentId"] == student_id
-        ]
+        query = query.filter(Complaint.user_id == student_id)
 
     if status:
-        result = [
-            complaint
-            for complaint in result
-            if complaint["status"] == status
-        ]
+        query = query.filter(Complaint.status == status)
 
     if category:
-        result = [
-            complaint
-            for complaint in result
-            if complaint["category"] == category
-        ]
+        query = query.filter(Complaint.category == category)
 
     if search:
-        search_text = search.lower()
+        search_pattern = f"%{search.lower()}%"
+        query = query.filter(
+            (Complaint.title.ilike(search_pattern))
+            | (Complaint.description.ilike(search_pattern))
+        )
 
-        result = [
-            complaint
-            for complaint in result
-            if search_text in complaint["title"].lower()
-            or search_text in complaint["description"].lower()
-        ]
+    query = query.order_by(Complaint.created_at.desc())
 
-    result.sort(
-        key=lambda complaint: complaint["createdAt"],
-        reverse=True,
+    return [_serialize(c) for c in query.all()]
+
+
+# ============================================================
+# Get single complaint
+# ============================================================
+
+def get_complaint(db: Session, complaint_id: int):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    return _serialize(complaint) if complaint else None
+
+
+# ============================================================
+# Create
+# ============================================================
+
+def create_complaint(db: Session, data, user: dict):
+    """
+    Create a complaint.
+    
+    Router passes:
+        - data: ComplaintCreate (Pydantic model)
+        - user: current user dict (from auth)
+    """
+    data = _to_dict(data)
+
+    images_json = None
+    if data.get("images"):
+        images_json = json.dumps(data["images"])
+
+    complaint = Complaint(
+        title=data["title"],
+        description=data["description"],
+        category=data["category"],
+        status="submitted",
+        user_id=int(user["id"]),
+        images=images_json,
     )
 
-    return result
+    db.add(complaint)
+    db.commit()
+    db.refresh(complaint)
+
+    return _serialize(complaint)
 
 
-def get_complaint(complaint_id: str):
-    for complaint in complaints:
-        if complaint["id"] == complaint_id:
-            return complaint
+# ============================================================
+# Update
+# ============================================================
 
-    return None
-
-
-def create_complaint(
-    data: dict,
-    student_id: int,
-    student_name: str,
-):
-    now = datetime.utcnow()
-
-    complaint = {
-        "id": next_complaint_id(),
-        "title": data["title"],
-        "description": data["description"],
-        "category": data["category"],
-        "status": "submitted",
-        "images": data.get("images", []),
-        "studentId": student_id,
-        "studentName": student_name,
-        "assignedTo": None,
-        "createdAt": now,
-        "updatedAt": now,
-    }
-
-    complaints.append(complaint)
-
-    return complaint
-
-
-def update_complaint(
-    complaint_id: str,
-    data: dict,
-):
-    complaint = get_complaint(complaint_id)
-
+def update_complaint(db: Session, complaint_id: int, data):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     if not complaint:
         return None
 
+    data = _to_dict(data)
+
     for key, value in data.items():
-        if value is not None:
-            complaint[key] = value
+        if value is None:
+            continue
 
-    complaint["updatedAt"] = datetime.utcnow()
+        if key == "assignedTo":
+            complaint.assigned_to = value
+        elif key == "images":
+            complaint.images = json.dumps(value) if value else None
+        elif key == "status":
+            if value in ("submitted", "assigned", "in-progress", "resolved"):
+                complaint.status = value
+        elif key in ("title", "description", "category"):
+            setattr(complaint, key, value)
+        # Skip unknown keys (id, createdAt, updatedAt, studentId)
 
-    return complaint
+    db.commit()
+    db.refresh(complaint)
+
+    return _serialize(complaint)
 
 
-def delete_complaint(complaint_id: str):
-    complaint = get_complaint(complaint_id)
+# ============================================================
+# Delete
+# ============================================================
 
+def delete_complaint(db: Session, complaint_id: int):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     if not complaint:
         return False
 
-    complaints.remove(complaint)
-
+    db.delete(complaint)
+    db.commit()
     return True

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
 
+from app.database import get_db
 from app.schemas.user import (
     UserLogin,
     UserRegister,
@@ -24,8 +26,13 @@ router = APIRouter(
 security = HTTPBearer()
 
 
+# ============================================================
+# Dependencies
+# ============================================================
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ):
     token = credentials.credentials
     payload = decode_access_token(token)
@@ -52,7 +59,7 @@ def get_current_user(
             detail="Invalid user ID",
         )
 
-    user = get_user_by_id(user_id)
+    user = get_user_by_id(db, user_id)
 
     if not user:
         raise HTTPException(
@@ -81,17 +88,20 @@ def require_admin(
     return current_user
 
 
+# ============================================================
+# Endpoints
+# ============================================================
+
 @router.post(
     "/register",
     response_model=UserResponse,
 )
-def register(payload: UserRegister):
+def register(payload: UserRegister, db: Session = Depends(get_db)):
     # Public registration only creates student accounts.
-    # Do not trust user-supplied roles.
     user_data = payload.model_dump()
     user_data["role"] = "student"
 
-    user = register_user(user_data)
+    user = register_user(db, user_data)
 
     if not user:
         raise HTTPException(
@@ -99,18 +109,15 @@ def register(payload: UserRegister):
             detail="Email already registered",
         )
 
-    return public_user(user)
+    return user
 
 
 @router.post(
     "/login",
     response_model=TokenResponse,
 )
-def login(payload: UserLogin):
-    user = authenticate_user(
-        payload.email,
-        payload.password,
-    )
+def login(payload: UserLogin, db: Session = Depends(get_db)):
+    user = authenticate_user(db, payload.email, payload.password)
 
     if not user:
         raise HTTPException(
@@ -118,20 +125,19 @@ def login(payload: UserLogin):
             detail="Invalid email or password",
         )
 
-    if user["role"] != payload.role:
+    # Case-insensitive role check
+    if str(user["role"]).lower() != str(payload.role).lower():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Selected role does not match account role",
         )
 
-    token = create_access_token(
-        {"sub": str(user["id"])}
-    )
+    token = create_access_token({"sub": str(user["id"])})
 
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": public_user(user),
+        "user": user,
     }
 
 
@@ -142,4 +148,4 @@ def login(payload: UserLogin):
 def get_me(
     current_user: dict = Depends(get_current_user),
 ):
-    return public_user(current_user)
+    return current_user
