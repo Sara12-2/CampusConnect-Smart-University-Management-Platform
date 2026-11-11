@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -11,8 +12,8 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
 
-    # Database — PostgreSQL
-    database_url: str = "postgresql+psycopg2://campusconnect_user:campusconnect_dev_pass@localhost:5432/campusconnect"
+        # database_url: str = "postgresql+psycopg2://campusconnect_user:campusconnect_dev_pass@localhost:5432/campusconnect"
+    database_url: str = "sqlite:///./campusconnect.db"
 
     # JWT
     secret_key: str = ""

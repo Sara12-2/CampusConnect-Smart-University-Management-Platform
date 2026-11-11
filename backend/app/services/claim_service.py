@@ -1,88 +1,105 @@
-from datetime import datetime
-
-from app.database import (
-    claims,
-    next_claim_id,
-)
-from app.services.lost_found_service import get_item
+from sqlalchemy.orm import Session
+from app.models.claim import Claim
+from app.models.lost_found import LostFound
 
 
+# ============================================================
+# Helpers
+# ============================================================
+def _serialize(claim: Claim) -> dict:
+    """Convert Claim model → API response."""
+    return {
+        "id": claim.id,
+        "itemId": claim.item_id,
+        "claimantId": claim.claimant_id,
+        "message": claim.message,
+        "status": claim.status,
+        "createdAt": claim.created_at,
+    }
+
+
+# ============================================================
+# List Claims
+# ============================================================
 def list_claims(
+    db: Session,
     claimant_id: int | None = None,
     status: str | None = None,
 ):
-    result = claims.copy()
+    query = db.query(Claim)
 
     if claimant_id is not None:
-        result = [
-            claim
-            for claim in result
-            if claim["claimantId"] == claimant_id
-        ]
+        query = query.filter(Claim.claimant_id == claimant_id)
 
     if status:
-        result = [
-            claim
-            for claim in result
-            if claim["status"] == status
-        ]
+        query = query.filter(Claim.status == status)
 
-    result.sort(
-        key=lambda claim: claim["createdAt"],
-        reverse=True,
-    )
+    query = query.order_by(Claim.created_at.desc())
 
-    return result
+    return [_serialize(c) for c in query.all()]
 
 
-def get_claim(claim_id: str):
-    for claim in claims:
-        if claim["id"] == claim_id:
-            return claim
+# ============================================================
+# Get Single Claim
+# ============================================================
+def get_claim(db: Session, claim_id: int):
+    claim = db.query(Claim).filter(Claim.id == claim_id).first()
+    return _serialize(claim) if claim else None
 
-    return None
 
-
+# ============================================================
+# Create Claim
+# ============================================================
 def create_claim(
-    data: dict,
+    db: Session,
+    data,
     claimant_id: int,
     claimant_name: str,
 ):
-    item = get_item(data["itemId"])
+    # Handle Pydantic or dict
+    if hasattr(data, "model_dump"):
+        data = data.model_dump()
 
+    # Check item exists
+    item = db.query(LostFound).filter(LostFound.id == data["itemId"]).first()
     if not item:
         return None
 
-    claim = {
-        "id": next_claim_id(),
-        "itemId": data["itemId"],
-        "claimantId": claimant_id,
-        "claimantName": claimant_name,
-        "proof": data["proof"],
-        "status": "pending",
-        "createdAt": datetime.utcnow(),
-    }
+    claim = Claim(
+        item_id=data["itemId"],
+        claimant_id=claimant_id,
+        message=data.get("message", ""),
+        status="pending",
+    )
 
-    claims.append(claim)
+    db.add(claim)
+    db.commit()
+    db.refresh(claim)
 
-    return claim
+    return _serialize(claim)
 
 
+# ============================================================
+# Update Claim Status
+# ============================================================
 def update_claim(
-    claim_id: str,
+    db: Session,
+    claim_id: int,
     status: str,
 ):
-    claim = get_claim(claim_id)
-
+    claim = db.query(Claim).filter(Claim.id == claim_id).first()
     if not claim:
         return None
 
-    claim["status"] = status
+    claim.status = status
 
+    # If approved, mark the item as claimed
     if status == "approved":
-        item = get_item(claim["itemId"])
-
+        item = db.query(LostFound).filter(LostFound.id == claim.item_id).first()
         if item:
-            item["status"] = "claimed"
+            item.status = "claimed"
 
-    return claim
+    db.commit()
+    db.refresh(claim)
+
+    return _serialize(claim)

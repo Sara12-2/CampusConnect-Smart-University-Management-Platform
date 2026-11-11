@@ -3,23 +3,22 @@ from pathlib import Path
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
-from app.config import settings, print_startup_checks
+from app.config import settings
 from app.database import init_db
-
 from app.routers import (
+    admin,
     auth,
-    users,
-    notices,
+    chat,
+    claims,
     complaints,
     lost_found,
-    claims,
+    notices,
     notifications,
     uploads,
-    admin,
-    chat,
+    users,
 )
 
 

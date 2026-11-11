@@ -1,48 +1,29 @@
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-)
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr, Field
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    Field,
-)
-
-import app.database as database
-
-
-claims = getattr(database, "claims")
-complaints = getattr(database, "complaints")
-lost_found_items = getattr(database, "lost_found_items")
-notices = getattr(database, "notices")
-staff = getattr(database, "staff")
-users = getattr(database, "users")
-next_staff_id = getattr(database, "next_staff_id")
-
+from app.database import get_db
+from app.models.user import User
+from app.models.notice import Notice
+from app.models.complaint import Complaint
+from app.models.lost_found import LostFound
+from app.models.claim import Claim
+from app.models.staff import Staff
 from app.routers.auth import require_admin
-
 
 router = APIRouter(
     prefix="/api/admin",
     tags=["Admin"],
 )
 
-
+# ============================================================
+# PYDANTIC SCHEMAS (Request Body)
+# ============================================================
 class StaffCreate(BaseModel):
-    name: str = Field(
-        ...,
-        min_length=3,
-        max_length=100,
-    )
-
+    name: str = Field(..., min_length=3, max_length=100)
     email: EmailStr
-
     department: str = "General"
-
     designation: str = "Staff"
-
 
 class StaffUpdate(BaseModel):
     name: str | None = None
@@ -55,175 +36,176 @@ class UserStatusUpdate(BaseModel):
     is_active: bool
 
 
+# ============================================================
+# STATS
+# ============================================================
+@router.get("/stats")
+def get_stats(
+    db: Session = Depends(get_db),
+    admin: dict = Depends(require_admin),
+):
+    return {
+        "users": db.query(User).count(),
+        "notices": db.query(Notice).count(),
+        "complaints": db.query(Complaint).count(),
+        "lostFound": db.query(LostFound).count(),
+        "claims": db.query(Claim).count(),
+        "staff": db.query(Staff).count(),
+        "pendingComplaints": db.query(Complaint).filter(Complaint.status != "resolved").count(),
+        "pendingClaims": db.query(Claim).filter(Claim.status == "pending").count(),
+    }
+
+
+# ============================================================
+# USERS
+# ============================================================
 @router.get("/users")
 def get_users(
-    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    admin: dict = Depends(require_admin),
 ):
-    # Passwords kabhi API response mein return na hon.
-    safe_users = []
-
-    for user in users:
-        safe_user = {
-            key: value
-            for key, value in user.items()
-            if key not in ("password", "hashed_password")
+    users = db.query(User).all()
+    return [
+        {
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "role": u.role.value if hasattr(u.role, "value") else u.role,
+            "department": u.department,
+            "is_active": u.is_active,
         }
-        safe_users.append(safe_user)
-
-    return safe_users
-
+        for u in users
+    ]
 
 @router.patch("/users/{user_id}/status")
 def update_user_status(
     user_id: int,
     data: UserStatusUpdate,
-    current_admin: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    admin: dict = Depends(require_admin),
 ):
-    user = next(
-        (user for user in users if user.get("id") == user_id),
-        None,
-    )
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
 
-    if user is None:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
+    # Cannot deactivate the last remaining active admin
+    if (str(user.role) == "admin" or user.role.value == "admin") and user.is_active and not data.is_active:
+        active_admins = db.query(User).filter(
+            User.role == user.role, 
+            User.is_active == True
+        ).count()
+        if active_admins <= 1:
+            raise HTTPException(400, "Cannot deactivate the last active admin")
 
-    # Cannot deactivate the last remaining active admin.
-    if (
-        user.get("role") == "admin"
-        and user.get("is_active", True)
-        and not data.is_active
-    ):
-        active_admins = [
-            item for item in users
-            if item.get("role") == "admin"
-            and item.get("is_active", True)
-        ]
-
-        if len(active_admins) <= 1:
-            raise HTTPException(
-                status_code=400,
-                detail="Cannot deactivate the last active admin",
-            )
-
-    user["is_active"] = data.is_active
+    user.is_active = data.is_active
+    db.commit()
+    db.refresh(user)
 
     return {
         "message": "User status updated successfully",
         "user": {
-            key: value
-            for key, value in user.items()
-            if key not in ("password", "hashed_password")
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role.value if hasattr(user.role, "value") else user.role,
+            "is_active": user.is_active,
         },
     }
-    
-@router.get("/stats")
-def get_stats(
-    _: dict = Depends(require_admin),
-):
-
-    return {
-        "users": len(users),
-        "notices": len(notices),
-        "complaints": len(complaints),
-        "lostFound": len(lost_found_items),
-        "claims": len(claims),
-        "staff": len(staff),
-        "pendingComplaints": sum(
-            1
-            for complaint in complaints
-            if complaint["status"] != "resolved"
-        ),
-        "pendingClaims": sum(
-            1
-            for claim in claims
-            if claim["status"] == "pending"
-        ),
-    }
 
 
+# ============================================================
+# STAFF CRUD
+# ============================================================
 @router.get("/staff")
 def get_staff(
-    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    admin: dict = Depends(require_admin),
 ):
-
-    return staff
-
+    staff_members = db.query(Staff).all()
+    return [
+        {
+            "id": s.id,
+            "name": s.name,
+            "email": s.email,
+            "role": s.role,
+            "department": s.department,
+            "is_active": s.is_active,
+        }
+        for s in staff_members
+    ]
 
 @router.post("/staff")
 def create_staff(
     data: StaffCreate,
-    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    admin: dict = Depends(require_admin),
 ):
+    # Check if email already exists
+    if db.query(Staff).filter(Staff.email == data.email).first():
+        raise HTTPException(400, "Email already registered for staff")
 
-    member = {
-        "id": next_staff_id(),
-        **data.model_dump(),
-        "is_active": True,
+    member = Staff(
+        name=data.name,
+        email=data.email,
+        department=data.department,
+        role=data.designation,  # mapping Pydantic field to DB column
+        is_active=True
+    )
+    db.add(member)
+    db.commit()
+    db.refresh(member)
+
+    return {
+        "id": member.id,
+        "name": member.name,
+        "email": member.email,
+        "role": member.role,
+        "department": member.department,
+        "is_active": member.is_active,
     }
-
-    staff.append(member)
-
-    return member
-
 
 @router.put("/staff/{staff_id}")
 def edit_staff(
-    staff_id: str,
+    staff_id: int,
     data: StaffUpdate,
-    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    admin: dict = Depends(require_admin),
 ):
-
-    member = next(
-        (
-            member
-            for member in staff
-            if member["id"] == staff_id
-        ),
-        None,
-    )
-
+    member = db.query(Staff).filter(Staff.id == staff_id).first()
     if not member:
-        raise HTTPException(
-            status_code=404,
-            detail="Staff member not found",
-        )
+        raise HTTPException(404, "Staff member not found")
 
-    changes = data.model_dump(
-        exclude_unset=True
-    )
+    update_data = data.model_dump(exclude_unset=True)
+    
+    for key, value in update_data.items():
+        if key == "designation":
+            setattr(member, "role", value)
+        elif hasattr(member, key):
+            setattr(member, key, value)
 
-    for key, value in changes.items():
-        member[key] = value
+    db.commit()
+    db.refresh(member)
 
-    return member
-
+    return {
+        "id": member.id,
+        "name": member.name,
+        "email": member.email,
+        "role": member.role,
+        "department": member.department,
+        "is_active": member.is_active,
+    }
 
 @router.delete("/staff/{staff_id}")
 def remove_staff(
-    staff_id: str,
-    _: dict = Depends(require_admin),
+    staff_id: int,
+    db: Session = Depends(get_db),
+    admin: dict = Depends(require_admin),
 ):
-
-    member = next(
-        (
-            member
-            for member in staff
-            if member["id"] == staff_id
-        ),
-        None,
-    )
-
+    member = db.query(Staff).filter(Staff.id == staff_id).first()
     if not member:
-        raise HTTPException(
-            status_code=404,
-            detail="Staff member not found",
-        )
+        raise HTTPException(404, "Staff member not found")
 
-    staff.remove(member)
+    db.delete(member)
+    db.commit()
 
-    return {
-        "message": "Staff member deleted successfully"
-    }
+    return {"message": "Staff member deleted successfully"}

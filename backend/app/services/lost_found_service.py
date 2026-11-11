@@ -1,105 +1,92 @@
-from datetime import datetime
+from sqlalchemy.orm import Session
+from app.models.lost_found import LostFound
 
-from app.database import (
-    lost_found_items,
-    next_lost_found_id,
-)
+
+def _serialize(item: LostFound) -> dict:
+    """Convert LostFound model → API response."""
+    return {
+        "id": item.id,
+        "title": item.title,
+        "description": item.description,
+        "type": item.type,
+        "location": item.location,
+        "status": item.status,
+        "imageUrl": item.image_url,
+        "reporterId": item.user_id,
+        "createdAt": item.created_at,
+    }
 
 
 def list_items(
+    db: Session,
     item_type: str | None = None,
     status: str | None = None,
     search: str | None = None,
 ):
-    result = lost_found_items.copy()
+    query = db.query(LostFound)
 
     if item_type:
-        result = [
-            item
-            for item in result
-            if item["type"] == item_type
-        ]
-
+        query = query.filter(LostFound.type == item_type)
     if status:
-        result = [
-            item
-            for item in result
-            if item["status"] == status
-        ]
-
+        query = query.filter(LostFound.status == status)
     if search:
-        search_text = search.lower()
+        pattern = f"%{search.lower()}%"
+        query = query.filter(
+            (LostFound.title.ilike(pattern)) | (LostFound.description.ilike(pattern))
+        )
 
-        result = [
-            item
-            for item in result
-            if search_text in item["title"].lower()
-            or search_text in item["description"].lower()
-            or search_text in item["location"].lower()
-        ]
+    query = query.order_by(LostFound.created_at.desc())
+    return [_serialize(i) for i in query.all()]
 
-    result.sort(
-        key=lambda item: item["createdAt"],
-        reverse=True,
+
+def get_item(db: Session, item_id: int):
+    item = db.query(LostFound).filter(LostFound.id == item_id).first()
+    return _serialize(item) if item else None
+
+
+def create_item(db: Session, data, user_id: int):
+    if hasattr(data, "model_dump"):
+        data = data.model_dump()
+
+    item = LostFound(
+        title=data["title"],
+        description=data["description"],
+        type=data["type"],
+        location=data.get("location"),
+        image_url=data.get("imageUrl"),
+        user_id=user_id,
+        status="open",
     )
-
-    return result
-
-
-def get_item(item_id: str):
-    for item in lost_found_items:
-        if item["id"] == item_id:
-            return item
-
-    return None
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return _serialize(item)
 
 
-def create_item(
-    data: dict,
-    reported_by: int,
-    reporter_name: str,
-):
-    item = {
-        "id": next_lost_found_id(),
-        "type": data["type"],
-        "title": data["title"],
-        "description": data["description"],
-        "location": data["location"],
-        "date": data["date"],
-        "images": data.get("images", []),
-        "reportedBy": reported_by,
-        "reporterName": reporter_name,
-        "status": "open",
-        "createdAt": datetime.utcnow(),
-    }
-
-    lost_found_items.append(item)
-
-    return item
-
-
-def update_item(
-    item_id: str,
-    data: dict,
-):
-    item = get_item(item_id)
-
+def update_item(db: Session, item_id: int, data):
+    item = db.query(LostFound).filter(LostFound.id == item_id).first()
     if not item:
         return None
 
+    if hasattr(data, "model_dump"):
+        data = data.model_dump(exclude_unset=True)
+
     for key, value in data.items():
         if value is not None:
-            item[key] = value
+            if key == "imageUrl":
+                item.image_url = value
+            elif hasattr(item, key):
+                setattr(item, key, value)
 
-    return item
+    db.commit()
+    db.refresh(item)
+    return _serialize(item)
 
 
-def delete_item(item_id: str):
-    item = get_item(item_id)
-
+def delete_item(db: Session, item_id: int):
+    item = db.query(LostFound).filter(LostFound.id == item_id).first()
     if not item:
         return False
-
-    lost_found_items.remove(item)
-
+    db.delete(item)
+    db.commit()
     return True
