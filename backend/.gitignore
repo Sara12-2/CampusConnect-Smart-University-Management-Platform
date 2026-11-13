@@ -2,3 +2,14 @@ venv/
 .env
 __pycache__/
 *.pyc
+*.db
+*.db.old
+campusconnect.db
+campusconnect.db.old
+venv/
+__pycache__/
+*.pyc
+.env
+uploads/
+vector_store/
+vector_store_temp/
