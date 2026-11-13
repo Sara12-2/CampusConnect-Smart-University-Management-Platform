@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.routers.auth import require_admin
+from app.routers.auth import get_current_user, require_admin
 
 from app.schemas.notice import (
     NoticeCreate,
@@ -25,6 +25,9 @@ router = APIRouter(
 )
 
 
+# ============================================================
+# List notices (public — no auth required)
+# ============================================================
 @router.get("", response_model=list[NoticeResponse])
 def get_notices(
     department: str | None = Query(default=None),
@@ -42,6 +45,9 @@ def get_notices(
     )
 
 
+# ============================================================
+# Get single notice (public)
+# ============================================================
 @router.get("/{notice_id}", response_model=NoticeResponse)
 def get_single_notice(
     notice_id: int,
@@ -56,15 +62,27 @@ def get_single_notice(
     return notice
 
 
+# ============================================================
+# Create notice (admin only)
+# ============================================================
 @router.post("", response_model=NoticeResponse)
 def create_new_notice(
     data: NoticeCreate,
     admin: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    return create_notice(db, data, author=admin["name"])
+    # ✅ Pass both author name AND author_id
+    return create_notice(
+        db,
+        data,
+        author=admin["name"],
+        author_id=int(admin["id"]),
+    )
 
 
+# ============================================================
+# Update notice (admin only)
+# ============================================================
 @router.put("/{notice_id}", response_model=NoticeResponse)
 def edit_notice(
     notice_id: int,
@@ -81,6 +99,9 @@ def edit_notice(
     return notice
 
 
+# ============================================================
+# Delete notice (admin only)
+# ============================================================
 @router.delete("/{notice_id}")
 def remove_notice(
     notice_id: int,
