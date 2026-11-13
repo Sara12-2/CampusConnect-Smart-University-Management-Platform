@@ -20,11 +20,7 @@ logger = logging.getLogger(__name__)
 # ============================================================
 
 IDENTITY_REPLY_EN = (
-
-    "Hello! I am CampusConnect Assistant, the official AI guide for CampusConnect - "
-
     "Hello! I am CampusConnect Assistant, the official AI guide for CampusConnect — "
-
     "Smart University Management Platform.\n\n"
     "I am here to assist university students, faculty, and administrative staff. "
     "Here is what I can help you with:\n\n"
@@ -51,7 +47,15 @@ OUT_OF_SCOPE_REPLY_EN = (
     "Please feel free to ask questions related to these university topics, or contact the university office for further assistance."
 )
 
-# Out-of-domain keywords that strictly do not belong to university operations
+NON_ENGLISH_REJECT_REPLY = (
+    "Please ask your question in English. CampusConnect Assistant only accepts inquiries in English."
+)
+
+
+# ============================================================
+# KEYWORD LISTS
+# ============================================================
+
 OUT_OF_DOMAIN_KEYWORDS = [
     "news", "politics", "election", "weather", "forecast", "rain today",
     "sunny today", "temperature outside", "cricket", "match score", "ipl",
@@ -61,7 +65,6 @@ OUT_OF_DOMAIN_KEYWORDS = [
     "joke", "poetry",
 ]
 
-# University domain terms that whitelist queries
 UNIVERSITY_WHITELIST = [
     "campus", "university", "notice", "notices", "exam", "exams", "paper",
     "complaint", "complaints", "lost", "found", "claim", "scholarship",
@@ -77,13 +80,8 @@ UNIVERSITY_WHITELIST = [
 
 
 # ============================================================
-# LANGUAGE & QUERY CLASSIFIERS (STRICT ENGLISH ENFORCEMENT)
+# LANGUAGE & QUERY CLASSIFIERS
 # ============================================================
-
-NON_ENGLISH_REJECT_REPLY = (
-    "Please ask your question in English. CampusConnect Assistant only accepts inquiries in English."
-)
-
 
 def detect_language(text: str) -> str:
     """Always enforce English as the system language."""
@@ -99,7 +97,6 @@ def is_roman_urdu(text: str) -> bool:
     cleaned = re.sub(r"[^\w\s]", " ", text.lower())
     words = set(cleaned.split())
 
-    # Strong Roman Urdu indicators (a single match indicates non-English inquiry)
     strong_indicators = [
         "kya", "kia", "kaise", "kese", "kaisa", "kesa", "kaisay", "kesay",
         "kyun", "kyu", "kyn", "kahan", "kidhar", "kab", "kon", "kaun",
@@ -114,7 +111,6 @@ def is_roman_urdu(text: str) -> bool:
         if ind in words:
             return True
 
-    # Auxiliary & grammatical particles
     particles = [
         "hai", "hain", "hyn", "hy", "hoon", "hun", "tha", "thi", "thay",
         "hoga", "hogi", "honge", "hongay", "mera", "meri", "mere", "meray",
@@ -300,14 +296,9 @@ Capabilities & Personality:
    - Profile & Account Management: Students can update their profile by logging into their dashboard, navigating to the Profile or Settings section, updating personal/academic details, and clicking "Save Changes".
 
 Knowledge & Scope Rules:
-<<<<<<< Updated upstream
-- STRICT EMOJI POLICY: You must NEVER use emojis, emoticons, or decorative icons in any part of your answers. Keep your responses clean, professional, and strictly emoji-free.
-- When asked about exams or exam schedule, always explicitly state that Midterm examinations start on October 20, and Final examinations begin on January 10.
-- When asked about scholarships, state the minimum 3.50 CGPA requirement for Merit Scholarships and the deadline of October 15.
-=======
+- STRICT EMOJI POLICY: You must NEVER use emojis, emoticons, or decorative icons in any part of your answers.
 - When asked about exams or exam schedule, always explicitly state that Midterm examinations start on **October 20**, and Final examinations begin on **January 10**.
 - When asked about scholarships, state the minimum **3.50 CGPA** requirement for Merit Scholarships and the deadline of **October 15**.
->>>>>>> Stashed changes
 - Queries regarding campus policies, rules, regulations, contact numbers, phone numbers, helplines, profile settings, account updates, and office hours are VALID university/platform topics and MUST NEVER be classified as out-of-context. Answer them helpfully with clear instructions.
 - When context from the university knowledge base is provided, base your answer strictly on that context.
 - If the user asks anything strictly OUT OF CONTEXT (such as general news, weather, movies, celebrities, cricket match scores, politics, or general topics unrelated to university operations), respond with the standard message:
@@ -315,6 +306,10 @@ Knowledge & Scope Rules:
 - Keep your answers structured, clean, and easy to read in English. Use numbered lists (1, 2, 3) or clean bullet points (•).
 """
 
+
+# ============================================================
+# GROQ API HELPERS
+# ============================================================
 
 def _get_api_key() -> str:
     """Retrieve Groq API key from settings or environment."""
@@ -325,22 +320,26 @@ def _get_api_key() -> str:
     return key.strip()
 
 
+def _get_model_name() -> str:
+    """Get configured Groq model name."""
+    return getattr(settings, "groq_model", "openai/gpt-oss-20b")
+
+
 def test_groq_connection() -> Dict[str, Any]:
     """Tests real-time connectivity to Groq API using configured key."""
     api_key = _get_api_key()
+    model_name = _get_model_name()
+
     if not api_key:
         return {
             "connected": False,
             "error": "GROQ_API_KEY is not configured.",
-            "model": getattr(settings, "groq_model", "openai/gpt-oss-120b"),
+            "model": model_name,
         }
-
-    model_name = getattr(settings, "groq_model", "openai/gpt-oss-120b")
 
     # 1. Try official groq SDK
     try:
-        # pyrefly: ignore[missing-import]
-        from groq import Groq
+        from groq import Groq  # type: ignore
 
         client = Groq(api_key=api_key)
         models_resp = client.models.list()
@@ -354,7 +353,7 @@ def test_groq_connection() -> Dict[str, Any]:
     except Exception as exc:
         logger.debug(f"Groq SDK test failed: {exc}")
 
-    # 2. Try direct REST with User-Agent
+    # 2. Try direct REST
     try:
         url = "https://api.groq.com/openai/v1/models"
         req = urllib.request.Request(
@@ -394,10 +393,9 @@ test_gemini_connection = test_groq_connection
 def _call_groq_rest(messages: List[Dict[str, str]], api_key: str) -> Optional[str]:
     """Call Groq chat completions endpoint via REST."""
     candidate_models = [
-        getattr(settings, "groq_model", "openai/gpt-oss-20b"),
+        _get_model_name(),
         "openai/gpt-oss-20b",
         "openai/gpt-oss-120b",
-        "qwen/qwen3.8-27b",
     ]
 
     for model_name in candidate_models:
@@ -446,7 +444,7 @@ def generate_chat_response(
     if not user_query:
         return "Please enter a question or message."
 
-    # 0. Strictly decline Roman Urdu or Urdu queries immediately
+    # 0. Strictly decline Roman Urdu or Urdu queries
     if is_roman_urdu(user_query):
         return NON_ENGLISH_REJECT_REPLY
 
@@ -462,7 +460,7 @@ def generate_chat_response(
     if is_out_of_domain(user_query):
         return OUT_OF_SCOPE_REPLY_EN
 
-    # 4. If retrieved RAG context is empty and query is not a university topic
+    # 4. If no RAG context and query is not a university topic
     if not context.strip() and not is_university_query(user_query):
         return OUT_OF_SCOPE_REPLY_EN
 
@@ -471,7 +469,6 @@ def generate_chat_response(
         logger.error("GROQ_API_KEY is not set.")
         return _fallback_offline_response(user_query, context)
 
-    # Build messages array for Groq OpenAI-compatible format
     messages: List[Dict[str, str]] = [
         {"role": "system", "content": system_instruction}
     ]
@@ -498,15 +495,13 @@ def generate_chat_response(
 
     # 1. Try official groq SDK
     candidate_models = [
-        getattr(settings, "groq_model", "openai/gpt-oss-20b"),
+        _get_model_name(),
         "openai/gpt-oss-20b",
         "openai/gpt-oss-120b",
-        "qwen/qwen3.8-27b",
     ]
 
     try:
-        # pyrefly: ignore[missing-import]
-        from groq import Groq
+        from groq import Groq  # type: ignore
 
         client = Groq(api_key=api_key)
         for model_name in candidate_models:
@@ -538,7 +533,7 @@ def generate_chat_response(
             return OUT_OF_SCOPE_REPLY_EN
         return rest_reply
 
-    # 3. If API calls fail, fallback to local knowledge
+    # 3. Fallback to local knowledge
     return _fallback_offline_response(user_query, context)
 
 
@@ -551,12 +546,11 @@ def generate_summary(content: str) -> str:
     api_key = _get_api_key()
     if api_key:
         try:
-            # pyrefly: ignore[missing-import]
-            from groq import Groq
+            from groq import Groq  # type: ignore
 
             client = Groq(api_key=api_key)
             resp = client.chat.completions.create(
-                model=getattr(settings, "groq_model", "openai/gpt-oss-120b"),
+                model=_get_model_name(),
                 messages=[
                     {
                         "role": "system",
@@ -580,7 +574,7 @@ def generate_summary(content: str) -> str:
 
 
 def _fallback_offline_response(message: str, context: str = "") -> str:
-    """English-only fallback when API is unreachable or key is pending."""
+    """English-only fallback when API is unreachable or key is missing."""
     user_query = (message or "").strip()
     m = user_query.lower()
 
@@ -626,13 +620,8 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
 
     if any(k in m for k in ["exam", "notice", "schedule", "dates", "announcement", "midterm", "final", "date sheet", "datesheet"]):
         return (
-
-            "Midterm examinations commence on October 20 for the Fall semester.\n"
-            "Final examinations begin on January 10.\n\n"
-
             "Midterm examinations commence on **October 20** for the Fall semester.\n"
             "Final examinations begin on **January 10**.\n\n"
-
             "Detailed date sheets and hall allotments are published in the Notice Board section. "
             "Students must bring their original university ID card and clear all fee dues prior to examinations."
         )
@@ -640,14 +629,9 @@ def _fallback_offline_response(message: str, context: str = "") -> str:
     if any(k in m for k in ["scholarship", "financial aid", "merit", "fee concession"]):
         return (
             "Scholarship Details:\n\n"
-            "• Merit Scholarships: Minimum 3.50 CGPA required (up to 100% tuition concession).\n"
-            "• Need-Based Scholarships: Minimum 2.50 CGPA required.\n"
-            "• Application Deadline: October 15.\n\n"
-
             "• Merit Scholarships: Minimum **3.50 CGPA** required (up to 100% tuition concession).\n"
             "• Need-Based Scholarships: Minimum **2.50 CGPA** required.\n"
             "• Application Deadline: **October 15**.\n\n"
-
             "Submit your academic transcript, CNIC copy, and income certificate to the Student Affairs office."
         )
 
