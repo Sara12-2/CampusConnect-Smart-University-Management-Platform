@@ -58,7 +58,7 @@ def create_claim(
     db: Session,
     data,
     claimant_id: int,
-    claimant_name: str,
+    claimant_name: str | None = None,  # kept for backward compat
 ):
     if hasattr(data, "model_dump"):
         data = data.model_dump()
@@ -88,12 +88,16 @@ def update_claim(
     db: Session,
     claim_id: int,
     status: str,
+    verifier_id: int | None = None,
 ):
     claim = db.query(Claim).filter(Claim.id == claim_id).first()
     if not claim:
         return None
 
     claim.status = status
+
+    if verifier_id:
+        claim.verified_by = verifier_id
 
     if status == "approved":
         item = db.query(LostFound).filter(LostFound.id == claim.item_id).first()

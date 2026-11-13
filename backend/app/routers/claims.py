@@ -15,7 +15,7 @@ router = APIRouter(
 @router.get("", response_model=list[ClaimResponse])
 def get_claims(
     item_id: int | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status_filter: str | None = Query(default=None, alias="status"),
     user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -26,7 +26,7 @@ def get_claims(
     return claim_service.list_claims(
         db=db,
         claimant_id=claimant_id,
-        status=status,
+        status=status_filter,
         item_id=item_id,
     )
 
@@ -41,8 +41,10 @@ def get_single_claim(
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
 
-    if user["role"] != "admin" and claim["claimantId"] != int(user["id"]):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if user["role"] != "admin":
+        owner_id = claim.get("claimantId")
+        if owner_id is None or int(owner_id) != int(user["id"]):
+            raise HTTPException(status_code=403, detail="Access denied")
 
     return claim
 
@@ -71,7 +73,6 @@ def edit_claim(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    # ✅ Yahan fix kiya gaya hai: 'data.status' pass karo, sirf 'data' nahi
     claim = claim_service.update_claim(db, claim_id, data.status)
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
