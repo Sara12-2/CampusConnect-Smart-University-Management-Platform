@@ -59,7 +59,6 @@ def get_current_user(
             detail="Invalid user ID",
         )
 
-    # ✅ get_user_by_id ab direct User object return karta hai
     user = get_user_by_id(db, user_id)
 
     if not user:
@@ -68,21 +67,22 @@ def get_current_user(
             detail="User not found",
         )
 
-    # ✅ FIX: .get() ki jagah direct attribute use karo
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive",
         )
 
-    # ✅ FIX: Baaki routes ko dictionary chahiye hoti hai, isliye public_user call karo
     return public_user(user)
 
 
 def require_admin(
     current_user: dict = Depends(get_current_user),
 ):
-    if current_user["role"] != "admin":
+    # ✅ Safe role comparison — works for enum or string
+    role_value = current_user.get("role")
+    role_str = role_value.value if hasattr(role_value, "value") else str(role_value)
+    if role_str.lower() != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required",
@@ -100,7 +100,6 @@ def require_admin(
     response_model=UserResponse,
 )
 def register(payload: UserRegister, db: Session = Depends(get_db)):
-    # Public registration only creates student accounts.
     user_data = payload.model_dump()
     user_data["role"] = "student"
 
@@ -128,12 +127,13 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
             detail="Invalid email or password",
         )
 
-    # Case-insensitive role check
-    if str(user["role"]).lower() != str(payload.role).lower():
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Selected role does not match account role",
-        )
+    # ✅ Role check — string comparison (public_user returns string)
+    if payload.role:
+        if str(user["role"]).lower() != str(payload.role).lower():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Selected role does not match account role",
+            )
 
     token = create_access_token({"sub": str(user["id"])})
 

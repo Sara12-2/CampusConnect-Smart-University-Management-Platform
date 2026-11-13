@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.utils.security import hash_password, verify_password
 
 
@@ -38,6 +38,22 @@ def list_users(db: Session):
 
 
 # ============================================================
+# Role parsing helper
+# ============================================================
+
+def _parse_role(raw_role) -> UserRole:
+    """Convert string or enum to UserRole."""
+    if isinstance(raw_role, UserRole):
+        return raw_role
+    if not raw_role:
+        return UserRole.STUDENT
+    try:
+        return UserRole(str(raw_role).lower())
+    except ValueError:
+        return UserRole.STUDENT
+
+
+# ============================================================
 # Register
 # ============================================================
 
@@ -51,7 +67,7 @@ def register_user(db: Session, data: dict):
         name=data["name"],
         email=data["email"].lower(),
         password_hash=hash_password(data["password"]),
-        role=data.get("role", "student"),
+        role=_parse_role(data.get("role")),  # ✅ enum conversion
         department=data.get("department"),
         semester=data.get("semester"),
         is_active=True,
@@ -98,6 +114,8 @@ def update_user(db: Session, user_id: int, data: dict):
             user.password_hash = hash_password(value)
         elif key == "password":
             continue
+        elif key == "role" and value:
+            user.role = _parse_role(value)
         elif value is not None and hasattr(user, key):
             setattr(user, key, value)
 
