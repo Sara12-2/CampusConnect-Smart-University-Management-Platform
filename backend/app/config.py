@@ -12,8 +12,13 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
 
-        # database_url: str = "postgresql+psycopg2://campusconnect_user:campusconnect_dev_pass@localhost:5432/campusconnect"
-    database_url: str = "sqlite:///./campusconnect.db"
+    # ============================================================
+    # DATABASE — PostgreSQL ONLY (SQLite removed)
+    # ============================================================
+    database_url: str = (
+        "postgresql+psycopg2://campusconnect_user:campusconnect_dev_pass"
+        "@localhost:5432/campusconnect"
+    )
 
     # JWT
     secret_key: str = ""
