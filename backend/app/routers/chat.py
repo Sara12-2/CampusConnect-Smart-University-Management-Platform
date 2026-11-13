@@ -1,14 +1,15 @@
 """CampusConnect Chat Router.
 
 Provides API endpoints for interacting with the CampusConnect AI Chatbot,
-supporting both simple Gemini dialogue and full RAG semantic search.
+supporting both simple Groq dialogue and full RAG semantic search.
 """
 
 from fastapi import APIRouter, status
+
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.rag_service import process_chat, ensure_vector_store_populated
 from app.services.vector_store import get_document_count
-from app.services.ai_service import test_groq_connection, test_gemini_connection
+from app.services.ai_service import test_groq_connection
 from app.config import settings
 
 
@@ -23,7 +24,7 @@ router = APIRouter(
     response_model=ChatResponse,
     status_code=status.HTTP_200_OK,
     summary="Chat with CampusConnect Assistant",
-    description="Processes user messages using RAG (with ChromaDB) or direct Gemini AI.",
+    description="Processes user messages using RAG (with ChromaDB) or direct Groq AI.",
 )
 @router.post(
     "/",
@@ -61,14 +62,17 @@ def chat_status():
     doc_count = get_document_count()
     has_groq_key = bool(getattr(settings, "groq_api_key", ""))
     connectivity = test_groq_connection()
+
     return {
         "status": "online",
+        # ✅ Groq keys (renamed from gemini_*)
         "groq_configured": has_groq_key,
         "groq_connected": connectivity.get("connected", False),
         "groq_details": connectivity,
+        # ⚠️ Backward-compat — remove once frontend updated
         "gemini_configured": has_groq_key,
         "gemini_connected": connectivity.get("connected", False),
-        "model": getattr(settings, "groq_model", "openai/gpt-oss-120b"),
+        "model": getattr(settings, "groq_model", "openai/gpt-oss-20b"),
         "vector_store_documents": doc_count,
         "rag_ready": doc_count > 0,
     }
