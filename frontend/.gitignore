@@ -34,3 +34,10 @@ backend/vector_store_temp/
 
 # Other
 powershell.cmd
+
+# Ignore accidental psql download
+psql
+psql.exe
+
+# Ignore root node_modules and lock files (frontend has its own)
+package-lock.json
