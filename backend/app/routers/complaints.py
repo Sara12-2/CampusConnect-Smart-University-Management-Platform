@@ -25,9 +25,12 @@ router = APIRouter(
 )
 
 
+# ============================================================
+# List complaints
+# ============================================================
 @router.get("", response_model=list[ComplaintResponse])
 def get_complaints(
-    status: str | None = Query(default=None),
+    status_filter: str | None = Query(default=None, alias="status"),
     category: str | None = Query(default=None),
     search: str | None = Query(default=None),
     user: dict = Depends(get_current_user),
@@ -40,12 +43,15 @@ def get_complaints(
     return list_complaints(
         db,
         student_id=student_id,
-        status=status,
+        status=status_filter,
         category=category,
         search=search,
     )
 
 
+# ============================================================
+# Get single complaint
+# ============================================================
 @router.get("/{complaint_id}", response_model=ComplaintResponse)
 def get_single_complaint(
     complaint_id: int,
@@ -60,15 +66,21 @@ def get_single_complaint(
             detail="Complaint not found",
         )
 
-    if user["role"] != "admin" and complaint["studentId"] != int(user["id"]):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied",
-        )
+    # ✅ Safe access — .get() se KeyError nahi aayega
+    if user["role"] != "admin":
+        owner_id = complaint.get("studentId")
+        if owner_id is None or int(owner_id) != int(user["id"]):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied",
+            )
 
     return complaint
 
 
+# ============================================================
+# Create complaint
+# ============================================================
 @router.post("", response_model=ComplaintResponse)
 def create_new_complaint(
     data: ComplaintCreate,
@@ -78,6 +90,9 @@ def create_new_complaint(
     return create_complaint(db, data, user)
 
 
+# ============================================================
+# Update complaint (admin only)
+# ============================================================
 @router.put("/{complaint_id}", response_model=ComplaintResponse)
 def edit_complaint(
     complaint_id: int,
@@ -94,6 +109,9 @@ def edit_complaint(
     return complaint
 
 
+# ============================================================
+# Delete complaint (admin only)
+# ============================================================
 @router.delete("/{complaint_id}")
 def remove_complaint(
     complaint_id: int,
