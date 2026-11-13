@@ -175,7 +175,8 @@ export default function RegisterPage() {
               <p className="text-xs text-[#5a6e63] mt-0.5">Join thousands of students using CampusConnect.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            {/* ✅ FIX: autoComplete="off" add kiya */}
+            <form onSubmit={handleSubmit} className="space-y-3" autoComplete="off">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Full Name" name="name" icon={User} placeholder="Sara Manzoor" value={form.name} onChange={(v) => update("name", v)} disabled={loading} />
                 <Field label="Email" name="email" type="email" icon={Mail} placeholder="you@campusconnect.edu" value={form.email} onChange={(v) => update("email", v)} disabled={loading} />
@@ -258,7 +259,16 @@ function Field({ label, name, icon: Icon, value, onChange, placeholder, type = "
       <label className="block text-[10px] font-bold text-[#0f1d17] mb-1 uppercase tracking-wide">{label}</label>
       <div className="relative group">
         <Icon size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6e63] group-focus-within:text-[#227736] transition-colors pointer-events-none" />
-        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled} required className="w-full pl-8 pr-3 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 disabled:opacity-60" />
+        <input 
+          type={type} 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)} 
+          placeholder={placeholder} 
+          disabled={disabled} 
+          required 
+          autoComplete={type === "email" ? "new-email" : "off"} // ✅ FIX: Autofill band
+          className="w-full pl-8 pr-3 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 disabled:opacity-60" 
+        />
       </div>
     </div>
   );
@@ -281,7 +291,16 @@ function PasswordField({ label, name, value, onChange, placeholder, show, toggle
       <label className="block text-[10px] font-bold text-[#0f1d17] mb-1 uppercase tracking-wide">{label}</label>
       <div className="relative group">
         <Lock size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a6e63] group-focus-within:text-[#227736] transition-colors pointer-events-none" />
-        <input type={show ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled} required className="w-full pl-8 pr-8 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 disabled:opacity-60" />
+        <input 
+          type={show ? "text" : "password"} 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)} 
+          placeholder={placeholder} 
+          disabled={disabled} 
+          required 
+          autoComplete="new-password" // ✅ FIX: Autofill band
+          className="w-full pl-8 pr-8 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 disabled:opacity-60" 
+        />
         <button type="button" onClick={toggle} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#5a6e63] hover:text-[#227736] transition-colors">
           {show ? <EyeOff size={12} /> : <Eye size={12} />}
         </button>

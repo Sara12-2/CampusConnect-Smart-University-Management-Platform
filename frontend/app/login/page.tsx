@@ -21,6 +21,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ✅ FIX: Role change hote hi form clear karne ka function
+  const handleRoleChange = (newRole: "student" | "admin") => {
+    setRole(newRole);
+    setEmail("");
+    setPassword("");
+    setError("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -95,7 +103,12 @@ export default function LoginPage() {
             {(["student", "admin"] as const).map((r) => {
               const isActive = role === r;
               return (
-                <button key={r} type="button" onClick={() => setRole(r)} className={cn("relative py-2.5 text-sm font-bold rounded-lg transition-colors capitalize", isActive ? "text-[#227736]" : "text-[#5a6e63] hover:text-[#0f1d17]")}>
+                <button 
+                  key={r} 
+                  type="button" 
+                  onClick={() => handleRoleChange(r)} // ✅ Yahan change kiya
+                  className={cn("relative py-2.5 text-sm font-bold rounded-lg transition-colors capitalize", isActive ? "text-[#227736]" : "text-[#5a6e63] hover:text-[#0f1d17]")}
+                >
                   {isActive && <motion.div layoutId="roleToggle" className="absolute inset-0 bg-white rounded-lg shadow-sm border border-[#e2ebe6]" transition={{ type: "spring", stiffness: 400, damping: 30 }} />}
                   <span className="relative z-10 flex items-center justify-center gap-1.5">
                     {r === "student" ? <User size={13} /> : <ShieldCheck size={13} />}
@@ -107,12 +120,22 @@ export default function LoginPage() {
           </div>
 
           {/* FORM */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* ✅ FIX: autoComplete="off" add kiya browser memory rokne ke liye */}
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div>
               <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Email Address</label>
               <div className="relative">
                 <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a6e63]" />
-                <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (error) setError(""); }} placeholder="you@campusconnect.edu" required disabled={loading} className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border border-[#e2ebe6] bg-white text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10 outline-none transition-all disabled:opacity-60" />
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => { setEmail(e.target.value); if (error) setError(""); }} 
+                  placeholder="you@campusconnect.edu" 
+                  required 
+                  disabled={loading} 
+                  autoComplete="new-email" // ✅ Browser autofill fix
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm border border-[#e2ebe6] bg-white text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10 outline-none transition-all disabled:opacity-60" 
+                />
               </div>
             </div>
 
@@ -120,7 +143,16 @@ export default function LoginPage() {
               <label className="block text-xs font-bold text-[#0f1d17] mb-1.5">Password</label>
               <div className="relative">
                 <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5a6e63]" />
-                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); if (error) setError(""); }} placeholder="••••••••" required disabled={loading} className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm border border-[#e2ebe6] bg-white text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10 outline-none transition-all disabled:opacity-60" />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  value={password} 
+                  onChange={(e) => { setPassword(e.target.value); if (error) setError(""); }} 
+                  placeholder="••••••••" 
+                  required 
+                  disabled={loading} 
+                  autoComplete="new-password" // ✅ Browser autofill fix
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm border border-[#e2ebe6] bg-white text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:ring-4 focus:ring-[#227736]/10 outline-none transition-all disabled:opacity-60" 
+                />
                 <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded text-[#5a6e63] hover:text-[#227736]">
                   {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>

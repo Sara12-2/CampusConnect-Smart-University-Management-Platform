@@ -1,83 +1,152 @@
-export type Role = "student" | "admin";
+// ============================================================
+// User
+// ============================================================
+export type Role = "student" | "staff" | "admin";
 
 export interface User {
-  id: string;
+  id: number;              // ✅ backend int
   name: string;
   email: string;
   role: Role;
-  department?: string;
-  semester?: number;
-  avatar?: string;
+  department?: string | null;
+  semester?: number | null;
+  avatar?: string | null;
+  is_active: boolean;      // ✅ backend field
 }
 
+// ============================================================
+// Notice
+// ============================================================
 export interface Notice {
-  id: string;
+  id: number;
   title: string;
   content: string;
-  summary?: string;
+  summary?: string | null;
   department: string;
-  semester?: number;
+  semester?: number | null;
   pinned: boolean;
-  deadline?: string;
+  deadline?: string | null;
   createdAt: string;
   author: string;
   category: "exam" | "event" | "fee" | "general" | "urgent";
+  priority?: "normal" | "high";
 }
 
+// ============================================================
+// Notification
+// ============================================================
 export interface Notification {
-  id: string;
+  id: number;
   title: string;
   message: string;
-  type: "notice" | "deadline" | "complaint" | "claim";
-  read: boolean;
+  isRead: boolean;         // ✅ backend field name
+  link?: string | null;    // ✅ backend field
+  userId: number;          // ✅ backend field
   createdAt: string;
 }
 
+// ============================================================
+// Complaint
+// ============================================================
 export type ComplaintStatus =
   | "submitted"
   | "assigned"
   | "in-progress"
-  | "resolved"
-  | "rejected";
+  | "resolved";
+
+export type ComplaintCategory =
+  | "classroom"
+  | "lab"
+  | "electricity"
+  | "wifi"
+  | "furniture"
+  | "other";
 
 export interface Complaint {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  category: "classroom" | "lab" | "electricity" | "wifi" | "furniture" | "other";
+  category: ComplaintCategory;
   status: ComplaintStatus;
-  priority?: string;
   images: string[];
-  studentId: string;
+  studentId: number;
   studentName: string;
-  assignedTo?: string;
+  assignedTo?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+// ============================================================
+// Lost & Found
+// ============================================================
 export type ItemType = "lost" | "found";
-export type ClaimStatus = "pending" | "approved" | "rejected";
+export type ItemStatus = "open" | "claimed" | "returned";
 
 export interface LostFoundItem {
-  id: string;
+  id: number;
   type: ItemType;
   title: string;
   description: string;
-  location: string;
-  date: string;
-  images: string[];
-  reportedBy: string;
-  reporterName: string;
-  status: "open" | "claimed" | "returned";
+  location?: string | null;
+  imageUrl?: string | null;    // ✅ backend field
+  status: ItemStatus;
+  reporterId: number;          // ✅ backend field name
   createdAt: string;
 }
 
+// ============================================================
+// Claim
+// ============================================================
+export type ClaimStatus = "pending" | "approved" | "rejected";
+
 export interface Claim {
-  id: string;
-  itemId: string;
-  claimantId: string;
-  claimantName: string;
-  proof: string;
+  id: number;
+  itemId: number;
+  claimantId: number;
+  message: string;             // ✅ backend field (was "proof")
   status: ClaimStatus;
   createdAt: string;
+}
+
+// ============================================================
+// Auth
+// ============================================================
+export interface LoginRequest {
+  email: string;
+  password: string;
+  role?: Role;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  department?: string;
+  semester?: number;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
+// ============================================================
+// Chat
+// ============================================================
+export interface ChatHistoryItem {
+  role: "user" | "assistant" | "bot";
+  content: string;
+}
+
+export interface ChatRequest {
+  message: string;
+  use_rag?: boolean;
+  history?: ChatHistoryItem[];
+}
+
+export interface ChatResponse {
+  reply: string;
+  sources: string[];
+  mode: string;
 }
