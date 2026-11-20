@@ -58,6 +58,7 @@ export default function RegisterPage() {
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(""); // ✅ Success message ke liye state
 
   const update = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -67,6 +68,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
 
     // Validation
     if (form.name.trim().length < 3) return setError("Please enter your full name (min 3 characters).");
@@ -99,17 +101,14 @@ export default function RegisterPage() {
         throw new Error(msg);
       }
 
-      // Save token
-      if (data.access_token || data.token) {
-        localStorage.setItem("token", data.access_token || data.token);
-      }
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("role", data.user.role);
-      }
+      // ✅ FIX: Success message dikhao aur login page par bhejo
+      setSuccessMsg("Account created successfully! Redirecting to login...");
+      
+      // 2 second baad login page par redirect karein
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
 
-      router.push("/student");
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -175,7 +174,6 @@ export default function RegisterPage() {
               <p className="text-xs text-[#5a6e63] mt-0.5">Join thousands of students using CampusConnect.</p>
             </div>
 
-            {/* ✅ FIX: autoComplete="off" add kiya */}
             <form onSubmit={handleSubmit} className="space-y-3" autoComplete="off">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Full Name" name="name" icon={User} placeholder="Sara Manzoor" value={form.name} onChange={(v) => update("name", v)} disabled={loading} />
@@ -205,9 +203,20 @@ export default function RegisterPage() {
               <label className="flex items-start gap-2 cursor-pointer select-none py-0.5 group">
                 <input type="checkbox" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); if (error) setError(""); }} disabled={loading} className="mt-0.5 w-3.5 h-3.5 rounded border-[#c8e6d1] text-[#227736] focus:ring-[#227736]/20 accent-[#227736] cursor-pointer" />
                 <span className="text-[10px] text-[#5a6e63] leading-relaxed group-hover:text-[#0f1d17] transition-colors">
-                  I agree to the <Link href="/terms" className="text-[#227736] font-semibold hover:underline">Terms</Link> and <Link href="/privacy" className="text-[#227736] font-semibold hover:underline">Privacy Policy</Link>
+                  {/* ✅ FIX: Link ki jagah span use kiya taake 404 error na aaye */}
+                  I agree to the <span className="text-[#227736] font-semibold">Terms</span> and <span className="text-[#227736] font-semibold">Privacy Policy</span>
                 </span>
               </label>
+
+              {/* ✅ FIX: Success Message Alert */}
+              <AnimatePresence>
+                {successMsg && (
+                  <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="flex items-start gap-1.5 p-2 rounded-lg bg-[#eaf6ee] border border-[#c8e6d1]">
+                    <CheckCircle2 size={12} className="text-[#227736] mt-0.5 shrink-0" />
+                    <p className="text-[10px] text-[#227736] font-bold">{successMsg}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <AnimatePresence>
                 {error && (
@@ -218,7 +227,7 @@ export default function RegisterPage() {
                 )}
               </AnimatePresence>
 
-              <motion.button type="submit" disabled={loading} whileHover={{ y: -1 }} whileTap={{ scale: 0.99 }} className="group relative w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#227736] text-white text-xs font-bold shadow-md hover:bg-[#1c6430] disabled:opacity-60 transition-all duration-200">
+              <motion.button type="submit" disabled={loading || successMsg !== ""} whileHover={{ y: -1 }} whileTap={{ scale: 0.99 }} className="group relative w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#227736] text-white text-xs font-bold shadow-md hover:bg-[#1c6430] disabled:opacity-60 transition-all duration-200">
                 {loading ? <><Loader2 size={14} className="animate-spin" /> Creating...</> : <><UserPlus size={14} /> Create Account <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" /></>}
               </motion.button>
             </form>
@@ -266,7 +275,7 @@ function Field({ label, name, icon: Icon, value, onChange, placeholder, type = "
           placeholder={placeholder} 
           disabled={disabled} 
           required 
-          autoComplete={type === "email" ? "new-email" : "off"} // ✅ FIX: Autofill band
+          autoComplete={type === "email" ? "new-email" : "off"} 
           className="w-full pl-8 pr-3 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 disabled:opacity-60" 
         />
       </div>
@@ -298,7 +307,7 @@ function PasswordField({ label, name, value, onChange, placeholder, show, toggle
           placeholder={placeholder} 
           disabled={disabled} 
           required 
-          autoComplete="new-password" // ✅ FIX: Autofill band
+          autoComplete="new-password" 
           className="w-full pl-8 pr-8 py-2 rounded-lg text-xs border border-[#e2ebe6] bg-[#f8faf9] text-[#0f1d17] placeholder:text-[#5a6e63]/50 focus:border-[#227736] focus:bg-white focus:ring-2 focus:ring-[#227736]/10 outline-none transition-all duration-200 disabled:opacity-60" 
         />
         <button type="button" onClick={toggle} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[#5a6e63] hover:text-[#227736] transition-colors">
