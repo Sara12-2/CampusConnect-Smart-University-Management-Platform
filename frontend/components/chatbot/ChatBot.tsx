@@ -655,6 +655,9 @@ export default function ChatBot() {
         mode = "local";
       }
 
+      // ✅ FIX: Remove the "[Notice: ...]" text from the top of the reply
+      reply = reply.replace(/\[.*?\]:/g, "").trim();
+
       const cleanSources = sources.filter((s: string) => {
         const lower = (s || "").toLowerCase();
         return !lower.includes("gemini") && !lower.includes("google") && !lower.includes("groq") && !lower.includes("llama") && !lower.includes("backend rag") && !lower.includes("flash");
