@@ -3,14 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User  # ✅ FIX: User model import add
+from app.routers.auth import get_current_user, require_admin
 from app.schemas.user import UserResponse, UserUpdate
 from app.services.auth_service import (
     get_user_by_id,
-    update_user,
     public_user,
+    update_user,
 )
-from app.routers.auth import get_current_user, require_admin
-
 
 router = APIRouter(
     prefix="/api/users",
